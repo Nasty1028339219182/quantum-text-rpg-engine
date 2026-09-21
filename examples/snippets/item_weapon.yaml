@@ -1,0 +1,12 @@
+# Paste into items.yaml.
+
+iron_sword:
+  name: {ru: железный меч, en: iron sword}
+  aliases: [меч, sword]
+  description: {ru: Простой клинок., en: A plain blade.}
+  type: weapon
+  slot: weapon
+  damage: 1d8
+  hit: 1
+  weight: 3
+  value: 15

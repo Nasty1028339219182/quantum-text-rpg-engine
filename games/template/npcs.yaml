@@ -1,0 +1,9 @@
+# npc_id:
+#   name: {ru: Имя, en: Name}
+#   aliases: [имя]
+#   description: {ru: ..., en: ...}
+#   location: start_room
+#   dialogue: npc_id
+#   shop:
+#     - {item: some_item, price: 5, stock: 2}
+#   encounter: some_fight

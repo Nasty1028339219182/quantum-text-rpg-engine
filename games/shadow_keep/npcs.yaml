@@ -1,0 +1,44 @@
+grom:
+  name: {ru: Гром, en: Grom}
+  aliases: [гром, страж, guard, grom, старик]
+  description:
+    ru: Раненый страж у фонтана. Щит расколот, но голос ещё командует.
+    en: A wounded guard by the fountain. His shield is split; his voice still commands.
+  location: courtyard
+  dialogue: grom
+  shop:
+    - {item: health_potion, price: 12, stock: 2}
+    - {item: torch, price: 2, stock: 4}
+    - {item: bread, price: 2, stock: 5}
+
+priest_ghost:
+  name: {ru: призрак священника, en: priest's ghost}
+  aliases: [призрак, священник, ghost, priest, отец]
+  description:
+    ru: Полупрозрачная фигура у алтаря. Глаза — как свечи в конце службы.
+    en: A translucent figure at the altar. Eyes like candles at the end of a mass.
+  location: chapel
+  dialogue: priest_ghost
+
+marek:
+  name: {ru: Марек, en: Marek}
+  aliases: [марек, узник, prisoner, marek]
+  description:
+    ru: Узник в цепях. Говорит тихо, будто боится, что камень слышит.
+    en: A chained prisoner. He speaks softly, as if the stone were listening.
+  location: prison
+  dialogue: marek
+
+vargos:
+  name: {ru: Варгос, en: Vargos}
+  aliases: [варгос, демон, vargos, demon, тень]
+  description:
+    ru: Фигура из дыма и костей. Голос — как треск угля.
+    en: A figure of smoke and bone. A voice like cracking coals.
+  location: sanctum
+  dialogue: vargos
+  hostile: true
+  encounter: vargos
+  on_death:
+    - set_flag: demon_slain
+    - complete_quest: investigate

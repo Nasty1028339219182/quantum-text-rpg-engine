@@ -1,0 +1,21 @@
+# Paste into locations.yaml and change ids/text.
+
+hall:
+  name: {ru: Зал, en: Hall}
+  description:
+    ru: Длинный зал. Выходы: север и юг.
+    en: A long hall. Exits: north and south.
+  exits:
+    south: gate
+    north:
+      to: throne
+      locked: true
+      key: iron_key
+      locked_text: {ru: Дверь заперта., en: The door is locked.}
+  items: [torch]
+  npcs: [steward]
+  search:
+    dc: 12
+    skill: perception
+    reveal: [hidden_coin]
+    text: {ru: Под камнем — монета., en: A coin under a stone.}

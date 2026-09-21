@@ -1,0 +1,5 @@
+# potion:
+#   name: {ru: зелье, en: potion}
+#   ingredients: [herb, flask]
+#   station: start_room
+#   result: potion

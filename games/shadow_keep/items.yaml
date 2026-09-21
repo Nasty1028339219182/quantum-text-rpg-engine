@@ -1,0 +1,236 @@
+torch:
+  name: {ru: факел, en: torch}
+  aliases: [факел, torch, свет]
+  description:
+    ru: Смоляной факел. Горит ровно даже на сквозняке.
+    en: A pitch torch. It burns even in a draught.
+  type: misc
+  light: true
+  weight: 1
+  value: 2
+
+rusty_sword:
+  name: {ru: ржавый меч, en: rusty sword}
+  aliases: [меч, sword, клинок, ржавый]
+  description:
+    ru: Старый клинок наёмника. Ещё режет.
+    en: An old mercenary's blade. It still cuts.
+  type: weapon
+  slot: weapon
+  damage: 1d6+2
+  hit: 2
+  weight: 3
+  value: 8
+
+pitchfork:
+  name: {ru: вилы, en: pitchfork}
+  aliases: [вилы, pitchfork, вила]
+  description:
+    ru: Крестьянские вилы. Ими можно отжать решётку — или драться.
+    en: A farmer's pitchfork. Good for a grate — or a fight.
+  type: weapon
+  slot: weapon
+  damage: 1d6
+  weight: 4
+  value: 3
+
+iron_key:
+  name: {ru: железный ключ, en: iron key}
+  aliases: [ключ, key, железный]
+  description:
+    ru: Тяжёлый ключ от северных дверей зала.
+    en: A heavy key to the hall's north doors.
+  type: key
+  weight: 0
+  value: 0
+
+armory_key:
+  name: {ru: ключ оружейной, en: armory key}
+  aliases: [оружейный, armory]
+  description:
+    ru: Маленький ключ с клеймом гарнизона.
+    en: A small key stamped with the garrison mark.
+  type: key
+  weight: 0
+
+signet:
+  name: {ru: перстень капитана, en: captain's signet}
+  aliases: [перстень, печать, signet, кольцо]
+  description:
+    ru: Печать капитана гарнизона. Священнику такое ещё что-то значит.
+    en: The garrison captain's seal. It still means something to a priest.
+  type: quest
+  weight: 0
+
+holy_water:
+  name: {ru: святая вода, en: holy water}
+  aliases: [вода, water, святая, чаша]
+  description:
+    ru: Вода из чаши часовни. Жжёт нечисть. В бою с демоном — самое то.
+    en: Water from the chapel font. It burns the unclean. Best used on a demon.
+  type: consumable
+  weight: 1
+  value: 20
+  use:
+    consume: false
+    text:
+      ru: Ты чувствуешь холод чаши. Против живых это просто вода. Против тени — оружие.
+      en: The font-water is cold. Against the living it is only water. Against a shadow — a weapon.
+
+mushroom:
+  name: {ru: пещерный гриб, en: cave mushroom}
+  aliases: [гриб, mushroom, грибы]
+  description:
+    ru: Светящаяся шляпка. Алхимики кладут такие в отвары.
+    en: A faintly glowing cap. Alchemists stew these.
+  type: misc
+  weight: 0
+  value: 2
+
+herbs:
+  name: {ru: травы, en: herbs}
+  aliases: [травы, трава, herbs]
+  description:
+    ru: Сухие стебли с кухни. Горькие, но целебные.
+    en: Dry kitchen stems. Bitter, but healing.
+  type: misc
+  weight: 0
+  value: 2
+
+flask:
+  name: {ru: колба, en: flask}
+  aliases: [колба, flask, бутыль, пузырёк, пузырек]
+  description:
+    ru: Пустая аптечная колба.
+    en: An empty apothecary flask.
+  type: misc
+  weight: 1
+  value: 1
+
+bread:
+  name: {ru: хлеб, en: bread}
+  aliases: [хлеб, bread]
+  description:
+    ru: Чёрствый, но ещё еда.
+    en: Stale, but still food.
+  type: consumable
+  heal: 4
+  weight: 1
+  value: 1
+  use:
+    consume: true
+    effects:
+      - heal: 4
+    text:
+      ru: Ты ешь хлеб. Немного легче.
+      en: You eat the bread. A little better.
+
+health_potion:
+  name: {ru: зелье лечения, en: health potion}
+  aliases: [зелье, potion, лечение]
+  description:
+    ru: Мутная жидкость цвета ржавчины. Закрывает раны.
+    en: A rusty, cloudy liquid. It closes wounds.
+  type: consumable
+  heal: 12
+  weight: 1
+  value: 12
+  use:
+    consume: true
+    effects:
+      - heal: 12
+    text:
+      ru: Ты выпиваешь зелье. Раны затягиваются.
+      en: You drink the potion. The wounds knit.
+
+alchemist_notes:
+  name: {ru: записки алхимика, en: alchemist's notes}
+  aliases: [записки, notes, рецепт]
+  description:
+    ru: Каракули про отвар из трав, гриба и колбы.
+    en: A scribble about a draught of herbs, mushroom and a flask.
+  type: book
+  text:
+    ru: |
+      «Если смешать травы кухни, гриб погреба и влить в колбу —
+      получится грубое зелье. Не для двора. Для тех, кто ещё дышит.»
+    en: |
+      "Mix kitchen herbs, a cellar mushroom, pour into a flask —
+      a crude potion. Not for court. For those still breathing."
+  on_read:
+    - set_flag: know_recipe
+    - journal:
+        ru: "Зелье: травы + гриб + колба. Варить на кухне."
+        en: "Potion: herbs + mushroom + flask. Brew in the kitchen."
+
+captain_journal:
+  name: {ru: журнал капитана, en: captain's journal}
+  aliases: [журнал, journal, дневник]
+  description:
+    ru: Потрёпанный журнал. Последние страницы писаны дрожащей рукой.
+    en: A battered journal. The last pages shake.
+  type: book
+  text:
+    ru: |
+      «Оно вышло из крипты. Имя — Варгос. Святая вода из часовни жжёт его.
+      Узник в погребе клялся, что знает, как произнести имя вслух.
+      Ключ оружейной — в ящике. Если читаешь это — не спускайся без света и веры.»
+    en: |
+      "It came from the crypt. The name is Vargos. Holy water from the chapel burns it.
+      The prisoner in the cellar swore he knew how to speak the name aloud.
+      Armory key is in the drawer. If you read this — do not go down without light and faith."
+  on_read:
+    - set_flag: know_crypt
+    - reveal_exit:
+        location: great_hall
+        dir: down
+    - journal:
+        ru: Демона зовут Варгос. Крипта под залом. Святая вода ранит его.
+        en: The demon is named Vargos. Crypt under the hall. Holy water wounds it.
+
+steel_sword:
+  name: {ru: стальной меч, en: steel sword}
+  aliases: [стальной, steel]
+  description:
+    ru: Гарнизонный клинок. Держит кромку.
+    en: A garrison blade. It holds an edge.
+  type: weapon
+  slot: weapon
+  damage: 1d8+2
+  hit: 3
+  weight: 3
+  value: 25
+
+leather_armor:
+  name: {ru: кожаный доспех, en: leather armor}
+  aliases: [доспех, броня, armor, кожа, jerkin]
+  description:
+    ru: Промасленная кожа. Не от демона, но от когтей — да.
+    en: Oiled leather. Not against a demon — against claws, yes.
+  type: armor
+  slot: armor
+  ac: 2
+  weight: 5
+  value: 20
+
+shield:
+  name: {ru: щит, en: shield}
+  aliases: [щит, shield]
+  description:
+    ru: Круглый щит с потёртым гербом.
+    en: A round shield with a worn crest.
+  type: shield
+  slot: shield
+  ac: 1
+  weight: 4
+  value: 10
+
+rat_tooth:
+  name: {ru: крысиный зуб, en: rat tooth}
+  aliases: [зуб, tooth]
+  description:
+    ru: Желтый зуб. На память — или на продажу.
+    en: A yellow tooth. A souvenir — or something to sell.
+  type: misc
+  weight: 0
+  value: 1

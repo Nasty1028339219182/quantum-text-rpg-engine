@@ -1,0 +1,9 @@
+# once_event:
+#   once: true
+#   trigger: enter
+#   when:
+#     enter: start_room
+#     not_flag: seen
+#   effects:
+#     - set_flag: seen
+#     - message: {ru: Что-то случилось., en: Something happened.}

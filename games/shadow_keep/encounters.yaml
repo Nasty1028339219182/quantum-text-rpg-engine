@@ -1,0 +1,77 @@
+giant_rat:
+  name: {ru: Гигантская крыса, en: Giant rat}
+  hp: 6
+  attack: 1d3
+  defense: 0
+  xp: 8
+  loot:
+    - {item: rat_tooth, chance: 40}
+  phrases:
+    appear:
+      ru: Из-за бочек выскакивает крыса размером с пса.
+      en: A dog-sized rat bursts from behind the barrels.
+    hit:
+      ru: Крыса вцепляется зубами.
+      en: The rat locks its teeth in.
+    miss:
+      ru: Крыса промахивается и скребёт камень.
+      en: The rat misses and scrapes stone.
+
+cellar_rats:
+  name: {ru: Крысы погреба, en: Cellar rats}
+  appear:
+    ru: Скрежет. Из тьмы на тебя идут крысы.
+    en: A scrape. Rats come at you out of the dark.
+  enemies: [giant_rat]
+  xp: 6
+  flee_dc: 10
+  on_win:
+    - set_flag: rats_cleared
+    - message:
+        ru: Скрежет стихает. Можно обыскать погреб.
+        en: The scraping stops. The cellar can be searched.
+
+skeleton:
+  name: {ru: Костяной страж, en: Bone guardian}
+  hp: 10
+  attack: 1d4
+  defense: 1
+  xp: 16
+  appear:
+    ru: Доспех поднимается. В щелях шлема — пустота.
+    en: The armour stands up. There is nothing in the visor.
+  phrases:
+    hit:
+      ru: Костяная рука бьёт щитом.
+      en: A bone arm slams with a shield.
+    miss:
+      ru: Клинок свистит мимо.
+      en: The blade whistles past.
+  flee_dc: 14
+  on_win:
+    - set_flag: skeleton_down
+    - message:
+        ru: Кости осыпаются. Проход на север свободен.
+        en: The bones spill. The north passage is open.
+
+vargos:
+  name: {ru: Варгос, en: Vargos}
+  hp: 16
+  attack: 1d6
+  defense: 2
+  xp: 40
+  appear:
+    ru: Дым собирается в рост человека. Уголь в глазницах вспыхивает.
+    en: Smoke gathers to a man's height. Coals flare in the sockets.
+  phrases:
+    hit:
+      ru: Жар бьёт в грудь.
+      en: Heat slams into your chest.
+    miss:
+      ru: Дым рвётся мимо.
+      en: The smoke tears past you.
+  flee_dc: 16
+  on_win:
+    - set_flag: demon_slain
+    - complete_quest: investigate
+    - add_xp: 20

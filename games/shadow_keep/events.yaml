@@ -1,0 +1,12 @@
+after_rats:
+  id: after_rats
+  once: true
+  trigger: turn
+  when:
+    flag: rats_cleared
+    not_flag: after_rats_note
+  effects:
+    - set_flag: after_rats_note
+    - journal:
+        ru: Погреб затих. Решётка ведёт в темницу.
+        en: The cellar went quiet. The grate leads to a cell.

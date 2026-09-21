@@ -1,0 +1,82 @@
+id: shadow_keep
+title:
+  ru: Тень Крепости
+  en: Shadow Keep
+author: Quantum
+version: "1.0.0"
+language: ru
+languages: [ru, en]
+start:
+  location: courtyard
+intro:
+  ru: |
+    Ночь. Дождь стучит по камню. Перед тобой — врата крепости, из которой
+    неделю не выходил ни один гонец. Тебя наняли за горсть серебра и обещание
+    не задавать лишних вопросов.
+
+    Факел в руке. Ржавый меч на поясе. Дальше — тьма.
+  en: |
+    Night. Rain on stone. Before you stand the gates of a keep that has sent
+    no messenger for a week. You were hired for a handful of silver and a
+    promise not to ask questions.
+
+    A torch in your hand. A rusty sword at your belt. Beyond — darkness.
+win:
+  when:
+    any:
+      - flag: demon_slain
+      - flag: dark_pact
+  text:
+    ru: |
+      Варгос рассыпается в пепел. Крепость выдыхает — впервые за много ночей.
+      На рассвете ты выйдешь во двор, и дождь смоет копоть с лат.
+
+      Тень снята.
+    en: |
+      Vargos crumbles to ash. The keep exhales for the first time in many nights.
+      At dawn you will walk into the courtyard, and the rain will wash the soot
+      from your mail.
+
+      The shadow is lifted.
+  pact_text:
+    ru: |
+      Ты выходишь во двор уже не совсем человеком. Крепость молчит — и слушается.
+      Это тоже победа. Просто не твоя.
+    en: |
+      You walk into the courtyard no longer quite a person. The keep is silent —
+      and obedient. This too is a victory. Just not yours.
+lose:
+  text:
+    ru: Камень принимает ещё одно тело. Крепость молчит.
+    en: The stone takes another body. The keep is silent.
+player:
+  name_prompt: true
+  name_prompt_text:
+    ru: Как тебя зовут?
+    en: What is your name?
+  name:
+    ru: Наёмник
+    en: Mercenary
+  stats:
+    str: 13
+    dex: 12
+    int: 10
+    con: 14
+    cha: 10
+    per: 12
+  hp: 32
+  max_hp: 32
+  mp: 6
+  max_mp: 6
+  gold: 18
+  inventory: [torch, rusty_sword]
+  equipment:
+    weapon: rusty_sword
+  skills:
+    perception: 1
+    persuasion: 0
+    lockpick: 0
+    athletics: 1
+settings:
+  inventory_limit: 24
+  weight_limit: 40

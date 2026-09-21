@@ -1,0 +1,19 @@
+# Paste into dialogues.yaml. Use the same id in npcs.yaml as `dialogue:`.
+
+steward:
+  start: greeting
+  nodes:
+    greeting:
+      text: {ru: Нужна помощь?, en: Need help?}
+      choices:
+        - text: {ru: Да. Что случилось?, en: Yes. What happened?}
+          goto: quest
+          effects:
+            - start_quest: missing_key
+        - text: {ru: Уйти., en: Leave.}
+          end: true
+    quest:
+      text: {ru: Ключ пропал в конюшне., en: The key went missing in the stables.}
+      choices:
+        - text: {ru: Я найду., en: I'll find it.}
+          end: true

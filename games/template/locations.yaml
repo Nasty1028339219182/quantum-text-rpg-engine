@@ -1,0 +1,28 @@
+# Every location is an ID + name + description + exits.
+# Exit value can be a room id, or a mapping with to / locked / key / hidden / trap / when.
+
+start_room:
+  name: {ru: Комната, en: Room}
+  description:
+    ru: Пустая комната. Выход на север.
+    en: An empty room. The exit is north.
+  exits:
+    north: other_room
+  items: []
+  npcs: []
+
+other_room:
+  name: {ru: Другая комната, en: Other room}
+  description:
+    ru: Здесь можно поставить свой финал.
+    en: You can put your ending here.
+  exits:
+    south: start_room
+  on_enter:
+    - when:
+        not_flag: game_won
+      effects:
+        - set_flag: game_won
+        - message:
+            ru: Замени этот триггер на свой квест.
+            en: Replace this trigger with your own quest.

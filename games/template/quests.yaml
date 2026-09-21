@@ -1,0 +1,7 @@
+# quest_id:
+#   name: {ru: Название, en: Title}
+#   description: {ru: ..., en: ...}
+#   start_text: {ru: ..., en: ...}
+#   done_text: {ru: ..., en: ...}
+#   reward:
+#     - give_gold: 10

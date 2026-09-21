@@ -1,0 +1,28 @@
+# Copy this folder:  python -m quantum_rpg new my_game
+# Then replace the example values. IDs stay in English; player-facing text can be ru/en.
+
+id: my_game
+title:
+  ru: Моя игра
+  en: My Game
+author: You
+version: "0.1.0"
+language: ru
+start:
+  location: start_room
+intro:
+  ru: Вставь свой пролог сюда.
+  en: Put your prologue here.
+win:
+  flags: [game_won]
+  text:
+    ru: Ты победил.
+    en: You won.
+player:
+  name_prompt: true
+  stats: {str: 10, dex: 10, int: 10, con: 10, cha: 10, per: 10}
+  hp: 20
+  max_hp: 20
+  gold: 10
+  inventory: []
+  equipment: {}

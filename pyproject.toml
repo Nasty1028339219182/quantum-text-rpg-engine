@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum-text-rpg-engine"
+version = "1.0.0"
+description = "Data-driven engine for fully text RPGs. Author games in YAML, optional Python hooks. No graphics."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [{name = "Quantum Text RPG Engine contributors"}]
+keywords = ["rpg", "text-adventure", "yaml", "engine", "interactive-fiction"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment :: Role-Playing",
+]
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+quantum-rpg = "quantum_rpg.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Nasty1028339219182/quantum-text-rpg-engine"
+
+[tool.setuptools.packages.find]
+include = ["quantum_rpg*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

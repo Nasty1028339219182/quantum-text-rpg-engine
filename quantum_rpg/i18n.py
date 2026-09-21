@@ -1,0 +1,222 @@
+"""Built-in UI strings (not game content). Game text lives in YAML."""
+
+from __future__ import annotations
+
+STRINGS: dict[str, dict[str, str]] = {
+    "prompt": {"ru": "> ", "en": "> "},
+    "hp": {"ru": "ОЗ", "en": "HP"},
+    "mp": {"ru": "ОМ", "en": "MP"},
+    "gold": {"ru": "Золото", "en": "Gold"},
+    "xp": {"ru": "Опыт", "en": "XP"},
+    "level": {"ru": "Уровень", "en": "Level"},
+    "exits": {"ru": "Выходы", "en": "Exits"},
+    "items_here": {"ru": "Предметы", "en": "Items"},
+    "people_here": {"ru": "Здесь", "en": "Here"},
+    "containers": {"ru": "Ёмкости", "en": "Containers"},
+    "locked": {"ru": "заперто", "en": "locked"},
+    "hidden": {"ru": "скрыто", "en": "hidden"},
+    "nothing": {"ru": "Ничего особенного.", "en": "Nothing special."},
+    "unknown": {
+        "ru": "Не понял. Набери «помощь» для списка команд.",
+        "en": "I don't understand. Type 'help' for commands.",
+    },
+    "gone": {"ru": "Этого здесь нет.", "en": "That isn't here."},
+    "no_item": {"ru": "У тебя нет такого предмета.", "en": "You don't have that."},
+    "cant_take": {"ru": "Это нельзя взять.", "en": "You can't take that."},
+    "taken": {"ru": "Ты берёшь: {name}.", "en": "You take the {name}."},
+    "dropped": {"ru": "Ты кладёшь: {name}.", "en": "You drop the {name}."},
+    "already_have": {"ru": "У тебя это уже есть.", "en": "You already have that."},
+    "inv_full": {"ru": "Инвентарь полон.", "en": "Inventory is full."},
+    "too_heavy": {"ru": "Слишком тяжело.", "en": "That's too heavy."},
+    "inventory": {"ru": "Инвентарь", "en": "Inventory"},
+    "empty_inv": {"ru": "Пусто.", "en": "Empty."},
+    "equipped": {"ru": "надето", "en": "equipped"},
+    "equip_ok": {"ru": "Ты надеваешь: {name}.", "en": "You equip the {name}."},
+    "unequip_ok": {"ru": "Ты снимаешь: {name}.", "en": "You unequip the {name}."},
+    "cant_equip": {"ru": "Это нельзя надеть.", "en": "You can't equip that."},
+    "used": {"ru": "Ты используешь: {name}.", "en": "You use the {name}."},
+    "cant_use": {"ru": "Не получается использовать это так.", "en": "You can't use that that way."},
+    "no_exit": {"ru": "Туда не пройти.", "en": "You can't go that way."},
+    "need_key": {"ru": "Заперто. Нужен ключ.", "en": "Locked. You need a key."},
+    "unlocked": {"ru": "Открыто.", "en": "Unlocked."},
+    "dark": {
+        "ru": "Здесь слишком темно. Нужен источник света.",
+        "en": "It's too dark. You need a light source.",
+    },
+    "you_are": {"ru": "Ты", "en": "You"},
+    "stats": {"ru": "Характеристики", "en": "Stats"},
+    "quests": {"ru": "Задания", "en": "Quests"},
+    "no_quests": {"ru": "Пока нет заданий.", "en": "No quests yet."},
+    "quest_active": {"ru": "активно", "en": "active"},
+    "quest_done": {"ru": "выполнено", "en": "done"},
+    "quest_failed": {"ru": "провалено", "en": "failed"},
+    "saved": {"ru": "Игра сохранена: {slot}", "en": "Game saved: {slot}"},
+    "loaded": {"ru": "Игра загружена: {slot}", "en": "Game loaded: {slot}"},
+    "no_save": {"ru": "Сохранение не найдено.", "en": "Save not found."},
+    "bye": {"ru": "До встречи.", "en": "Goodbye."},
+    "dead": {"ru": "Ты погибаешь.", "en": "You die."},
+    "win": {"ru": "*** ПОБЕДА ***", "en": "*** VICTORY ***"},
+    "lose": {"ru": "*** КОНЕЦ ***", "en": "*** GAME OVER ***"},
+    "combat": {"ru": "БОЙ", "en": "COMBAT"},
+    "attack": {"ru": "Атаковать", "en": "Attack"},
+    "defend": {"ru": "Защищаться", "en": "Defend"},
+    "flee": {"ru": "Бежать", "en": "Flee"},
+    "use_item": {"ru": "Предмет", "en": "Item"},
+    "hit": {"ru": "{who} наносит {dmg} урона {target}.", "en": "{who} hits {target} for {dmg}."},
+    "miss": {"ru": "{who} промахивается.", "en": "{who} misses."},
+    "enemy_down": {"ru": "{name} падает.", "en": "{name} falls."},
+    "you_hit": {"ru": "Ты наносишь {dmg} урона ({name}).", "en": "You deal {dmg} damage ({name})."},
+    "you_miss": {"ru": "Промах.", "en": "Miss."},
+    "got_xp": {"ru": "Опыт +{xp}.", "en": "+{xp} XP."},
+    "got_loot": {"ru": "Добыча: {name}.", "en": "Loot: {name}."},
+    "fled": {"ru": "Ты сбегаешь.", "en": "You flee."},
+    "cant_flee": {"ru": "Не удалось сбежать.", "en": "You fail to flee."},
+    "defending": {"ru": "Ты принимаешь защитную стойку.", "en": "You take a defensive stance."},
+    "no_target": {"ru": "Некого атаковать.", "en": "No one to attack."},
+    "already_dead": {"ru": "Уже мертво.", "en": "Already dead."},
+    "talk_nobody": {"ru": "Здесь не с кем говорить.", "en": "No one to talk to."},
+    "who": {"ru": "С кем? Уточни имя.", "en": "Who? Specify a name."},
+    "what": {"ru": "Что именно?", "en": "What exactly?"},
+    "search_fail": {"ru": "Ты ничего не находишь.", "en": "You find nothing."},
+    "search_ok": {"ru": "Ты обыскиваешь место.", "en": "You search the area."},
+    "skill_ok": {"ru": "Успех ({roll} против {dc}).", "en": "Success ({roll} vs {dc})."},
+    "skill_fail": {"ru": "Неудача ({roll} против {dc}).", "en": "Failure ({roll} vs {dc})."},
+    "healed": {"ru": "Восстановлено {n} ОЗ.", "en": "Healed {n} HP."},
+    "damaged": {"ru": "Потеряно {n} ОЗ.", "en": "Lost {n} HP."},
+    "gold_gain": {"ru": "Золото +{n}.", "en": "+{n} gold."},
+    "gold_lose": {"ru": "Золото −{n}.", "en": "−{n} gold."},
+    "not_enough_gold": {"ru": "Не хватает золота.", "en": "Not enough gold."},
+    "bought": {"ru": "Куплено: {name} за {n}.", "en": "Bought {name} for {n}."},
+    "sold": {"ru": "Продано: {name} за {n}.", "en": "Sold {name} for {n}."},
+    "shop": {"ru": "Лавка", "en": "Shop"},
+    "shop_empty": {"ru": "Нечего предложить.", "en": "Nothing for sale."},
+    "shop_hint": {
+        "ru": "Команды: купить <предмет>, продать <предмет>, уйти.",
+        "en": "Commands: buy <item>, sell <item>, leave.",
+    },
+    "craft_ok": {"ru": "Создано: {name}.", "en": "Crafted: {name}."},
+    "craft_fail": {"ru": "Не хватает ингредиентов.", "en": "Missing ingredients."},
+    "no_recipe": {"ru": "Такого рецепта нет.", "en": "No such recipe."},
+    "opened": {"ru": "Открыто: {name}.", "en": "Opened: {name}."},
+    "need_lockpick": {"ru": "Не открывается.", "en": "It won't open."},
+    "rest_ok": {"ru": "Ты отдыхаешь. Силы возвращаются.", "en": "You rest. Strength returns."},
+    "cant_rest": {"ru": "Здесь нельзя отдыхать.", "en": "You can't rest here."},
+    "journal": {"ru": "Журнал", "en": "Journal"},
+    "map": {"ru": "Известные места", "en": "Known places"},
+    "lang_set": {"ru": "Язык: русский.", "en": "Language: English."},
+    "help_title": {"ru": "Команды", "en": "Commands"},
+    "help_body": {
+        "ru": (
+            "осмотреться, идти <направление>, взять <предмет>, положить <предмет>,\n"
+            "осмотреть <что>, инвентарь, надеть / снять <предмет>, использовать <предмет>,\n"
+            "говорить <кто>, атаковать <кто>, искать, открыть <что>, читать <что>,\n"
+            "купить / продать, создать <рецепт>, дать <предмет> <кому>,\n"
+            "характеристики, задания, журнал, карта, отдохнуть, ждать,\n"
+            "сохранить [слот], загрузить [слот], язык ru|en, помощь, выход"
+        ),
+        "en": (
+            "look, go <dir>, take <item>, drop <item>, examine <thing>,\n"
+            "inventory, equip / unequip <item>, use <item>, talk <who>,\n"
+            "attack <who>, search, open <thing>, read <thing>,\n"
+            "buy / sell, craft <recipe>, give <item> <who>,\n"
+            "stats, quests, journal, map, rest, wait,\n"
+            "save [slot], load [slot], language ru|en, help, quit"
+        ),
+    },
+    "dirs": {"ru": "направления: север юг восток запад вверх вниз", "en": "dirs: north south east west up down"},
+    "status": {"ru": "Эффекты", "en": "Effects"},
+    "weight": {"ru": "Вес", "en": "Weight"},
+    "ac": {"ru": "Защита", "en": "AC"},
+    "weapon": {"ru": "Оружие", "en": "Weapon"},
+    "armor": {"ru": "Броня", "en": "Armor"},
+    "level_up": {"ru": "Уровень повышен! ({level})", "en": "Level up! ({level})"},
+    "gave": {"ru": "Ты отдаёшь {name}.", "en": "You give the {name}."},
+    "wait": {"ru": "Время идёт.", "en": "Time passes."},
+    "read": {"ru": "{name}:\n{text}", "en": "{name}:\n{text}"},
+    "no_read": {"ru": "Тут нечего читать.", "en": "Nothing to read."},
+    "combined": {"ru": "Ты соединяешь предметы. Получается: {name}.", "en": "You combine them into: {name}."},
+    "cant_combine": {"ru": "Эти предметы не соединяются.", "en": "Those don't combine."},
+    "which_item": {"ru": "Какой предмет? {list}", "en": "Which item? {list}"},
+    "combat_menu": {
+        "ru": "1 атаковать  2 предмет  3 защищаться  4 бежать",
+        "en": "1 attack  2 item  3 defend  4 flee",
+    },
+    "pick_enemy": {"ru": "Кого? {list}", "en": "Whom? {list}"},
+    "poison_tick": {"ru": "Яд снимает {n} ОЗ.", "en": "Poison deals {n} HP."},
+    "effect_end": {"ru": "Эффект закончился: {name}.", "en": "Effect ended: {name}."},
+    "say_what": {"ru": "Что сказать?", "en": "Say what?"},
+    "nothing_happens": {"ru": "Ничего не происходит.", "en": "Nothing happens."},
+    "ambiguous": {"ru": "Уточни: {list}", "en": "Be more specific: {list}"},
+    "visited": {"ru": "(было)", "en": "(visited)"},
+    "light_needed": {"ru": "Нужен свет.", "en": "You need light."},
+    "broke_lock": {"ru": "Ты взламываешь запор.", "en": "You break the lock."},
+    "left": {"ru": "Ты уходишь.", "en": "You leave."},
+}
+
+DIRS = {
+    "north": {
+        "id": "north",
+        "ru": "север",
+        "en": "north",
+        "aliases": ["n", "с", "север", "north", "на север"],
+    },
+    "south": {
+        "id": "south",
+        "ru": "юг",
+        "en": "south",
+        "aliases": ["s", "ю", "юг", "south", "на юг"],
+    },
+    "east": {
+        "id": "east",
+        "ru": "восток",
+        "en": "east",
+        "aliases": ["e", "в", "восток", "east", "на восток"],
+    },
+    "west": {
+        "id": "west",
+        "ru": "запад",
+        "en": "west",
+        "aliases": ["w", "з", "запад", "west", "на запад"],
+    },
+    "up": {
+        "id": "up",
+        "ru": "вверх",
+        "en": "up",
+        "aliases": ["u", "вверх", "наверх", "up", "вверх"],
+    },
+    "down": {
+        "id": "down",
+        "ru": "вниз",
+        "en": "down",
+        "aliases": ["d", "вниз", "down", "вниз"],
+    },
+}
+
+
+def t(lang: str, key: str, **kwargs) -> str:
+    block = STRINGS.get(key, {})
+    text = block.get(lang) or block.get("en") or block.get("ru") or key
+    if kwargs:
+        try:
+            return text.format(**kwargs)
+        except (KeyError, IndexError, ValueError):
+            return text
+    return text
+
+
+def dir_id(token: str) -> str | None:
+    tok = (token or "").strip().lower()
+    if not tok:
+        return None
+    for did, info in DIRS.items():
+        aliases = [did, info["ru"], info["en"], *info.get("aliases", [])]
+        if tok in {a.lower() for a in aliases}:
+            return did
+    return None
+
+
+def dir_name(did: str, lang: str) -> str:
+    info = DIRS.get(did)
+    if not info:
+        return did
+    return info.get(lang) or info.get("en") or did

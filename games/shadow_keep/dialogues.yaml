@@ -1,0 +1,198 @@
+grom:
+  start: greeting
+  nodes:
+    greeting:
+      text:
+        ru: Стой. Если ты мародёр — уходи. Если наёмный меч — говори, зачем пришёл.
+        en: Halt. If you are a looter, leave. If you are a hired blade, say why you came.
+      choices:
+        - text: {ru: "Меня наняли узнать, что случилось.", en: "I was hired to find out what happened."}
+          goto: job
+        - text: {ru: "Что здесь произошло?", en: "What happened here?"}
+          goto: lore
+        - text: {ru: "Есть что продать?", en: "Anything for sale?"}
+          shop: true
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    job:
+      text:
+        ru: |
+          Тогда слушай. Капитан заперся в башне. Люди ушли в крипту и не вернулись.
+          Ключ от зала где-то на дворе или в конюшне — я уже не хожу.
+          Найди, что сидит внизу, и сожги это. Я заплачу тем, что осталось в лавке.
+        en: |
+          Then listen. The captain locked himself in the tower. Men went into the crypt
+          and did not return. The hall key is somewhere in the yard or stables — I don't walk.
+          Find what sits below, and burn it. I will pay with whatever the stall has left.
+      effects:
+        - start_quest: investigate
+        - set_flag: grom_job
+      choices:
+        - text: {ru: "Где крипта?", en: "Where is the crypt?"}
+          goto: crypt_hint
+        - text: {ru: "Покажи лавку.", en: "Show me the stall."}
+          shop: true
+        - text: {ru: "Я пошёл.", en: "I'm going."}
+          end: true
+    lore:
+      text:
+        ru: Тень вышла из-под алтаря. Сначала крысы, потом люди. Часовня ещё держит свет. Не плюй на воду в чаше.
+        en: A shadow came from under the altar. First rats, then men. The chapel still holds a light. Do not spit in the font.
+      choices:
+        - text: {ru: "Поручение.", en: "The job."}
+          goto: job
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    crypt_hint:
+      text:
+        ru: Под залом. Гобелен. Или журнал капитана — если доживёшь до башни.
+        en: Under the hall. The tapestry. Or the captain's journal — if you live to see the tower.
+      choices:
+        - text: {ru: "Понял.", en: "Understood."}
+          end: true
+
+priest_ghost:
+  start: greeting
+  nodes:
+    greeting:
+      text:
+        ru: Живой… давно здесь не стоял живой. Вода в чаше ещё святая. Возьми. Не лей всуе.
+        en: Living… it has been long since a living one stood here. The font is still holy. Take it. Do not spill it idly.
+      choices:
+        - text: {ru: "Кто ты?", en: "Who are you?"}
+          goto: who
+        - text: {ru: "Благослови меня.", en: "Bless me."}
+          goto: bless
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    who:
+      text:
+        ru: Я был пастырем этой крепости. Тело лежит в крипте. Имя врага я выцарапал на алтаре, но произнести его должен живой.
+        en: I was shepherd of this keep. My body lies in the crypt. I carved the enemy's name on the altar, but a living voice must speak it.
+      choices:
+        - text: {ru: "Благослови меня.", en: "Bless me."}
+          goto: bless
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    bless:
+      text:
+        ru: Перстень капитана — знак стада. Покажи, если есть. Иначе дам только слово.
+        en: The captain's signet is the mark of the flock. Show it, if you have it. Otherwise I can give only a word.
+      choices:
+        - text: {ru: "Вот перстень.", en: "Here is the signet."}
+          when: {has_item: signet}
+          effects:
+            - add_status:
+                id: bless
+                name: {ru: "благословение", en: "blessing"}
+                turns: 20
+                attack: 2
+            - message:
+                ru: Холод проходит по клинку. Удар станет вернее.
+                en: Cold runs along the blade. Your strike will sit truer.
+          end: true
+        - text: {ru: "У меня ничего нет.", en: "I have nothing."}
+          effects:
+            - message:
+                ru: Тогда иди с водой. Этого хватит, если не дрогнешь.
+                en: Then go with the water. It will be enough, if you do not flinch.
+          end: true
+
+marek:
+  start: greeting
+  nodes:
+    greeting:
+      text:
+        ru: Не бей. Я не с ними. Я считал дни, пока камень не стал громче людей.
+        en: Don't strike. I'm not with them. I counted days until the stone grew louder than people.
+      choices:
+        - text: {ru: "Кто ты?", en: "Who are you?"}
+          goto: who
+        - text: {ru: "Как убить то, что внизу?", en: "How do I kill what is below?"}
+          goto: name
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    who:
+      text:
+        ru: Марек. Писарь. Спрятал правду в имени. Они заперли меня, чтобы я не сказал его вслух.
+        en: Marek. A scribe. I hid the truth in a name. They locked me so I would not say it aloud.
+      choices:
+        - text: {ru: "Скажи имя.", en: "Say the name."}
+          goto: name
+        - text: {ru: "Уйти.", en: "Leave."}
+          end: true
+    name:
+      text:
+        ru: |
+          Варгос. Произнеси, когда увидишь его — не раньше. Имя делает его плотью,
+          святая вода — раной. Меч добивает. Если предложит сделку — не бери.
+          Тени не держат клятв.
+        en: |
+          Vargos. Speak it when you see him — not before. The name makes him flesh,
+          holy water makes the wound, the sword finishes it. If he offers a bargain, refuse.
+          Shadows do not keep oaths.
+      effects:
+        - set_flag: know_true_name
+        - start_quest: true_name
+        - complete_quest: true_name
+        - journal:
+            ru: Имя демона — Варгос. Произнести в святилище. Не заключать сделку.
+            en: The demon's name is Vargos. Speak it in the sanctum. Make no bargain.
+      choices:
+        - text: {ru: "Спасибо.", en: "Thank you."}
+          end: true
+
+vargos:
+  start: greeting
+  start_if:
+    - when: {flag: true_name_spoken}
+      node: named
+  nodes:
+    greeting:
+      text:
+        ru: Ещё один меч. Сложи его. Я дам тебе крепость, золото капитана и тишину. Или умри как остальные.
+        en: Another sword. Lay it down. I will give you the keep, the captain's gold, and quiet. Or die like the rest.
+      choices:
+        - text: {ru: "Атаковать.", en: "Attack."}
+          effects:
+            - start_combat: vargos
+          end: true
+        - text: {ru: "Слушаю сделку.", en: "I'll hear the bargain."}
+          skill: persuasion
+          dc: 14
+          success: pact
+          fail: mock
+        - text: {ru: "Я знаю твоё имя.", en: "I know your name."}
+          when: {flag: know_true_name}
+          goto: named
+        - text: {ru: "Отступить.", en: "Fall back."}
+          end: true
+    named:
+      text:
+        ru: Ты сказал имя. Плоть болит. Бей, пока я помню, что такое боль.
+        en: You spoke the name. Flesh hurts. Strike while I still remember pain.
+      effects:
+        - set_flag: true_name_spoken
+      choices:
+        - text: {ru: "Атаковать.", en: "Attack."}
+          effects:
+            - start_combat: vargos
+          end: true
+    pact:
+      text:
+        ru: Ты берёшь корону из дыма. Крепость твоя. Люди за стеной больше не твои.
+        en: You take a crown of smoke. The keep is yours. The people beyond the wall are no longer yours.
+      effects:
+        - set_flag: dark_pact
+        - game_over: win
+        - message:
+            ru: Ты выходишь во двор уже не совсем человеком. Это тоже конец.
+            en: You walk into the courtyard no longer quite a person. This, too, is an ending.
+      end: true
+    mock:
+      text:
+        ru: Слабый голос. Тогда — клинком.
+        en: A weak voice. Then — the blade.
+      effects:
+        - start_combat: vargos
+      end: true

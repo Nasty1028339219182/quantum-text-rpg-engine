@@ -1,0 +1,277 @@
+courtyard:
+  name: {ru: Двор крепости, en: Keep courtyard}
+  description:
+    ru: |
+      Мокрый камень, ржавые крюки для факелов, мёртвый фонтан. Северные двери
+      в большой зал закрыты. На востоке — конюшня. На западе — часовня.
+      Люк в погреб открыт, из него тянет холодом.
+    en: |
+      Wet stone, rusted torch-hooks, a dead fountain. The north doors into the
+      great hall are shut. East — the stables. West — a chapel. A cellar hatch
+      stands open, breathing cold.
+  exits:
+    north:
+      to: great_hall
+      locked: true
+      key: iron_key
+      locked_text:
+        ru: Тяжёлые двери заперты. Нужен железный ключ.
+        en: The heavy doors are locked. You need an iron key.
+    east: stables
+    west: chapel
+    down: cellar
+  npcs: [grom]
+  rest: true
+  on_first_enter:
+    - set_flag: entered_keep
+    - journal:
+        ru: Я вошёл во двор крепости. Страж ещё жив.
+        en: I entered the courtyard. The guard is still alive.
+
+stables:
+  name: {ru: Конюшня, en: Stables}
+  description:
+    ru: |
+      Стойла пусты. Сено свалено кучей, будто кто-то спешно искал. На стене
+      висят вилы. Пахнет мышами и старой кожей.
+    en: |
+      The stalls are empty. Hay is piled as if someone searched in a hurry.
+      A pitchfork hangs on the wall. It smells of mice and old leather.
+  exits:
+    west: courtyard
+  items: [pitchfork]
+  hidden_items: [iron_key]
+  search:
+    dc: 8
+    skill: perception
+    reveal: [iron_key]
+    text:
+      ru: Под сеном блеснёт железо — старый ключ от зала.
+      en: Iron glints under the hay — an old key to the hall.
+
+chapel:
+  name: {ru: Часовня, en: Chapel}
+  description:
+    ru: |
+      Потрескавшиеся скамьи, алтарь под серым полотном. В каменной чаше ещё
+      есть вода — она не застоялась. В воздухе холодно, как в колодце.
+    en: |
+      Cracked pews, an altar under a grey cloth. The stone font still holds
+      water that has not gone stale. The air is well-cold.
+  exits:
+    east: courtyard
+  items: [holy_water]
+  npcs: [priest_ghost]
+  rest: true
+  features:
+    altar:
+      name: {ru: алтарь, en: altar}
+      aliases: [алтарь, altar]
+      description:
+        ru: На алтаре выцарапано имя, которое лучше не произносить всуе.
+        en: A name is scratched into the altar. Better not say it idly.
+      on_examine:
+        - journal:
+            ru: На алтаре часовни выцарапано демоническое имя.
+            en: A demonic name is scratched into the chapel altar.
+
+cellar:
+  name: {ru: Погреб, en: Cellar}
+  description:
+    ru: |
+      Низкий свод, бочки, лужи. В восточной стене — решётка в темницу.
+      Слышен скрежет когтей.
+    en: |
+      A low vault, barrels, puddles. An iron grate in the east wall leads to
+      a cell. Something scrapes its claws.
+  dark: true
+  exits:
+    up: courtyard
+    east:
+      to: prison
+      when:
+        any:
+          - flag: grate_broken
+          - has_item: pitchfork
+          - stat_gte: {str: 14}
+      on_use:
+        - when:
+            not_flag: grate_broken
+          effects:
+            - set_flag: grate_broken
+            - message:
+                ru: Ты отжимаешь решётку. Прутья скрипят и поддаются.
+                en: You force the grate. The bars screech and give.
+      blocked_text:
+        ru: Решётка крепкая. Нужны вилы или грубая сила.
+        en: The grate is strong. You need a pitchfork or brute strength.
+  items: [mushroom, alchemist_notes]
+  on_enter:
+    - when:
+        not_flag: rats_cleared
+      start_combat: cellar_rats
+
+prison:
+  name: {ru: Темница, en: Cell}
+  description:
+    ru: |
+      Каменная клетка. На цепи сидит человек — тощий, но глаза живые.
+      На стене угольные чёрточки: кто-то считал дни и сбился.
+    en: |
+      A stone cage. A man sits in chains — thin, but his eyes are alive.
+      Charcoal marks on the wall: someone counted days and lost the count.
+  exits:
+    west: cellar
+  npcs: [marek]
+
+great_hall:
+  name: {ru: Большой зал, en: Great hall}
+  description:
+    ru: |
+      Длинный стол, опрокинутые кубки, гобелен на северной стене. Слева —
+      запах кухни. Справа — железная дверь оружейной. Прямо — лестница в башню.
+      Под гобеленом, если приглядеться, камни лежат неровно.
+    en: |
+      A long table, overturned cups, a tapestry on the north wall. Left — the
+      smell of a kitchen. Right — the armory's iron door. Ahead — tower stairs.
+      Under the tapestry the stones sit unevenly, if you look.
+  exits:
+    south: courtyard
+    west: kitchen
+    east:
+      to: armory
+      locked: true
+      key: armory_key
+      locked_text:
+        ru: Дверь оружейной заперта. Ключ, скорее всего, у капитана.
+        en: The armory door is locked. The captain likely had the key.
+    north: tower_stairs
+    up: tower_stairs
+    down:
+      to: crypt
+      hidden: true
+  features:
+    tapestry:
+      name: {ru: гобелен, en: tapestry}
+      aliases: [гобелен, tapestry, ковёр, ковер]
+      description:
+        ru: "На гобелене — святой, поражающий змея. Угол ткани отогнут: под ним люк."
+        en: "A saint spearing a serpent. A corner of cloth is lifted: a hatch beneath."
+      on_examine:
+        - reveal_exit: down
+        - journal:
+            ru: Под гобеленом в зале скрыт спуск в крипту.
+            en: A hatch under the hall tapestry leads to the crypt.
+  search:
+    dc: 10
+    skill: perception
+    reveal_exit: down
+    text:
+      ru: Ты отгибаешь гобелен. В полу — кольцо люка в крипту.
+      en: You lift the tapestry. A hatch-ring to the crypt sits in the floor.
+
+kitchen:
+  name: {ru: Кухня, en: Kitchen}
+  description:
+    ru: |
+      Холодный очаг, полка с банками, колодезное ведро. Кто-то бросил готовку
+      на середине: нож воткнут в стол, травы рассыпаны.
+    en: |
+      A cold hearth, a shelf of jars, a well-bucket. Someone stopped cooking
+      halfway: a knife in the table, herbs spilled.
+  exits:
+    east: great_hall
+  items: [herbs, flask, bread]
+  tags: [kitchen]
+  rest: true
+
+armory:
+  name: {ru: Оружейная, en: Armory}
+  description:
+    ru: |
+      Стойки, пустые крюки и то, что не успели разграбить: стальной меч и
+      кожаный доспех на манекене.
+    en: |
+      Racks, empty hooks, and what looters missed: a steel sword and a leather
+      jerkin on a dummy.
+  exits:
+    west: great_hall
+  items: [steel_sword, leather_armor, shield]
+
+tower_stairs:
+  name: {ru: Башенная лестница, en: Tower stairs}
+  description:
+    ru: |
+      Винтовая лестница. Камень крошится. В щелях свистит ветер.
+    en: |
+      A spiral stair. The stone crumbles. Wind hisses in the cracks.
+  exits:
+    south: great_hall
+    down: great_hall
+    up:
+      to: captain
+      trap:
+        skill: dex
+        dc: 11
+        damage: 1d4
+        once: true
+        text_success:
+          ru: Ты замечаешь трухлявую ступень и переступаешь её.
+          en: You spot a rotten step and step over it.
+        text_fail:
+          ru: Ступень ломается. Удар по колену, короткий вспых боли.
+          en: The step snaps. A jolt of pain through the knee.
+
+captain:
+  name: {ru: Каюта капитана, en: Captain's quarters}
+  description:
+    ru: |
+      Узкая комната. Кровать не застелена. На столе — журнал, ключ и перстень
+      с печатью гарнизона. На стене карта, отмеченная крестом внизу крепости.
+    en: |
+      A narrow room. The bed is unmade. On the desk: a journal, a key, and a
+      signet of the garrison. A map on the wall is marked with a cross under the keep.
+  exits:
+    down: tower_stairs
+  items: [captain_journal, armory_key, signet]
+
+crypt:
+  name: {ru: Крипта, en: Crypt}
+  description:
+    ru: |
+      Ниши с костями, запах сырой извести. Проход на север закрывает то,
+      что когда-то было человеком в доспехе.
+    en: |
+      Bone niches, the smell of wet lime. The north passage is blocked by
+      what used to be a man in armour.
+  exits:
+    up: great_hall
+    north:
+      to: sanctum
+      when:
+        defeated: skeleton
+      blocked_text:
+        ru: Скелет в доспехе не пропускает. Придётся драться.
+        en: The armoured skeleton will not yield. You have to fight.
+  on_enter:
+    - when:
+        not_flag: skeleton_down
+      start_combat: skeleton
+
+sanctum:
+  name: {ru: Святилище, en: Sanctum}
+  description:
+    ru: |
+      Круглая камера. Алтарь из чёрного камня. Воздух дрожит, как над жаровней.
+      Здесь живёт то, что убило крепость.
+    en: |
+      A round chamber. An altar of black stone. The air shimmers as over a brazier.
+      Here lives what killed the keep.
+  exits:
+    south: crypt
+  npcs: [vargos]
+  on_first_enter:
+    - set_flag: entered_sanctum
+    - journal:
+        ru: Я нашёл святилище под криптой. Там — он.
+        en: I found the sanctum under the crypt. It is there.

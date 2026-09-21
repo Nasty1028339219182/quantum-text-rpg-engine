@@ -1,0 +1,9 @@
+health_potion:
+  name: {ru: зелье лечения, en: health potion}
+  aliases: [зелье, potion, лечение]
+  ingredients: [herbs, mushroom, flask]
+  station: kitchen
+  result: health_potion
+  text:
+    ru: Ты кипятишь отвар на холодном очаге, как умеешь. Получается мутное зелье.
+    en: You boil a draught on the cold hearth as best you can. A cloudy potion comes of it.

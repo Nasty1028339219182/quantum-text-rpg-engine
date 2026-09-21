@@ -1,0 +1,26 @@
+investigate:
+  name: {ru: Что случилось с крепостью, en: What happened to the keep}
+  description:
+    ru: Найти источник тени под крепостью и уничтожить его.
+    en: Find the source of the shadow under the keep and destroy it.
+  start_text:
+    ru: Гром просит спуститься в крипту и покончить с тем, что вышло оттуда.
+    en: Grom asks you to go down into the crypt and end what came out of it.
+  done_text:
+    ru: Тень снята. Гром ещё может увидеть утро.
+    en: The shadow is lifted. Grom may yet see morning.
+  reward:
+    - give_gold: 25
+    - add_xp: 30
+
+true_name:
+  name: {ru: Истинное имя, en: True name}
+  description:
+    ru: Узнать имя демона и произнести его в святилище.
+    en: Learn the demon's name and speak it in the sanctum.
+  start_text:
+    ru: Марек шепчет имя. Его нельзя тратить всуе.
+    en: Marek whispers a name. It is not to be spent idly.
+  done_text:
+    ru: Имя у тебя. Осталось сказать его тому, кто его боится.
+    en: You have the name. Left is to say it to the one who fears it.

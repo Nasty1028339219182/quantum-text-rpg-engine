@@ -1,0 +1,6 @@
+# rat:
+#   name: {ru: Крыса, en: Rat}
+#   hp: 6
+#   attack: 1d4
+#   defense: 0
+#   xp: 8

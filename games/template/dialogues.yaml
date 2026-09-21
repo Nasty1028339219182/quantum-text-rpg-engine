@@ -1,0 +1,8 @@
+# npc_id:
+#   start: greeting
+#   nodes:
+#     greeting:
+#       text: {ru: Привет., en: Hello.}
+#       choices:
+#         - text: {ru: Уйти., en: Leave.}
+#           end: true

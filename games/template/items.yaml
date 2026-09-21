@@ -1,0 +1,8 @@
+# Types: weapon, armor, shield, accessory, consumable, key, book, quest, misc
+# Optional fields: aliases, damage, hit, ac, slot, light, heal, weight, value,
+#   takeable, use, text, combine, on_read
+
+# key_example:
+#   name: {ru: ключ, en: key}
+#   type: key
+#   aliases: [ключ, key]
