@@ -6,8 +6,9 @@ Player (no Python): install QuantumRPG.exe from the GitHub release.
 You (author):
   1. Install Python 3.10+
   2. pip install -r requirements.txt
-  3. packaging\play.bat          → window UI
-     python -m quantum_rpg play shadow_keep   → terminal
+  3. packaging\play.bat          → window: play + editor
+     python -m quantum_rpg editor shadow_keep
+
   4. python -m quantum_rpg new my_game
   5. Edit games\my_game\*.yaml   (see docs\AUTHORING.ru.md)
   6. python -m quantum_rpg validate my_game

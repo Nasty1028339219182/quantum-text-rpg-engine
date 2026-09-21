@@ -15,46 +15,9 @@ from .i18n import t
 from .loader import load_world
 from .paths import games_dir, list_games
 from .save import list_slots
+from .theme import C, Btn, font_ui, font_log
 from .ui import QueueIO
 from .util import loc
-
-C = {
-    "bg": "#121212",
-    "panel": "#1b1b1b",
-    "fg": "#e8e4d9",
-    "dim": "#8e8a82",
-    "accent": "#c4a35a",
-    "btn": "#2a2a2a",
-    "btn_hi": "#3a3a3a",
-    "line": "#2e2e2e",
-    "danger": "#b54a4a",
-    "ok": "#6a9e6d",
-}
-
-
-def _font_ui(size=10, bold=False):
-    return ("Segoe UI", size, "bold" if bold else "normal")
-
-
-def _font_log(size=10):
-    return ("Consolas", size)
-
-
-class _Btn(tk.Button):
-    def __init__(self, master, **kw):
-        kw.setdefault("bg", C["btn"])
-        kw.setdefault("fg", C["fg"])
-        kw.setdefault("activebackground", C["btn_hi"])
-        kw.setdefault("activeforeground", C["fg"])
-        kw.setdefault("relief", "flat")
-        kw.setdefault("bd", 0)
-        kw.setdefault("padx", 8)
-        kw.setdefault("pady", 4)
-        kw.setdefault("cursor", "hand2")
-        kw.setdefault("font", _font_ui(9))
-        kw.setdefault("anchor", "w")
-        kw.setdefault("highlightthickness", 0)
-        super().__init__(master, **kw)
 
 
 def launch_gui(language: str = "ru") -> None:
@@ -75,8 +38,8 @@ class Launcher:
         self.lang = language
         self.frame = tk.Frame(root, bg=C["bg"])
         self.frame.pack(fill="both", expand=True)
-        root.geometry("520x480")
-        root.minsize(440, 400)
+        root.geometry("560x540")
+        root.minsize(480, 440)
         self._build()
         self._refresh_games()
 
@@ -88,36 +51,40 @@ class Launcher:
         pad.pack(fill="both", expand=True, padx=28, pady=24)
         tk.Label(
             pad, text="QUANTUM TEXT RPG", bg=C["bg"], fg=C["accent"],
-            font=_font_ui(16, True),
+            font=font_ui(16, True),
         ).pack(anchor="w")
         tk.Label(
             pad, text=self._tr("gui_subtitle"), bg=C["bg"], fg=C["dim"],
-            font=_font_ui(10),
+            font=font_ui(10),
         ).pack(anchor="w", pady=(4, 16))
         tk.Label(
             pad, text=self._tr("gui_games"), bg=C["bg"], fg=C["dim"],
-            font=_font_ui(9),
+            font=font_ui(9),
         ).pack(anchor="w")
         box = tk.Frame(pad, bg=C["line"])
         box.pack(fill="both", expand=True, pady=(4, 12))
         self.listbox = tk.Listbox(
             box, bg=C["panel"], fg=C["fg"], selectbackground=C["accent"],
-            selectforeground=C["bg"], relief="flat", bd=0, font=_font_ui(11),
+            selectforeground=C["bg"], relief="flat", bd=0, font=font_ui(11),
             highlightthickness=0, activestyle="none",
         )
         self.listbox.pack(fill="both", expand=True, padx=1, pady=1)
         self.listbox.bind("<Double-Button-1>", lambda e: self._play())
         row = tk.Frame(pad, bg=C["bg"])
         row.pack(fill="x")
-        _Btn(row, text=self._tr("gui_play"), command=self._play, anchor="center",
-             font=_font_ui(10, True), padx=16).pack(side="left")
-        _Btn(row, text=self._tr("gui_open"), command=self._open, anchor="center").pack(side="left", padx=8)
-        self.lang_btn = _Btn(row, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
-        self.lang_btn.pack(side="left")
-        _Btn(row, text=self._tr("gui_quit"), command=self.root.destroy, anchor="center").pack(side="right")
+        Btn(row, text=self._tr("gui_play"), command=self._play, anchor="center",
+             font=font_ui(10, True), padx=16).pack(side="left")
+        Btn(row, text=self._tr("ed_open"), command=self._edit, anchor="center").pack(side="left", padx=8)
+        Btn(row, text=self._tr("ed_new"), command=self._new, anchor="center").pack(side="left")
+        row2 = tk.Frame(pad, bg=C["bg"])
+        row2.pack(fill="x", pady=(8, 0))
+        Btn(row2, text=self._tr("gui_open"), command=self._open, anchor="center").pack(side="left")
+        self.lang_btn = Btn(row2, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
+        self.lang_btn.pack(side="left", padx=8)
+        Btn(row2, text=self._tr("gui_quit"), command=self.root.destroy, anchor="center").pack(side="right")
         tk.Label(
             pad, text=self._tr("gui_hint"), bg=C["bg"], fg=C["dim"],
-            font=_font_ui(8), wraplength=460, justify="left",
+            font=font_ui(8), wraplength=460, justify="left",
         ).pack(anchor="w", pady=(16, 0))
         self.paths: list[Path] = []
 
@@ -168,6 +135,37 @@ class Launcher:
     def _start_play(self, path: Path) -> None:
         self.frame.pack_forget()
         PlayWindow(self.root, path, self.lang, on_exit=self._back)
+
+    def _edit(self) -> None:
+        p = self._selected()
+        if not p:
+            messagebox.showinfo("Quantum RPG", self._tr("gui_pick_game"))
+            return
+        self._start_edit(p)
+
+    def _new(self) -> None:
+        name = simpledialog.askstring("Quantum RPG", self._tr("ed_new_name"), parent=self.root)
+        if not name:
+            return
+        from .project import new_game
+
+        template = games_dir() / "template"
+        try:
+            dest = new_game(name, template)
+        except FileExistsError as exc:
+            messagebox.showerror("Quantum RPG", str(exc))
+            return
+        except Exception as exc:
+            messagebox.showerror("Quantum RPG", str(exc))
+            return
+        self._refresh_games()
+        self._start_edit(dest)
+
+    def _start_edit(self, path: Path) -> None:
+        from .editor import EditorWindow
+
+        self.frame.pack_forget()
+        EditorWindow(self.root, path, self.lang, on_exit=self._back)
 
     def _back(self) -> None:
         self.frame.pack(fill="both", expand=True)
@@ -220,16 +218,16 @@ class PlayWindow:
         top = tk.Frame(self.frame, bg=C["panel"], height=40)
         top.pack(fill="x")
         top.pack_propagate(False)
-        self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=_font_ui(11, True))
+        self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=font_ui(11, True))
         self.title_lbl.pack(side="left", padx=12)
-        _Btn(top, text=self._tr("gui_quit"), command=self._quit_game, anchor="center").pack(side="right", padx=8, pady=6)
-        _Btn(top, text=self._tr("gui_menu"), command=self._to_menu, anchor="center").pack(side="right", pady=6)
-        _Btn(top, text=self._tr("gui_load"), command=self._load, anchor="center").pack(side="right", padx=4, pady=6)
-        _Btn(top, text=self._tr("gui_save"), command=self._save, anchor="center").pack(side="right", pady=6)
-        self.lang_btn = _Btn(top, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
+        Btn(top, text=self._tr("gui_quit"), command=self._quit_game, anchor="center").pack(side="right", padx=8, pady=6)
+        Btn(top, text=self._tr("gui_menu"), command=self._to_menu, anchor="center").pack(side="right", pady=6)
+        Btn(top, text=self._tr("gui_load"), command=self._load, anchor="center").pack(side="right", padx=4, pady=6)
+        Btn(top, text=self._tr("gui_save"), command=self._save, anchor="center").pack(side="right", pady=6)
+        self.lang_btn = Btn(top, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
         self.lang_btn.pack(side="right", padx=8, pady=6)
 
-        self.status = tk.Label(self.frame, text="", bg=C["bg"], fg=C["fg"], font=_font_ui(10), anchor="w")
+        self.status = tk.Label(self.frame, text="", bg=C["bg"], fg=C["fg"], font=font_ui(10), anchor="w")
         self.status.pack(fill="x", padx=12, pady=(8, 4))
 
         body = tk.Frame(self.frame, bg=C["bg"])
@@ -239,7 +237,7 @@ class PlayWindow:
         left.pack(side="left", fill="both", expand=True)
         self.log = tk.Text(
             left, bg=C["panel"], fg=C["fg"], insertbackground=C["fg"],
-            relief="flat", bd=0, wrap="word", font=_font_log(11),
+            relief="flat", bd=0, wrap="word", font=font_log(11),
             highlightthickness=0, padx=12, pady=10, state="disabled",
         )
         scroll = tk.Scrollbar(left, command=self.log.yview, bg=C["panel"], troughcolor=C["bg"],
@@ -263,17 +261,17 @@ class PlayWindow:
 
         bottom = tk.Frame(self.frame, bg=C["panel"])
         bottom.pack(fill="x", padx=12, pady=(4, 12))
-        self.prompt_lbl = tk.Label(bottom, text=">", bg=C["panel"], fg=C["accent"], font=_font_ui(11, True))
+        self.prompt_lbl = tk.Label(bottom, text=">", bg=C["panel"], fg=C["accent"], font=font_ui(11, True))
         self.prompt_lbl.pack(side="left", padx=(8, 4), pady=8)
         self.entry = tk.Entry(
             bottom, bg=C["bg"], fg=C["fg"], insertbackground=C["accent"],
-            relief="flat", font=_font_log(11), highlightthickness=1,
+            relief="flat", font=font_log(11), highlightthickness=1,
             highlightcolor=C["accent"], highlightbackground=C["line"],
         )
         self.entry.pack(side="left", fill="x", expand=True, pady=8, ipady=4)
         self.entry.bind("<Return>", lambda e: self._submit())
-        _Btn(bottom, text=self._tr("gui_send"), command=self._submit, anchor="center",
-             font=_font_ui(10, True)).pack(side="right", padx=8, pady=8)
+        Btn(bottom, text=self._tr("gui_send"), command=self._submit, anchor="center",
+             font=font_ui(10, True)).pack(side="right", padx=8, pady=8)
         self.entry.focus_set()
 
     def _on_wheel(self, event) -> None:
@@ -333,13 +331,13 @@ class PlayWindow:
             w.destroy()
 
     def _head(self, text: str) -> None:
-        tk.Label(self.side, text=text.upper(), bg=C["bg"], fg=C["dim"], font=_font_ui(8), anchor="w").pack(
+        tk.Label(self.side, text=text.upper(), bg=C["bg"], fg=C["dim"], font=font_ui(8), anchor="w").pack(
             fill="x", pady=(10, 2)
         )
 
     def _btn(self, label: str, cmd: str, dim: bool = False) -> None:
         fg = C["dim"] if dim else C["fg"]
-        _Btn(self.side, text=label, fg=fg, command=lambda c=cmd: self._send(c)).pack(fill="x", pady=1)
+        Btn(self.side, text=label, fg=fg, command=lambda c=cmd: self._send(c)).pack(fill="x", pady=1)
 
     def _render_side(self) -> None:
         self._clear_side()
@@ -402,7 +400,7 @@ class PlayWindow:
         inv = s.get("inventory") or []
         if not inv:
             tk.Label(self.side, text=t(self.lang, "empty_inv"), bg=C["bg"], fg=C["dim"],
-                     font=_font_ui(9), anchor="w").pack(fill="x")
+                     font=font_ui(9), anchor="w").pack(fill="x")
         for it in inv:
             mark = " *" if it.get("equipped") else ""
             self._btn(it["label"] + mark, f"__inv:{it['id']}")
@@ -415,8 +413,8 @@ class PlayWindow:
                 ("gui_equip", f"equip {self.selected_item}"),
                 ("gui_drop", f"drop {self.selected_item}"),
             ):
-                _Btn(row, text=self._tr(key), command=lambda c=cmd: self._send(c),
-                     font=_font_ui(8), padx=4).pack(side="left", padx=1)
+                Btn(row, text=self._tr(key), command=lambda c=cmd: self._send(c),
+                     font=font_ui(8), padx=4).pack(side="left", padx=1)
 
     def _send(self, command: str) -> None:
         if command.startswith("__inv:"):

@@ -22,3 +22,5 @@ Windows player: `QuantumRPG.exe` from the GitHub release.
 | Command line | Type `взять ключ` / `go north` as in 1.0.0 |
 
 Saves: `save` / `load` in the top bar. Frozen exe writes to `%APPDATA%\quantum-rpg\saves`.
+
+Editor: [EDITOR.md](EDITOR.md). Launcher buttons **Редактор** and **Новая игра**.

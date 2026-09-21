@@ -28,6 +28,10 @@ def main(argv: list[str] | None = None) -> int:
     p_gui = sub.add_parser("gui", help="Open the window UI")
     p_gui.add_argument("--lang", default="ru", choices=["ru", "en"])
 
+    p_ed = sub.add_parser("editor", help="Open the game editor")
+    p_ed.add_argument("game", nargs="?", help="Folder name or path")
+    p_ed.add_argument("--lang", default="ru", choices=["ru", "en"])
+
     p_play = sub.add_parser("play", help="Play a game in the terminal")
     p_play.add_argument("game", nargs="?", default="shadow_keep", help="Folder name or path")
     p_play.add_argument("--lang", default=None, choices=["ru", "en"])
@@ -51,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_gui(argparse.Namespace(lang="ru"))
     if args.cmd == "gui":
         return cmd_gui(args)
+    if args.cmd == "editor":
+        return cmd_editor(args)
     if args.cmd == "play":
         return cmd_play(args)
     if args.cmd == "validate":
@@ -76,6 +82,28 @@ def cmd_gui(args) -> int:
     from .gui import launch_gui
 
     launch_gui(language=getattr(args, "lang", None) or "ru")
+    return 0
+
+
+def cmd_editor(args) -> int:
+    import tkinter as tk
+
+    from .theme import C
+
+    lang = getattr(args, "lang", None) or "ru"
+    if not getattr(args, "game", None):
+        from .gui import launch_gui
+
+        launch_gui(language=lang)
+        return 0
+    path = resolve_game(args.game)
+    from .editor import EditorWindow
+
+    root = tk.Tk()
+    root.configure(bg=C["bg"])
+    root.title("Quantum Text RPG")
+    EditorWindow(root, path, lang, on_exit=root.destroy)
+    root.mainloop()
     return 0
 
 

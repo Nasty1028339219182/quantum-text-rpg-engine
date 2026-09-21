@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**1.1.0** adds a small Windows window: log, buttons for exits/items/people, inventory, and a command line.
+**1.2.0** — window player **and** a form editor in the same app. Still no graphics, no browser.
 
 ```text
 python -m quantum_rpg
@@ -56,9 +56,7 @@ python -m quantum_rpg validate my_game
 python -m quantum_rpg play my_game
 ```
 
-Then in the window: **Открыть папку…** and pick `games/my_game`.
-
-Copy-paste guide: [docs/AUTHORING.md](docs/AUTHORING.md) · [docs/AUTHORING.ru.md](docs/AUTHORING.ru.md)
+Then in the window: **Редактор** or **Новая игра**. Guide: [docs/EDITOR.md](docs/EDITOR.md) · [docs/AUTHORING.md](docs/AUTHORING.md)
 
 ## What the engine already does
 
@@ -80,6 +78,7 @@ Copy-paste guide: [docs/AUTHORING.md](docs/AUTHORING.md) · [docs/AUTHORING.ru.m
 | Status | bless, poison, defend |
 | Language | `language ru` / `language en` at runtime |
 | Window UI | buttons + command line (1.1.0) |
+| Editor | forms for YAML games (1.2.0) |
 
 ## License
 

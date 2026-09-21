@@ -4,7 +4,7 @@
 
 Движок для **полностью текстовых** RPG. Без графики, без картинок, без браузера. Игра — YAML. Python-хуки по желанию.
 
-**1.1.0** — окно Windows: лог, кнопки выходов/предметов/NPC, инвентарь и строка команды.
+**1.2.0** — окно игрока и редактор форм в том же exe. Без графики, без браузера.
 
 ```text
 python -m quantum_rpg
@@ -43,9 +43,9 @@ python -m quantum_rpg new my_game
 python -m quantum_rpg validate my_game
 ```
 
-В окне — **Открыть папку…** → `games/my_game`.
+В окне — **Редактор** или **Новая игра**.
 
-Гайд: [docs/AUTHORING.ru.md](docs/AUTHORING.ru.md)
+Гайд: [docs/EDITOR.md](docs/EDITOR.md) · [docs/AUTHORING.ru.md](docs/AUTHORING.ru.md)
 
 ## Лицензия
 

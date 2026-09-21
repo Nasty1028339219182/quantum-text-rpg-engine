@@ -1,0 +1,956 @@
+"""YAML game editor — forms for the main files, text for events/hooks."""
+
+from __future__ import annotations
+
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+from pathlib import Path
+from typing import Any, Callable, Optional
+
+from .i18n import t
+from .loader import load_world
+from .paths import games_dir
+from .project import (
+    Project,
+    copy_for_edit,
+    csv_dump,
+    csv_load,
+    loc_pair,
+    loc_value,
+    yaml_dump_text,
+    yaml_load_text,
+)
+from .theme import C, Btn, Entry, Text, font_ui, font_log
+
+KINDS = [
+    ("locations", "ed_rooms"),
+    ("items", "ed_items"),
+    ("npcs", "ed_npcs"),
+    ("dialogues", "ed_dialogues"),
+    ("quests", "ed_quests"),
+    ("encounters", "ed_fights"),
+    ("recipes", "ed_recipes"),
+]
+DIRS = ("north", "south", "east", "west", "up", "down")
+ITEM_TYPES = ("weapon", "armor", "shield", "accessory", "consumable", "key", "book", "quest", "misc")
+
+
+class EditorWindow:
+    def __init__(self, root: tk.Tk, game_path: Path, lang: str, on_exit: Callable):
+        self.root = root
+        self.lang = lang
+        self.on_exit = on_exit
+        src = Path(game_path)
+        writable = copy_for_edit(src)
+        if writable != src:
+            messagebox.showinfo(
+                "Quantum RPG",
+                t(lang, "ed_copied", path=str(writable)),
+            )
+        self.project = Project.load(writable)
+        self.sel = ("game", "")
+        self.form: Optional[tk.Frame] = None
+        self.vars: dict[str, Any] = {}
+        root.geometry("1100x720")
+        root.minsize(900, 580)
+        self.frame = tk.Frame(root, bg=C["bg"])
+        self.frame.pack(fill="both", expand=True)
+        self._build()
+        self._fill_tree()
+        self._show("game", "")
+
+    def tr(self, key: str, **kw) -> str:
+        return t(self.lang, key, **kw)
+
+    def _build(self) -> None:
+        top = tk.Frame(self.frame, bg=C["panel"])
+        top.pack(fill="x")
+        self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=font_ui(11, True))
+        self.title_lbl.pack(side="left", padx=12, pady=8)
+        Btn(top, text=self.tr("gui_menu"), command=self._leave, anchor="center").pack(side="right", padx=8, pady=6)
+        Btn(top, text=self.tr("gui_play"), command=self._play, anchor="center").pack(side="right", pady=6)
+        Btn(top, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="right", padx=4, pady=6)
+        Btn(top, text=self.tr("gui_save"), command=self._save, anchor="center", font=font_ui(9, True)).pack(
+            side="right", pady=6
+        )
+
+        body = tk.Frame(self.frame, bg=C["bg"])
+        body.pack(fill="both", expand=True, padx=10, pady=8)
+
+        left = tk.Frame(body, bg=C["line"], width=240)
+        left.pack(side="left", fill="y")
+        left.pack_propagate(False)
+        self.tree = tk.Listbox(
+            left, bg=C["panel"], fg=C["fg"], selectbackground=C["accent"],
+            selectforeground=C["bg"], relief="flat", bd=0, font=font_ui(10),
+            highlightthickness=0, activestyle="none",
+        )
+        self.tree.pack(fill="both", expand=True, padx=1, pady=1)
+        self.tree.bind("<<ListboxSelect>>", lambda e: self._on_tree())
+        self.tree.bind("<Delete>", lambda e: self._delete_sel())
+
+        right_wrap = tk.Frame(body, bg=C["bg"])
+        right_wrap.pack(side="right", fill="both", expand=True, padx=(10, 0))
+        self.canvas = tk.Canvas(right_wrap, bg=C["bg"], highlightthickness=0, bd=0)
+        scroll = tk.Scrollbar(right_wrap, command=self.canvas.yview, width=10)
+        self.inner = tk.Frame(self.canvas, bg=C["bg"])
+        self.inner.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
+        self.canvas.configure(yscrollcommand=scroll.set)
+        self.canvas.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(1, width=e.width))
+
+        self.status = tk.Label(self.frame, text="", bg=C["bg"], fg=C["dim"], font=font_ui(9), anchor="w")
+        self.status.pack(fill="x", padx=12, pady=(0, 8))
+        self._set_title()
+
+    def _set_title(self) -> None:
+        from .util import loc
+
+        name = loc(self.project.game.get("title") or self.project.path.name, self.lang)
+        mark = " *" if self.project.dirty else ""
+        self.title_lbl.configure(text=f"{self.tr('ed_title')}: {name}{mark}")
+
+    def _fill_tree(self, keep: Optional[tuple] = None) -> None:
+        self.tree.delete(0, "end")
+        self.rows: list[tuple[str, str]] = []
+
+        def add(label: str, kind: str, eid: str, dim: bool = False):
+            self.tree.insert("end", label)
+            self.rows.append((kind, eid))
+
+        add("  " + self.tr("ed_game"), "game", "")
+        for kind, key in KINDS:
+            add(self.tr(key).upper(), "head", kind)
+            for eid in self.project.table(kind):
+                add(f"    {eid}", kind, eid)
+            add("    + " + self.tr("ed_add"), "add", kind)
+        add(self.tr("ed_events"), "events", "")
+        add(self.tr("ed_hooks"), "hooks", "")
+        if keep:
+            for i, row in enumerate(self.rows):
+                if row == keep:
+                    self.tree.selection_set(i)
+                    self.tree.see(i)
+                    break
+
+    def _on_tree(self) -> None:
+        sel = self.tree.curselection()
+        if not sel:
+            return
+        kind, eid = self.rows[sel[0]]
+        if kind == "head":
+            return
+        if kind == "add":
+            self._add(eid)
+            return
+        self._flush()
+        self._show(kind, eid)
+
+    def _add(self, kind: str) -> None:
+        eid = simpledialog.askstring("Quantum RPG", self.tr("ed_new_id"), parent=self.root)
+        if not eid:
+            return
+        try:
+            self.project.add(kind, eid)
+        except ValueError:
+            messagebox.showerror("Quantum RPG", self.tr("ed_bad_id"))
+            return
+        self._fill_tree((kind, eid.strip().replace(" ", "_")))
+        self._show(kind, eid.strip().replace(" ", "_"))
+        self._set_title()
+
+    def _delete_sel(self) -> None:
+        kind, eid = self.sel
+        if kind not in dict(KINDS) or not eid:
+            return
+        if not messagebox.askyesno("Quantum RPG", self.tr("ed_delete", id=eid)):
+            return
+        self.project.delete(kind, eid)
+        self._fill_tree()
+        self._show("game", "")
+        self._set_title()
+
+    def _flush(self) -> None:
+        if self.form is None:
+            return
+        fn = getattr(self.form, "collect", None)
+        if callable(fn):
+            try:
+                fn()
+                self.project.dirty = True
+            except Exception as exc:
+                self.status.configure(text=str(exc), fg=C["danger"])
+        self._set_title()
+
+    def _clear_form(self) -> None:
+        for w in self.inner.winfo_children():
+            w.destroy()
+        self.form = None
+
+    def _show(self, kind: str, eid: str) -> None:
+        self.sel = (kind, eid)
+        self._clear_form()
+        box = tk.Frame(self.inner, bg=C["bg"])
+        box.pack(fill="both", expand=True, padx=8, pady=4)
+        self.form = box
+        if kind == "game":
+            GameForm(box, self)
+        elif kind == "events":
+            RawForm(box, self, "events_text", "events.yaml")
+        elif kind == "hooks":
+            RawForm(box, self, "hooks_text", "hooks.py")
+        elif kind == "locations":
+            LocationForm(box, self, eid)
+        elif kind == "items":
+            ItemForm(box, self, eid)
+        elif kind == "npcs":
+            NpcForm(box, self, eid)
+        elif kind == "dialogues":
+            DialogueForm(box, self, eid)
+        elif kind == "quests":
+            QuestForm(box, self, eid)
+        elif kind == "encounters":
+            EncounterForm(box, self, eid)
+        elif kind == "recipes":
+            RecipeForm(box, self, eid)
+        self.status.configure(text=f"{kind} {eid}".strip(), fg=C["dim"])
+
+    def _save(self) -> bool:
+        self._flush()
+        try:
+            self.project.save()
+        except OSError as exc:
+            messagebox.showerror("Quantum RPG", str(exc))
+            return False
+        self.status.configure(text=self.tr("ed_saved", path=str(self.project.path)), fg=C["ok"])
+        self._set_title()
+        return True
+
+    def _validate(self) -> None:
+        if not self._save():
+            return
+        world = load_world(self.project.path)
+        lines = [f"ERROR: {e}" for e in world.errors] + [f"WARN: {w}" for w in world.warnings]
+        if not lines:
+            lines = [
+                f"OK  {self.project.path.name}: {len(world.locations)} loc, "
+                f"{len(world.items)} items, {len(world.npcs)} npc"
+            ]
+            self.status.configure(text=lines[0], fg=C["ok"])
+        else:
+            self.status.configure(text=lines[0], fg=C["danger"])
+        messagebox.showinfo("Quantum RPG", "\n".join(lines[:40]))
+
+    def _play(self) -> None:
+        if not self._save():
+            return
+        world = load_world(self.project.path)
+        if world.errors:
+            messagebox.showerror("Quantum RPG", "\n".join(world.errors))
+            return
+        from .gui import PlayWindow
+
+        self.frame.pack_forget()
+
+        def back():
+            self.frame.pack(fill="both", expand=True)
+            self._fill_tree(self.sel)
+
+        PlayWindow(self.root, self.project.path, self.lang, on_exit=back)
+
+    def _leave(self) -> None:
+        self._flush()
+        if self.project.dirty:
+            if not messagebox.askyesno("Quantum RPG", self.tr("ed_unsaved")):
+                return
+        self.frame.destroy()
+        self.on_exit()
+
+
+# ----- form helpers ----------------------------------------------------------
+
+def _label(parent, text: str) -> None:
+    tk.Label(parent, text=text, bg=C["bg"], fg=C["dim"], font=font_ui(8), anchor="w").pack(fill="x", pady=(10, 2))
+
+
+def _entry(parent, value: str = "", width: int = 48) -> Entry:
+    e = Entry(parent, width=width)
+    e.insert(0, value)
+    e.pack(fill="x")
+    return e
+
+
+def _text(parent, value: str = "", height: int = 4) -> Text:
+    w = Text(parent, height=height)
+    if value:
+        w.insert("1.0", value)
+    w.pack(fill="x")
+    return w
+
+
+def _loc(parent, label: str, value, height: int = 0):
+    _label(parent, label)
+    ru, en = loc_pair(value)
+    row = tk.Frame(parent, bg=C["bg"])
+    row.pack(fill="x")
+    tk.Label(row, text="RU", bg=C["bg"], fg=C["accent"], font=font_ui(8), width=3).pack(side="left")
+    if height:
+        a = Text(row, height=height, width=40)
+        a.insert("1.0", ru)
+        a.pack(side="left", fill="x", expand=True)
+    else:
+        a = Entry(row)
+        a.insert(0, ru)
+        a.pack(side="left", fill="x", expand=True)
+    row2 = tk.Frame(parent, bg=C["bg"])
+    row2.pack(fill="x", pady=(2, 0))
+    tk.Label(row2, text="EN", bg=C["bg"], fg=C["accent"], font=font_ui(8), width=3).pack(side="left")
+    if height:
+        b = Text(row2, height=height, width=40)
+        b.insert("1.0", en)
+        b.pack(side="left", fill="x", expand=True)
+    else:
+        b = Entry(row2)
+        b.insert(0, en)
+        b.pack(side="left", fill="x", expand=True)
+    return a, b
+
+
+def _get(w) -> str:
+    if isinstance(w, tk.Text):
+        return w.get("1.0", "end").rstrip("\n")
+    return w.get()
+
+
+def _check(parent, text: str, value: bool) -> tk.BooleanVar:
+    v = tk.BooleanVar(value=bool(value))
+    tk.Checkbutton(
+        parent, text=text, variable=v, bg=C["bg"], fg=C["fg"],
+        selectcolor=C["btn"], activebackground=C["bg"], activeforeground=C["fg"],
+        highlightthickness=0, font=font_ui(9),
+    ).pack(anchor="w", pady=2)
+    return v
+
+
+def _option(parent, label: str, value: str, choices: tuple[str, ...]) -> tk.StringVar:
+    _label(parent, label)
+    v = tk.StringVar(value=value if value in choices else (choices[0] if choices else ""))
+    tk.OptionMenu(parent, v, *choices).pack(anchor="w")
+    return v
+
+
+# ----- forms -----------------------------------------------------------------
+
+class _Base:
+    def __init__(self, parent, editor: EditorWindow):
+        self.parent = parent
+        self.ed = editor
+        parent.collect = self.collect  # type: ignore[attr-defined]
+
+    def collect(self) -> None:
+        raise NotImplementedError
+
+
+class GameForm(_Base):
+    def __init__(self, parent, editor):
+        super().__init__(parent, editor)
+        g = editor.project.game
+        player = g.get("player") or {}
+        start = g.get("start") or {}
+        start_id = start if isinstance(start, str) else (start.get("location") or "")
+        win = g.get("win") or {}
+        self.id = _labeled(parent, "id", g.get("id") or editor.project.path.name)
+        self.title = _loc(parent, "title", g.get("title"))
+        self.author = _labeled(parent, "author", g.get("author") or "")
+        self.version = _labeled(parent, "version", g.get("version") or "0.1.0")
+        self.language = _option(parent, "language", str(g.get("language") or "ru"), ("ru", "en"))
+        rooms = tuple(editor.project.locations) or ("start_room",)
+        self.start = _option(parent, "start.location", start_id if start_id in rooms else (rooms[0] if rooms else ""), rooms)
+        self.intro = _loc(parent, "intro", g.get("intro"), height=4)
+        self.win_flags = _labeled(parent, "win.flags", csv_load(win.get("flags") or win.get("flag")))
+        self.win_text = _loc(parent, "win.text", win.get("text"), height=3)
+        self.pname = _labeled(parent, "player.name", player.get("name") or "")
+        self.prompt = _check(parent, "player.name_prompt", player.get("name_prompt"))
+        self.hp = _labeled(parent, "player.hp", str(player.get("hp") or 20))
+        self.gold = _labeled(parent, "player.gold", str(player.get("gold") or 0))
+        stats = player.get("stats") or {}
+        self.stats = _labeled(
+            parent,
+            "player.stats  str,dex,int,con,cha,per",
+            ",".join(str(stats.get(k, 10)) for k in ("str", "dex", "int", "con", "cha", "per")),
+        )
+        self.inv = _labeled(parent, "player.inventory", csv_load(player.get("inventory")))
+
+    def collect(self) -> None:
+        g = self.ed.project.game
+        g["id"] = _get(self.id)
+        g["title"] = loc_value(_get(self.title[0]), _get(self.title[1]))
+        g["author"] = _get(self.author)
+        g["version"] = _get(self.version)
+        g["language"] = self.language.get()
+        g["start"] = {"location": self.start.get()}
+        g["intro"] = loc_value(_get(self.intro[0]), _get(self.intro[1]))
+        flags = csv_dump(_get(self.win_flags))
+        g.setdefault("win", {})
+        g["win"]["flags"] = flags
+        g["win"]["text"] = loc_value(_get(self.win_text[0]), _get(self.win_text[1]))
+        p = g.setdefault("player", {})
+        if _get(self.pname):
+            p["name"] = _get(self.pname)
+        p["name_prompt"] = bool(self.prompt.get())
+        p["hp"] = int(_get(self.hp) or 20)
+        p["max_hp"] = p["hp"]
+        p["gold"] = int(_get(self.gold) or 0)
+        nums = csv_dump(_get(self.stats))
+        keys = ("str", "dex", "int", "con", "cha", "per")
+        p["stats"] = {k: int(nums[i]) if i < len(nums) else 10 for i, k in enumerate(keys)}
+        p["inventory"] = csv_dump(_get(self.inv))
+
+
+def _labeled(parent, label: str, value: str) -> Entry:
+    _label(parent, label)
+    return _entry(parent, value)
+
+
+class LocationForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        loc = editor.project.locations[eid]
+        self.name = _loc(parent, "name", loc.get("name"))
+        self.desc = _loc(parent, "description", loc.get("description"), height=5)
+        self.dark = _check(parent, "dark", loc.get("dark"))
+        self.rest = _check(parent, "rest", loc.get("rest") is not False)
+        self.items = _labeled(parent, "items", csv_load(loc.get("items")))
+        self.hidden = _labeled(parent, "hidden_items", csv_load(loc.get("hidden_items")))
+        self.npcs = _labeled(parent, "npcs", csv_load(loc.get("npcs")))
+        search = loc.get("search") or {}
+        self.search_dc = _labeled(parent, "search.dc", str(search.get("dc") or ""))
+        self.search_reveal = _labeled(parent, "search.reveal", csv_load(search.get("reveal")))
+        _label(parent, "exits")
+        self.exit_rows = []
+        self.exit_box = tk.Frame(parent, bg=C["bg"])
+        self.exit_box.pack(fill="x")
+        exits = loc.get("exits") or {}
+        rooms = tuple(editor.project.locations) or (eid,)
+        if not exits:
+            self._exit_row("north", "", False, "")
+        else:
+            for d, dest in exits.items():
+                if isinstance(dest, dict):
+                    self._exit_row(
+                        d,
+                        str(dest.get("to") or ""),
+                        bool(dest.get("locked")),
+                        str(dest.get("key") or ""),
+                        dest,
+                    )
+                else:
+                    self._exit_row(d, str(dest or ""), False, "", dest)
+        Btn(parent, text="+ exit", command=lambda: self._exit_row("north", "", False, ""), anchor="center").pack(
+            pady=6, anchor="w"
+        )
+        self.extra = _yaml_field(parent, "extra YAML (on_enter, containers, trap…)", _extra_yaml(loc, KEEP_LOC))
+
+    def _exit_row(self, d, to, locked, key, original=None):
+        row = tk.Frame(self.exit_box, bg=C["bg"])
+        row.pack(fill="x", pady=2)
+        dv = tk.StringVar(value=d if d in DIRS else "north")
+        tk.OptionMenu(row, dv, *DIRS).pack(side="left")
+        to_e = Entry(row, width=18)
+        to_e.insert(0, to)
+        to_e.pack(side="left", padx=4)
+        lv = tk.BooleanVar(value=locked)
+        tk.Checkbutton(
+            row, text="lock", variable=lv, bg=C["bg"], fg=C["fg"], selectcolor=C["btn"],
+            activebackground=C["bg"], highlightthickness=0,
+        ).pack(side="left")
+        key_e = Entry(row, width=14)
+        key_e.insert(0, key)
+        key_e.pack(side="left", padx=4)
+        Btn(row, text="×", command=lambda r=row: self._drop_exit(r), width=2, anchor="center").pack(side="left")
+        self.exit_rows.append((row, dv, to_e, lv, key_e, original))
+
+    def _drop_exit(self, row):
+        self.exit_rows = [x for x in self.exit_rows if x[0] is not row]
+        row.destroy()
+
+    def collect(self) -> None:
+        loc = self.ed.project.locations[self.eid]
+        loc["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        loc["description"] = loc_value(_get(self.desc[0]), _get(self.desc[1]))
+        loc["dark"] = bool(self.dark.get())
+        loc["rest"] = bool(self.rest.get())
+        loc["items"] = csv_dump(_get(self.items))
+        loc["hidden_items"] = csv_dump(_get(self.hidden))
+        loc["npcs"] = csv_dump(_get(self.npcs))
+        dc = _get(self.search_dc).strip()
+        reveal = csv_dump(_get(self.search_reveal))
+        if dc or reveal:
+            search = dict(loc.get("search") or {})
+            if dc:
+                search["dc"] = int(dc)
+            if reveal:
+                search["reveal"] = reveal
+            loc["search"] = search
+        elif "search" in loc and not dc:
+            pass
+        exits = {}
+        for _row, dv, to_e, lv, key_e, original in self.exit_rows:
+            d = dv.get()
+            to = to_e.get().strip()
+            if not to:
+                continue
+            locked, key = bool(lv.get()), key_e.get().strip()
+            if isinstance(original, dict):
+                body = dict(original)
+                body["to"] = to
+                body["locked"] = locked
+                if key:
+                    body["key"] = key
+                elif "key" in body:
+                    body.pop("key", None)
+                exits[d] = body
+            elif locked or key:
+                body = {"to": to, "locked": locked}
+                if key:
+                    body["key"] = key
+                exits[d] = body
+            else:
+                exits[d] = to
+        loc["exits"] = exits
+        _merge_extra(loc, _get(self.extra), KEEP_LOC)
+
+
+KEEP_LOC = {"name", "description", "dark", "rest", "items", "hidden_items", "npcs", "exits", "search", "id"}
+KEEP_ITEM = {
+    "name", "aliases", "description", "type", "slot", "damage", "hit", "ac", "light",
+    "heal", "weight", "value", "takeable", "text", "use", "id",
+}
+KEEP_NPC = {"name", "aliases", "description", "location", "dialogue", "hostile", "encounter", "shop", "wants", "id"}
+
+
+class ItemForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        it = editor.project.items[eid]
+        self.name = _loc(parent, "name", it.get("name"))
+        self.aliases = _labeled(parent, "aliases", csv_load(it.get("aliases")))
+        self.desc = _loc(parent, "description", it.get("description"), height=3)
+        self.type = _option(parent, "type", str(it.get("type") or "misc"), ITEM_TYPES)
+        self.slot = _labeled(parent, "slot", str(it.get("slot") or ""))
+        self.damage = _labeled(parent, "damage", str(it.get("damage") or ""))
+        self.hit = _labeled(parent, "hit", str(it.get("hit") or ""))
+        self.ac = _labeled(parent, "ac", str(it.get("ac") or ""))
+        self.heal = _labeled(parent, "heal", str(it.get("heal") or ""))
+        self.value = _labeled(parent, "value", str(it.get("value") or ""))
+        self.weight = _labeled(parent, "weight", str(it.get("weight") or ""))
+        self.light = _check(parent, "light", it.get("light"))
+        self.takeable = _check(parent, "takeable", it.get("takeable") is not False)
+        use = it.get("use") or {}
+        self.use_text = _loc(parent, "use.text", use.get("text") if isinstance(use, dict) else None)
+        self.use_consume = _check(parent, "use.consume", bool(isinstance(use, dict) and use.get("consume")))
+        self.use_fx = _yaml_field(parent, "use.effects (YAML)", yaml_dump_text(use.get("effects") if isinstance(use, dict) else None))
+        self.read = _loc(parent, "text / on_read", it.get("text") or it.get("on_read"), height=4)
+        self.extra = _yaml_field(parent, "extra YAML", _extra_yaml(it, KEEP_ITEM))
+
+    def collect(self) -> None:
+        it = self.ed.project.items[self.eid]
+        it["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        it["aliases"] = csv_dump(_get(self.aliases))
+        it["description"] = loc_value(_get(self.desc[0]), _get(self.desc[1]))
+        it["type"] = self.type.get()
+        for key, w in (
+            ("slot", self.slot),
+            ("damage", self.damage),
+            ("hit", self.hit),
+            ("ac", self.ac),
+            ("heal", self.heal),
+            ("value", self.value),
+            ("weight", self.weight),
+        ):
+            val = _get(w).strip()
+            if val == "":
+                it.pop(key, None)
+            else:
+                it[key] = int(val) if val.isdigit() else val
+        it["light"] = bool(self.light.get())
+        it["takeable"] = bool(self.takeable.get())
+        ut = loc_value(_get(self.use_text[0]), _get(self.use_text[1]))
+        fx = yaml_load_text(_get(self.use_fx))
+        if ut or fx or self.use_consume.get():
+            use = dict(it.get("use") or {}) if isinstance(it.get("use"), dict) else {}
+            if ut:
+                use["text"] = ut
+            use["consume"] = bool(self.use_consume.get())
+            if fx:
+                use["effects"] = fx
+            it["use"] = use
+        txt = loc_value(_get(self.read[0]), _get(self.read[1]))
+        if txt:
+            it["text"] = txt
+        _merge_extra(it, _get(self.extra), KEEP_ITEM)
+
+
+class NpcForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        n = editor.project.npcs[eid]
+        rooms = tuple(editor.project.locations) or ("",)
+        dlgs = tuple(editor.project.dialogues) or ("",)
+        encs = ("",) + tuple(editor.project.encounters)
+        self.name = _loc(parent, "name", n.get("name"))
+        self.aliases = _labeled(parent, "aliases", csv_load(n.get("aliases")))
+        self.desc = _loc(parent, "description", n.get("description"), height=3)
+        loc_id = str(n.get("location") or "")
+        self.location = _option(parent, "location", loc_id if loc_id in rooms else (rooms[0] if rooms else ""), rooms)
+        dlg = str(n.get("dialogue") or eid)
+        self.dialogue = _option(parent, "dialogue", dlg if dlg in dlgs else (dlgs[0] if dlgs else ""), dlgs or (eid,))
+        enc = str(n.get("encounter") or "")
+        self.encounter = _option(parent, "encounter", enc if enc in encs else "", encs)
+        self.hostile = _check(parent, "hostile", n.get("hostile"))
+        self.wants = _labeled(parent, "wants", csv_load(n.get("wants")))
+        _label(parent, "shop  item, price, stock")
+        self.shop_box = tk.Frame(parent, bg=C["bg"])
+        self.shop_box.pack(fill="x")
+        self.shop_rows = []
+        for row in n.get("shop") or []:
+            if isinstance(row, str):
+                self._shop_row(row, "", "")
+            elif isinstance(row, dict):
+                self._shop_row(str(row.get("item") or ""), str(row.get("price") or ""), str(row.get("stock") or ""))
+        Btn(parent, text="+ shop item", command=lambda: self._shop_row("", "", ""), anchor="center").pack(anchor="w", pady=4)
+        self.extra = _yaml_field(parent, "extra YAML", _extra_yaml(n, KEEP_NPC))
+
+    def _shop_row(self, item, price, stock):
+        row = tk.Frame(self.shop_box, bg=C["bg"])
+        row.pack(fill="x", pady=1)
+        a, b, c = Entry(row, width=18), Entry(row, width=8), Entry(row, width=8)
+        a.insert(0, item)
+        b.insert(0, price)
+        c.insert(0, stock)
+        a.pack(side="left", padx=2)
+        b.pack(side="left", padx=2)
+        c.pack(side="left", padx=2)
+        Btn(row, text="×", width=2, anchor="center", command=lambda r=row: self._drop_shop(r)).pack(side="left")
+        self.shop_rows.append((row, a, b, c))
+
+    def _drop_shop(self, row):
+        self.shop_rows = [x for x in self.shop_rows if x[0] is not row]
+        row.destroy()
+
+    def collect(self) -> None:
+        n = self.ed.project.npcs[self.eid]
+        n["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        n["aliases"] = csv_dump(_get(self.aliases))
+        n["description"] = loc_value(_get(self.desc[0]), _get(self.desc[1]))
+        n["location"] = self.location.get()
+        n["dialogue"] = self.dialogue.get()
+        enc = self.encounter.get()
+        if enc:
+            n["encounter"] = enc
+        else:
+            n.pop("encounter", None)
+        n["hostile"] = bool(self.hostile.get())
+        n["wants"] = csv_dump(_get(self.wants))
+        shop = []
+        for _r, a, b, c in self.shop_rows:
+            item = a.get().strip()
+            if not item:
+                continue
+            row: dict[str, Any] = {"item": item}
+            if b.get().strip():
+                row["price"] = int(b.get())
+            if c.get().strip():
+                row["stock"] = int(c.get())
+            shop.append(row)
+        if shop:
+            n["shop"] = shop
+        else:
+            n.pop("shop", None)
+        _merge_extra(n, _get(self.extra), KEEP_NPC)
+
+
+class DialogueForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        d = editor.project.dialogues[eid]
+        nodes = d.get("nodes") or {}
+        self.start = _labeled(parent, "start", str(d.get("start") or "start"))
+        _label(parent, "nodes")
+        self.node_id = tk.StringVar(value=next(iter(nodes), "start"))
+        ids = tuple(nodes) or ("start",)
+        self.node_menu = tk.OptionMenu(parent, self.node_id, *ids, command=lambda *_: self._load_node())
+        self.node_menu.pack(anchor="w")
+        row = tk.Frame(parent, bg=C["bg"])
+        row.pack(fill="x", pady=4)
+        Btn(row, text="+ node", command=self._add_node, anchor="center").pack(side="left")
+        Btn(row, text="× node", command=self._del_node, anchor="center").pack(side="left", padx=4)
+        self.node_box = tk.Frame(parent, bg=C["bg"])
+        self.node_box.pack(fill="x")
+        self._widgets: dict[str, Any] = {}
+        self._load_node()
+
+    def _nodes(self) -> dict:
+        return self.ed.project.dialogues[self.eid].setdefault("nodes", {})
+
+    def _add_node(self) -> None:
+        nid = simpledialog.askstring("Quantum RPG", "node id", parent=self.ed.root)
+        if not nid:
+            return
+        self._collect_node()
+        self._nodes()[nid] = {"text": {"ru": nid, "en": nid}, "choices": []}
+        self.ed.project.dirty = True
+        self._reload_menu(nid)
+
+    def _del_node(self) -> None:
+        nid = self.node_id.get()
+        nodes = self._nodes()
+        if nid in nodes and len(nodes) > 1:
+            nodes.pop(nid)
+            self._reload_menu(next(iter(nodes)))
+
+    def _reload_menu(self, current: str) -> None:
+        self._collect_node()
+        menu = self.node_menu["menu"]
+        menu.delete(0, "end")
+        for nid in self._nodes():
+            menu.add_command(label=nid, command=lambda n=nid: self._switch(n))
+        self.node_id.set(current)
+        self._load_node()
+
+    def _switch(self, nid: str) -> None:
+        self._collect_node()
+        self.node_id.set(nid)
+        self._load_node()
+
+    def _load_node(self) -> None:
+        for w in self.node_box.winfo_children():
+            w.destroy()
+        nid = self.node_id.get()
+        node = self._nodes().get(nid) or {}
+        name = _loc(self.node_box, "text", node.get("text"), height=3)
+        end = _check(self.node_box, "end", node.get("end"))
+        shop = _check(self.node_box, "shop", node.get("shop"))
+        _label(self.node_box, "choices  (text RU / EN / goto / end)")
+        box = tk.Frame(self.node_box, bg=C["bg"])
+        box.pack(fill="x")
+        rows = []
+
+        def add_choice(ch=None):
+            ch = ch or {}
+            r = tk.Frame(box, bg=C["bg"])
+            r.pack(fill="x", pady=4)
+            ru, en = loc_pair(ch.get("text"))
+            a, b, g = Entry(r), Entry(r), Entry(r, width=14)
+            a.insert(0, ru)
+            b.insert(0, en)
+            g.insert(0, str(ch.get("goto") or ""))
+            a.pack(fill="x")
+            b.pack(fill="x", pady=1)
+            meta = tk.Frame(r, bg=C["bg"])
+            meta.pack(fill="x")
+            tk.Label(meta, text="goto", bg=C["bg"], fg=C["dim"], font=font_ui(8)).pack(side="left")
+            g.pack(side="left", padx=4)
+            ev = tk.BooleanVar(value=bool(ch.get("end")))
+            tk.Checkbutton(
+                meta, text="end", variable=ev, bg=C["bg"], fg=C["fg"], selectcolor=C["btn"],
+                activebackground=C["bg"], highlightthickness=0,
+            ).pack(side="left")
+            Btn(meta, text="×", width=2, anchor="center", command=lambda rr=r: drop(rr)).pack(side="left")
+            rows.append((r, a, b, g, ev, ch))
+
+        def drop(r):
+            nonlocal rows
+            rows = [x for x in rows if x[0] is not r]
+            r.destroy()
+
+        for ch in node.get("choices") or []:
+            add_choice(ch)
+        Btn(self.node_box, text="+ choice", command=lambda: add_choice(), anchor="center").pack(anchor="w", pady=4)
+        fx = _yaml_field(self.node_box, "node effects YAML", yaml_dump_text(node.get("effects")))
+        self._widgets = {"name": name, "end": end, "shop": shop, "rows": rows, "fx": fx, "add": add_choice}
+
+    def _collect_node(self) -> None:
+        if not self._widgets:
+            return
+        nid = self.node_id.get()
+        node = self._nodes().setdefault(nid, {})
+        name = self._widgets["name"]
+        node["text"] = loc_value(_get(name[0]), _get(name[1]))
+        node["end"] = bool(self._widgets["end"].get())
+        if self._widgets["shop"].get():
+            node["shop"] = True
+        else:
+            node.pop("shop", None)
+        choices = []
+        for _r, a, b, g, ev, original in self._widgets["rows"]:
+            text = loc_value(a.get(), b.get())
+            if not text:
+                continue
+            ch = dict(original) if isinstance(original, dict) else {}
+            ch["text"] = text
+            goto = g.get().strip()
+            if goto:
+                ch["goto"] = goto
+            else:
+                ch.pop("goto", None)
+            ch["end"] = bool(ev.get())
+            if not ch["end"]:
+                ch.pop("end", None)
+            choices.append(ch)
+        node["choices"] = choices
+        fx = yaml_load_text(_get(self._widgets["fx"]))
+        if fx:
+            node["effects"] = fx
+        elif "effects" in node and not fx:
+            node.pop("effects", None)
+
+    def collect(self) -> None:
+        self._collect_node()
+        self.ed.project.dialogues[self.eid]["start"] = _get(self.start) or "start"
+
+
+class QuestForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        q = editor.project.quests[eid]
+        self.name = _loc(parent, "name", q.get("name"))
+        self.desc = _loc(parent, "description", q.get("description"), height=3)
+        self.start = _loc(parent, "start_text", q.get("start_text"), height=2)
+        self.done = _loc(parent, "done_text", q.get("done_text"), height=2)
+        self.auto = _check(parent, "auto_start", q.get("auto_start"))
+        self.reward = _yaml_field(parent, "reward (YAML effects)", yaml_dump_text(q.get("reward")))
+
+    def collect(self) -> None:
+        q = self.ed.project.quests[self.eid]
+        q["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        q["description"] = loc_value(_get(self.desc[0]), _get(self.desc[1]))
+        q["start_text"] = loc_value(_get(self.start[0]), _get(self.start[1]))
+        q["done_text"] = loc_value(_get(self.done[0]), _get(self.done[1]))
+        q["auto_start"] = bool(self.auto.get())
+        rw = yaml_load_text(_get(self.reward))
+        if rw:
+            q["reward"] = rw
+        else:
+            q.pop("reward", None)
+
+
+class EncounterForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        e = editor.project.encounters[eid]
+        self.name = _loc(parent, "name", e.get("name"))
+        self.hp = _labeled(parent, "hp", str(e.get("hp") or 8))
+        self.attack = _labeled(parent, "attack", str(e.get("attack") or "1d4"))
+        self.defense = _labeled(parent, "defense", str(e.get("defense") or 0))
+        self.ac = _labeled(parent, "ac", str(e.get("ac") or 10))
+        self.xp = _labeled(parent, "xp", str(e.get("xp") or 0))
+        self.flee = _labeled(parent, "flee_dc", str(e.get("flee_dc") or ""))
+        self.appear = _loc(parent, "appear", e.get("appear"), height=2)
+        self.loot = _labeled(parent, "loot (item ids)", csv_load(_loot_ids(e.get("loot"))))
+        self.on_win = _yaml_field(parent, "on_win (YAML)", yaml_dump_text(e.get("on_win")))
+        self.on_lose = _yaml_field(parent, "on_lose (YAML)", yaml_dump_text(e.get("on_lose")))
+
+    def collect(self) -> None:
+        e = self.ed.project.encounters[self.eid]
+        e["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        e["hp"] = int(_get(self.hp) or 8)
+        e["attack"] = _get(self.attack) or "1d4"
+        e["defense"] = int(_get(self.defense) or 0)
+        e["ac"] = int(_get(self.ac) or 10)
+        e["xp"] = int(_get(self.xp) or 0)
+        flee = _get(self.flee).strip()
+        if flee:
+            e["flee_dc"] = int(flee)
+        e["appear"] = loc_value(_get(self.appear[0]), _get(self.appear[1]))
+        loot = csv_dump(_get(self.loot))
+        e["loot"] = [{"item": x, "chance": 100} for x in loot]
+        w = yaml_load_text(_get(self.on_win))
+        if w:
+            e["on_win"] = w
+        else:
+            e.pop("on_win", None)
+        lose = yaml_load_text(_get(self.on_lose))
+        if lose:
+            e["on_lose"] = lose
+        else:
+            e.pop("on_lose", None)
+
+
+class RecipeForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        r = editor.project.recipes[eid]
+        rooms = ("",) + tuple(self.ed.project.locations)
+        self.name = _loc(parent, "name", r.get("name"))
+        self.ings = _labeled(parent, "ingredients", csv_load(r.get("ingredients")))
+        st = str(r.get("station") or "")
+        self.station = _option(parent, "station", st if st in rooms else "", rooms)
+        self.result = _labeled(parent, "result", str(r.get("result") or eid))
+        self.text = _loc(parent, "text", r.get("text"), height=2)
+
+    def collect(self) -> None:
+        r = self.ed.project.recipes[self.eid]
+        r["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        r["ingredients"] = csv_dump(_get(self.ings))
+        st = self.station.get()
+        if st:
+            r["station"] = st
+        else:
+            r.pop("station", None)
+        r["result"] = _get(self.result)
+        r["text"] = loc_value(_get(self.text[0]), _get(self.text[1]))
+
+
+class RawForm(_Base):
+    def __init__(self, parent, editor, attr: str, filename: str):
+        super().__init__(parent, editor)
+        self.attr = attr
+        _label(parent, filename)
+        self.body = _text(parent, getattr(editor.project, attr) or "", height=28)
+
+    def collect(self) -> None:
+        setattr(self.ed.project, self.attr, _get(self.body))
+
+
+def _yaml_field(parent, label: str, value: str) -> Text:
+    _label(parent, label)
+    return _text(parent, value, height=6)
+
+
+def _extra_yaml(obj: dict, keep: set[str]) -> str:
+    extra = {k: v for k, v in obj.items() if k not in keep and not str(k).startswith("_")}
+    return yaml_dump_text(extra)
+
+
+def _merge_extra(obj: dict, text: str, keep: set[str]) -> None:
+    extra = yaml_load_text(text)
+    # drop previous extra keys that we own via the textarea
+    for k in list(obj):
+        if k not in keep and not str(k).startswith("_"):
+            obj.pop(k, None)
+    if isinstance(extra, dict):
+        for k, v in extra.items():
+            if k not in keep:
+                obj[k] = v
+
+
+def _loot_ids(loot) -> list:
+    if not loot:
+        return []
+    out = []
+    for x in loot:
+        if isinstance(x, str):
+            out.append(x)
+        elif isinstance(x, dict) and x.get("item"):
+            out.append(x["item"])
+    return out

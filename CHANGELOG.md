@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — 2026-09-21
+
+- Game editor in the same window / same `QuantumRPG.exe`
+- Forms: game, rooms, items, NPCs, dialogues, quests, encounters, recipes
+- Raw text for `events.yaml` and `hooks.py`
+- Extra YAML on rooms/items/NPCs keeps traps, `on_enter`, containers
+- New game, save, validate, playtest
+- Author games: `games/` or `%APPDATA%\quantum-rpg\games`
+
 ## 1.1.0 — 2026-09-21
 
 - Window UI (Tk): log, HP/gold, clickable exits/items/NPCs, inventory actions, command line
