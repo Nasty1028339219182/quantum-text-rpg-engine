@@ -60,6 +60,10 @@ def run(game: "Game", npc_id: str) -> None:
         for i, ch in enumerate(choices, 1):
             label = loc(ch.get("text"), game.lang)
             game.say(f"  {i}. {label}")
+        game.set_choices(
+            [{"label": f"{i}. {loc(ch.get('text'), game.lang)}", "command": str(i)} for i, ch in enumerate(choices, 1)]
+            + [{"label": t(game.lang, "gui_leave"), "command": "уйти"}]
+        )
         raw = (game.ui.read(t(game.lang, "prompt")) or "").strip()
         cmd = parse(raw)
         if cmd and cmd.verb in ("go", "quit", "look", "inventory", "help"):
@@ -99,6 +103,7 @@ def run(game: "Game", npc_id: str) -> None:
         if picked.get("end") or node_id in (None, False, "end"):
             break
     game.in_dialogue = False
+    game.set_choices([])
 
 
 def _visible_choices(game: "Game", choices: list) -> list[dict]:

@@ -1,4 +1,4 @@
-"""Command-line interface: play, validate, new, list."""
+"""Command-line interface: gui, play, validate, new, list."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .engine import Game, play_path
+from .engine import Game
 from .hooks import Hooks
 from .loader import load_world
+from .paths import games_dir, list_games
 from .ui import ScriptedIO, TerminalIO
 
-ROOT = Path(__file__).resolve().parent.parent
-GAMES = ROOT / "games"
+GAMES = games_dir()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -25,13 +25,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"quantum-rpg {__version__}")
     sub = parser.add_subparsers(dest="cmd")
 
-    p_play = sub.add_parser("play", help="Play a game folder")
+    p_gui = sub.add_parser("gui", help="Open the window UI")
+    p_gui.add_argument("--lang", default="ru", choices=["ru", "en"])
+
+    p_play = sub.add_parser("play", help="Play a game in the terminal")
     p_play.add_argument("game", nargs="?", default="shadow_keep", help="Folder name or path")
     p_play.add_argument("--lang", default=None, choices=["ru", "en"])
     p_play.add_argument("--seed", type=int, default=1)
     p_play.add_argument("--script", help="File with one command per line (for tests)")
     p_play.add_argument("--name", help="Player name (skips prompt)")
     p_play.add_argument("--echo", action="store_true", help="Echo scripted commands")
+    p_play.add_argument("--ui", choices=["cli", "tk"], default="cli")
 
     p_val = sub.add_parser("validate", help="Check a game folder for errors")
     p_val.add_argument("game", nargs="?", default="shadow_keep")
@@ -44,10 +48,9 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     if not args.cmd:
-        parser.print_help()
-        print()
-        print("Example:  python -m quantum_rpg play shadow_keep")
-        return 0
+        return cmd_gui(argparse.Namespace(lang="ru"))
+    if args.cmd == "gui":
+        return cmd_gui(args)
     if args.cmd == "play":
         return cmd_play(args)
     if args.cmd == "validate":
@@ -63,14 +66,35 @@ def resolve_game(name: str) -> Path:
     p = Path(name)
     if p.exists():
         return p.resolve()
-    cand = GAMES / name
+    cand = games_dir() / name
     if cand.exists():
         return cand.resolve()
     raise SystemExit(f"Game not found: {name}\nLooked in {p.resolve()} and {cand}")
 
 
+def cmd_gui(args) -> int:
+    from .gui import launch_gui
+
+    launch_gui(language=getattr(args, "lang", None) or "ru")
+    return 0
+
+
 def cmd_play(args) -> int:
     path = resolve_game(args.game)
+    if getattr(args, "ui", "cli") == "tk" and not args.script:
+        from .gui import PlayWindow
+        import tkinter as tk
+
+        root = tk.Tk()
+        root.configure(bg="#121212")
+        root.title("Quantum Text RPG")
+
+        def _noop():
+            root.destroy()
+
+        PlayWindow(root, path, args.lang or "ru", on_exit=_noop)
+        root.mainloop()
+        return 0
     world = load_world(path)
     if world.errors:
         print("Cannot play, fix these errors:")
@@ -117,7 +141,7 @@ def cmd_validate(args) -> int:
 
 
 def cmd_new(args) -> int:
-    src = GAMES / "template"
+    src = games_dir() / "template"
     parent = Path(args.out) if args.out else Path.cwd() / "games"
     parent.mkdir(parents=True, exist_ok=True)
     dest = parent / args.name
@@ -128,16 +152,17 @@ def cmd_new(args) -> int:
     print(f"Created {dest}")
     print("Edit the YAML files, then:")
     print(f"  python -m quantum_rpg play {dest}")
+    print(f"  python -m quantum_rpg gui")
     return 0
 
 
 def cmd_list() -> int:
-    if not GAMES.exists():
+    found = list_games()
+    if not found:
         print("No bundled games.")
         return 0
-    for p in sorted(GAMES.iterdir()):
-        if p.is_dir() and (p / "game.yaml").exists():
-            print(p.name)
+    for p in found:
+        print(p.name)
     return 0
 
 

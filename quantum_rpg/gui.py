@@ -1,0 +1,474 @@
+"""Minimal Tk window: log + action buttons + command line. No graphics."""
+
+from __future__ import annotations
+
+import threading
+import tkinter as tk
+from tkinter import filedialog, simpledialog, messagebox
+from pathlib import Path
+from typing import Callable, Optional
+
+from . import __version__
+from .engine import Game
+from .hooks import Hooks
+from .i18n import t
+from .loader import load_world
+from .paths import games_dir, list_games
+from .save import list_slots
+from .ui import QueueIO
+from .util import loc
+
+C = {
+    "bg": "#121212",
+    "panel": "#1b1b1b",
+    "fg": "#e8e4d9",
+    "dim": "#8e8a82",
+    "accent": "#c4a35a",
+    "btn": "#2a2a2a",
+    "btn_hi": "#3a3a3a",
+    "line": "#2e2e2e",
+    "danger": "#b54a4a",
+    "ok": "#6a9e6d",
+}
+
+
+def _font_ui(size=10, bold=False):
+    return ("Segoe UI", size, "bold" if bold else "normal")
+
+
+def _font_log(size=10):
+    return ("Consolas", size)
+
+
+class _Btn(tk.Button):
+    def __init__(self, master, **kw):
+        kw.setdefault("bg", C["btn"])
+        kw.setdefault("fg", C["fg"])
+        kw.setdefault("activebackground", C["btn_hi"])
+        kw.setdefault("activeforeground", C["fg"])
+        kw.setdefault("relief", "flat")
+        kw.setdefault("bd", 0)
+        kw.setdefault("padx", 8)
+        kw.setdefault("pady", 4)
+        kw.setdefault("cursor", "hand2")
+        kw.setdefault("font", _font_ui(9))
+        kw.setdefault("anchor", "w")
+        kw.setdefault("highlightthickness", 0)
+        super().__init__(master, **kw)
+
+
+def launch_gui(language: str = "ru") -> None:
+    root = tk.Tk()
+    root.configure(bg=C["bg"])
+    root.title(f"Quantum Text RPG {__version__}")
+    try:
+        root.iconname("QuantumRPG")
+    except Exception:
+        pass
+    Launcher(root, language=language)
+    root.mainloop()
+
+
+class Launcher:
+    def __init__(self, root: tk.Tk, language: str = "ru"):
+        self.root = root
+        self.lang = language
+        self.frame = tk.Frame(root, bg=C["bg"])
+        self.frame.pack(fill="both", expand=True)
+        root.geometry("520x480")
+        root.minsize(440, 400)
+        self._build()
+        self._refresh_games()
+
+    def _tr(self, key: str) -> str:
+        return t(self.lang, key)
+
+    def _build(self) -> None:
+        pad = tk.Frame(self.frame, bg=C["bg"])
+        pad.pack(fill="both", expand=True, padx=28, pady=24)
+        tk.Label(
+            pad, text="QUANTUM TEXT RPG", bg=C["bg"], fg=C["accent"],
+            font=_font_ui(16, True),
+        ).pack(anchor="w")
+        tk.Label(
+            pad, text=self._tr("gui_subtitle"), bg=C["bg"], fg=C["dim"],
+            font=_font_ui(10),
+        ).pack(anchor="w", pady=(4, 16))
+        tk.Label(
+            pad, text=self._tr("gui_games"), bg=C["bg"], fg=C["dim"],
+            font=_font_ui(9),
+        ).pack(anchor="w")
+        box = tk.Frame(pad, bg=C["line"])
+        box.pack(fill="both", expand=True, pady=(4, 12))
+        self.listbox = tk.Listbox(
+            box, bg=C["panel"], fg=C["fg"], selectbackground=C["accent"],
+            selectforeground=C["bg"], relief="flat", bd=0, font=_font_ui(11),
+            highlightthickness=0, activestyle="none",
+        )
+        self.listbox.pack(fill="both", expand=True, padx=1, pady=1)
+        self.listbox.bind("<Double-Button-1>", lambda e: self._play())
+        row = tk.Frame(pad, bg=C["bg"])
+        row.pack(fill="x")
+        _Btn(row, text=self._tr("gui_play"), command=self._play, anchor="center",
+             font=_font_ui(10, True), padx=16).pack(side="left")
+        _Btn(row, text=self._tr("gui_open"), command=self._open, anchor="center").pack(side="left", padx=8)
+        self.lang_btn = _Btn(row, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
+        self.lang_btn.pack(side="left")
+        _Btn(row, text=self._tr("gui_quit"), command=self.root.destroy, anchor="center").pack(side="right")
+        tk.Label(
+            pad, text=self._tr("gui_hint"), bg=C["bg"], fg=C["dim"],
+            font=_font_ui(8), wraplength=460, justify="left",
+        ).pack(anchor="w", pady=(16, 0))
+        self.paths: list[Path] = []
+
+    def _refresh_games(self) -> None:
+        self.listbox.delete(0, "end")
+        self.paths = list_games()
+        for p in self.paths:
+            try:
+                w = load_world(p)
+                world_title = loc(w.title, self.lang)
+            except Exception:
+                world_title = p.name
+            self.listbox.insert("end", f"  {world_title}")
+        if self.paths:
+            self.listbox.selection_set(0)
+
+    def _toggle_lang(self) -> None:
+        self.lang = "en" if self.lang == "ru" else "ru"
+        self.frame.destroy()
+        self.frame = tk.Frame(self.root, bg=C["bg"])
+        self.frame.pack(fill="both", expand=True)
+        self._build()
+        self._refresh_games()
+
+    def _selected(self) -> Optional[Path]:
+        sel = self.listbox.curselection()
+        if not sel:
+            return None
+        return self.paths[sel[0]]
+
+    def _open(self) -> None:
+        path = filedialog.askdirectory(title=self._tr("gui_open"))
+        if not path:
+            return
+        p = Path(path)
+        if not (p / "game.yaml").exists():
+            messagebox.showerror("Quantum RPG", "game.yaml not found")
+            return
+        self._start_play(p)
+
+    def _play(self) -> None:
+        p = self._selected()
+        if not p:
+            messagebox.showinfo("Quantum RPG", self._tr("gui_pick_game"))
+            return
+        self._start_play(p)
+
+    def _start_play(self, path: Path) -> None:
+        self.frame.pack_forget()
+        PlayWindow(self.root, path, self.lang, on_exit=self._back)
+
+    def _back(self) -> None:
+        self.frame.pack(fill="both", expand=True)
+        self._refresh_games()
+
+
+class PlayWindow:
+    def __init__(self, root: tk.Tk, game_path: Path, lang: str, on_exit: Callable):
+        self.root = root
+        self.game_path = Path(game_path)
+        self.lang = lang
+        self.on_exit = on_exit
+        self.ui = QueueIO()
+        self.waiting = False
+        self.snap: dict = {}
+        self.selected_item: Optional[str] = None
+        world = load_world(self.game_path)
+        if world.errors:
+            messagebox.showerror("Quantum RPG", "\n".join(world.errors))
+            on_exit()
+            return
+        self.game = Game(
+            world,
+            hooks=Hooks.load(self.game_path),
+            ui=self.ui,
+            language=lang,
+            seed=1,
+            ask_name=True,
+        )
+        self.ui.game = self.game
+        root.geometry("1040x680")
+        root.minsize(860, 560)
+        self.frame = tk.Frame(root, bg=C["bg"])
+        self.frame.pack(fill="both", expand=True)
+        self._build()
+        self.thread = threading.Thread(target=self._run_game, daemon=True)
+        self.thread.start()
+        self.root.after(40, self._pump)
+
+    def _tr(self, key: str) -> str:
+        return t(self.lang, key)
+
+    def _run_game(self) -> None:
+        try:
+            self.game.start()
+        finally:
+            self.ui.out.put({"op": "ended", "text": "", "snap": self.ui._snap()})
+
+    def _build(self) -> None:
+        top = tk.Frame(self.frame, bg=C["panel"], height=40)
+        top.pack(fill="x")
+        top.pack_propagate(False)
+        self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=_font_ui(11, True))
+        self.title_lbl.pack(side="left", padx=12)
+        _Btn(top, text=self._tr("gui_quit"), command=self._quit_game, anchor="center").pack(side="right", padx=8, pady=6)
+        _Btn(top, text=self._tr("gui_menu"), command=self._to_menu, anchor="center").pack(side="right", pady=6)
+        _Btn(top, text=self._tr("gui_load"), command=self._load, anchor="center").pack(side="right", padx=4, pady=6)
+        _Btn(top, text=self._tr("gui_save"), command=self._save, anchor="center").pack(side="right", pady=6)
+        self.lang_btn = _Btn(top, text=self.lang.upper(), command=self._toggle_lang, anchor="center", width=4)
+        self.lang_btn.pack(side="right", padx=8, pady=6)
+
+        self.status = tk.Label(self.frame, text="", bg=C["bg"], fg=C["fg"], font=_font_ui(10), anchor="w")
+        self.status.pack(fill="x", padx=12, pady=(8, 4))
+
+        body = tk.Frame(self.frame, bg=C["bg"])
+        body.pack(fill="both", expand=True, padx=12, pady=4)
+
+        left = tk.Frame(body, bg=C["line"])
+        left.pack(side="left", fill="both", expand=True)
+        self.log = tk.Text(
+            left, bg=C["panel"], fg=C["fg"], insertbackground=C["fg"],
+            relief="flat", bd=0, wrap="word", font=_font_log(11),
+            highlightthickness=0, padx=12, pady=10, state="disabled",
+        )
+        scroll = tk.Scrollbar(left, command=self.log.yview, bg=C["panel"], troughcolor=C["bg"],
+                              relief="flat", bd=0, width=10)
+        self.log.configure(yscrollcommand=scroll.set)
+        scroll.pack(side="right", fill="y")
+        self.log.pack(fill="both", expand=True, padx=1, pady=1)
+
+        right_wrap = tk.Frame(body, bg=C["bg"], width=280)
+        right_wrap.pack(side="right", fill="y", padx=(10, 0))
+        right_wrap.pack_propagate(False)
+        self.side_canvas = tk.Canvas(right_wrap, bg=C["bg"], highlightthickness=0, bd=0)
+        self.side_scroll = tk.Scrollbar(right_wrap, command=self.side_canvas.yview, width=8, bg=C["bg"])
+        self.side = tk.Frame(self.side_canvas, bg=C["bg"])
+        self.side.bind("<Configure>", lambda e: self.side_canvas.configure(scrollregion=self.side_canvas.bbox("all")))
+        self.side_canvas.create_window((0, 0), window=self.side, anchor="nw", width=262)
+        self.side_canvas.configure(yscrollcommand=self.side_scroll.set)
+        self.side_canvas.pack(side="left", fill="both", expand=True)
+        self.side_scroll.pack(side="right", fill="y")
+        self.side_canvas.bind_all("<MouseWheel>", self._on_wheel)
+
+        bottom = tk.Frame(self.frame, bg=C["panel"])
+        bottom.pack(fill="x", padx=12, pady=(4, 12))
+        self.prompt_lbl = tk.Label(bottom, text=">", bg=C["panel"], fg=C["accent"], font=_font_ui(11, True))
+        self.prompt_lbl.pack(side="left", padx=(8, 4), pady=8)
+        self.entry = tk.Entry(
+            bottom, bg=C["bg"], fg=C["fg"], insertbackground=C["accent"],
+            relief="flat", font=_font_log(11), highlightthickness=1,
+            highlightcolor=C["accent"], highlightbackground=C["line"],
+        )
+        self.entry.pack(side="left", fill="x", expand=True, pady=8, ipady=4)
+        self.entry.bind("<Return>", lambda e: self._submit())
+        _Btn(bottom, text=self._tr("gui_send"), command=self._submit, anchor="center",
+             font=_font_ui(10, True)).pack(side="right", padx=8, pady=8)
+        self.entry.focus_set()
+
+    def _on_wheel(self, event) -> None:
+        self.side_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _append(self, text: str) -> None:
+        if not text:
+            return
+        self.log.configure(state="normal")
+        self.log.insert("end", text.rstrip() + "\n")
+        self.log.see("end")
+        self.log.configure(state="disabled")
+
+    def _pump(self) -> None:
+        if not self.frame.winfo_exists():
+            return
+        try:
+            while True:
+                msg = self.ui.out.get_nowait()
+                op = msg.get("op")
+                if op == "write":
+                    self._append(msg.get("text") or "")
+                elif op == "read":
+                    self.waiting = True
+                    prompt = (msg.get("prompt") or "> ").strip()
+                    self.prompt_lbl.configure(text=prompt or ">")
+                elif op == "choices":
+                    pass
+                elif op == "ended":
+                    self.waiting = False
+                    self._append("")
+                snap = msg.get("snap")
+                if snap:
+                    self.snap = snap
+                    self.lang = self.game.lang
+                    self._render_side()
+                    self._render_status()
+        except Exception:
+            pass
+        if self.frame.winfo_exists():
+            self.root.after(40, self._pump)
+
+    def _render_status(self) -> None:
+        s = self.snap or {}
+        locn = (s.get("location") or "").upper()
+        hp = f"{t(self.lang, 'hp')} {s.get('hp', 0)}/{s.get('max_hp', 0)}"
+        gold = f"{t(self.lang, 'gold')} {s.get('gold', 0)}"
+        extra = ""
+        if s.get("max_mp"):
+            extra = f"  {t(self.lang, 'mp')} {s.get('mp')}/{s.get('max_mp')}"
+        self.status.configure(text=f"{locn}    {hp}{extra}    {gold}")
+        self.title_lbl.configure(text=s.get("title") or "Quantum RPG")
+        self.lang_btn.configure(text=self.lang.upper())
+
+    def _clear_side(self) -> None:
+        for w in self.side.winfo_children():
+            w.destroy()
+
+    def _head(self, text: str) -> None:
+        tk.Label(self.side, text=text.upper(), bg=C["bg"], fg=C["dim"], font=_font_ui(8), anchor="w").pack(
+            fill="x", pady=(10, 2)
+        )
+
+    def _btn(self, label: str, cmd: str, dim: bool = False) -> None:
+        fg = C["dim"] if dim else C["fg"]
+        _Btn(self.side, text=label, fg=fg, command=lambda c=cmd: self._send(c)).pack(fill="x", pady=1)
+
+    def _render_side(self) -> None:
+        self._clear_side()
+        s = self.snap or {}
+        mode = s.get("mode") or "play"
+        choices = s.get("choices") or []
+        if mode in ("combat", "dialogue", "shop") and choices:
+            title = {
+                "combat": t(self.lang, "combat"),
+                "dialogue": t(self.lang, "people_here"),
+                "shop": t(self.lang, "shop"),
+            }.get(mode, "")
+            self._head(title)
+            for ch in choices:
+                self._btn(ch.get("label") or ch.get("command"), ch.get("command") or "")
+            if mode == "shop":
+                self._head(t(self.lang, "inventory"))
+                for it in s.get("inventory") or []:
+                    self._btn(f"{self._tr('gui_sell')}: {it['label']}", f"sell {it['id']}")
+            return
+
+        self._head(t(self.lang, "exits"))
+        for ex in s.get("exits") or []:
+            label = ex["label"]
+            if ex.get("locked"):
+                label = f"{label} ({t(self.lang, 'locked')})"
+            self._btn(label, ex["command"], dim=bool(ex.get("locked")))
+
+        if s.get("items"):
+            self._head(t(self.lang, "items_here"))
+            for it in s["items"]:
+                self._btn(f"{self._tr('gui_take')}: {it['label']}", it["command"])
+
+        if s.get("containers"):
+            self._head(t(self.lang, "containers"))
+            for c in s["containers"]:
+                self._btn(f"{self._tr('gui_open_c')}: {c['label']}", c["command"])
+
+        if s.get("npcs"):
+            self._head(t(self.lang, "people_here"))
+            for n in s["npcs"]:
+                self._btn(f"{self._tr('gui_talk')}: {n['label']}", n["talk"])
+                if n.get("shop"):
+                    self._btn(f"{t(self.lang, 'shop')}: {n['label']}", f"shop {n['id']}")
+                self._btn(f"{self._tr('gui_attack')}: {n['label']}", n["attack"], dim=True)
+
+        self._head(self._tr("gui_actions"))
+        self._btn(self._tr("gui_look"), "look")
+        self._btn(self._tr("gui_search"), "search")
+        self._btn(t(self.lang, "stats"), "stats")
+        self._btn(t(self.lang, "quests"), "quests")
+        self._btn(t(self.lang, "journal"), "journal")
+        self._btn(t(self.lang, "map"), "map")
+        if s.get("can_rest"):
+            self._btn(self._tr("gui_rest"), "rest")
+        for rec in s.get("recipes") or []:
+            self._btn(f"{self._tr('gui_craft')}: {rec['label']}", rec["command"])
+
+        self._head(t(self.lang, "inventory"))
+        inv = s.get("inventory") or []
+        if not inv:
+            tk.Label(self.side, text=t(self.lang, "empty_inv"), bg=C["bg"], fg=C["dim"],
+                     font=_font_ui(9), anchor="w").pack(fill="x")
+        for it in inv:
+            mark = " *" if it.get("equipped") else ""
+            self._btn(it["label"] + mark, f"__inv:{it['id']}")
+        if self.selected_item:
+            row = tk.Frame(self.side, bg=C["bg"])
+            row.pack(fill="x", pady=4)
+            for key, cmd in (
+                ("gui_examine", f"look {self.selected_item}"),
+                ("gui_use", f"use {self.selected_item}"),
+                ("gui_equip", f"equip {self.selected_item}"),
+                ("gui_drop", f"drop {self.selected_item}"),
+            ):
+                _Btn(row, text=self._tr(key), command=lambda c=cmd: self._send(c),
+                     font=_font_ui(8), padx=4).pack(side="left", padx=1)
+
+    def _send(self, command: str) -> None:
+        if command.startswith("__inv:"):
+            self.selected_item = command.split(":", 1)[1]
+            self._render_side()
+            return
+        self._submit(command)
+
+    def _submit(self, text: Optional[str] = None) -> None:
+        if text is None:
+            text = self.entry.get()
+            self.entry.delete(0, "end")
+        text = (text or "").strip()
+        if not text:
+            return
+        self._append(f"> {text}")
+        self.waiting = False
+        self.ui.submit(text)
+
+    def _save(self) -> None:
+        slot = simpledialog.askstring("Quantum RPG", self._tr("gui_slot"), parent=self.root) or "slot1"
+        self._submit(f"save {slot}")
+
+    def _load(self) -> None:
+        slots = list_slots(self.game_path)
+        slot = simpledialog.askstring(
+            "Quantum RPG",
+            self._tr("gui_slot") + (("  " + ", ".join(slots)) if slots else "  (" + self._tr("gui_no_saves") + ")"),
+            parent=self.root,
+        )
+        if slot:
+            self._submit(f"load {slot}")
+
+    def _toggle_lang(self) -> None:
+        self._submit("language")
+
+    def _quit_game(self) -> None:
+        self.ui.submit("quit")
+        self.root.after(200, self._close)
+
+    def _to_menu(self) -> None:
+        self.ui.submit("quit")
+        self.root.after(200, self._close)
+
+    def _close(self) -> None:
+        try:
+            self.ui.close()
+        except Exception:
+            pass
+        try:
+            self.root.unbind_all("<MouseWheel>")
+        except Exception:
+            pass
+        self.frame.destroy()
+        self.on_exit()

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from .effects import apply as apply_effects
 from .i18n import t
+from .parser import parse
 from .util import loc, modifier, roll
 
 if TYPE_CHECKING:
@@ -116,23 +117,46 @@ def run(game: "Game", encounter_id: str) -> str:
     while True:
         if game.state.ended:
             game.in_combat = False
+            game.set_choices([])
             return "lose" if game.state.ended == "lose" else "win"
         living = [e for e in enemies if e.hp > 0]
         if not living:
             _victory(game, enc, enemies)
             game.in_combat = False
+            game.set_choices([])
             game.hooks.call("on_combat_end", game, encounter_id, True)
             apply_effects(game, enc.get("on_win"))
             return "win"
 
         _status(game, living)
         game.say(t(game.lang, "combat_menu"))
+        game.set_choices(
+            [
+                {"label": t(game.lang, "attack"), "command": "1"},
+                {"label": t(game.lang, "use_item"), "command": "2"},
+                {"label": t(game.lang, "defend"), "command": "3"},
+                {"label": t(game.lang, "flee"), "command": "4"},
+            ]
+        )
         choice = (game.ui.read(t(game.lang, "prompt")) or "").strip().lower()
+        cmd = parse(choice)
+        if cmd and cmd.verb in (
+            "save", "load", "language", "help", "stats", "inventory",
+            "quests", "journal", "map", "quit",
+        ):
+            if cmd.verb == "quit":
+                game.in_combat = False
+                game.running = False
+                game.set_choices([])
+                return "abort"
+            game.handle(choice)
+            continue
         action, extra = _parse_choice(choice)
 
         if action in ("quit", "выход"):
             game.in_combat = False
             game.running = False
+            game.set_choices([])
             return "abort"
         if action == "flee" or action == "4":
             dc = int(enc.get("flee_dc") or 12)
@@ -140,6 +164,7 @@ def run(game: "Game", encounter_id: str) -> str:
             if roll_v >= dc:
                 game.say(t(game.lang, "fled"))
                 game.in_combat = False
+                game.set_choices([])
                 game.hooks.call("on_combat_end", game, encounter_id, False)
                 return "flee"
             game.say(t(game.lang, "cant_flee"))
@@ -169,6 +194,7 @@ def run(game: "Game", encounter_id: str) -> str:
                 game.say(t(game.lang, "dead"))
                 game.finish("lose")
                 game.in_combat = False
+                game.set_choices([])
                 game.hooks.call("on_combat_end", game, encounter_id, False)
                 apply_effects(game, enc.get("on_lose"))
                 return "lose"
@@ -283,12 +309,17 @@ def _enemy_hit(game: "Game", enemy: Fighter, ac: int) -> None:
 def _use_in_combat(game: "Game", extra: str, living: list[Fighter]) -> None:
     if not extra:
         names = []
+        choices = []
         for iid in game.state.player.inventory:
             item = game.world.items.get(iid) or {}
-            if item.get("type") in ("consumable", "weapon", "misc", "key") or item.get("use"):
-                names.append(loc(item.get("name") or iid, game.lang))
+            label = loc(item.get("name") or iid, game.lang)
+            names.append(label)
+            choices.append({"label": label, "command": iid})
+        game.set_choices(choices + [{"label": t(game.lang, "gui_leave"), "command": "0"}])
         game.say(t(game.lang, "which_item", list=", ".join(names) or "—"))
         extra = (game.ui.read(t(game.lang, "prompt")) or "").strip()
+        if extra in ("0", "leave", "уйти"):
+            return
     if extra:
         game.use_item(extra, combat=True)
 

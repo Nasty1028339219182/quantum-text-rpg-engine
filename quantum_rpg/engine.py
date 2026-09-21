@@ -36,6 +36,8 @@ class Game:
         self.combat_id = ""
         self.last_skill_roll = (0, 0, False)
         self.ask_name = ask_name
+        self.in_shop = False
+        self.ui_choices: list = []
         self.state = self._new_state(language, seed)
 
     @property
@@ -69,6 +71,102 @@ class Game:
     def npc_name(self, npc_id: str) -> str:
         npc = self.world.npcs.get(npc_id) or {}
         return loc(npc.get("name") or npc_id, self.lang)
+
+    def set_choices(self, choices: list | None) -> None:
+        self.ui_choices = list(choices or [])
+        fn = getattr(self.ui, "set_choices", None)
+        if callable(fn):
+            fn(self.ui_choices)
+
+    def snapshot(self) -> dict:
+        """Button-friendly view of the current room. Safe to call from the UI thread."""
+        p = self.state.player
+        mode = "play"
+        if self.state.ended:
+            mode = "ended"
+        elif self.in_combat:
+            mode = "combat"
+        elif self.in_shop:
+            mode = "shop"
+        elif self.in_dialogue:
+            mode = "dialogue"
+        exits = []
+        for d, dest in self.visible_exits().items():
+            exits.append(
+                {
+                    "id": d,
+                    "label": dir_name(d, self.lang),
+                    "locked": self.is_locked(d, dest),
+                    "command": d,
+                }
+            )
+        items = []
+        for iid in self.state.location_items.get(self.state.location) or []:
+            items.append({"id": iid, "label": self.item_name(iid), "command": f"take {iid}"})
+        npcs = []
+        for nid, data in self._here_npcs().items():
+            npcs.append(
+                {
+                    "id": nid,
+                    "label": self.npc_name(nid),
+                    "talk": f"talk {nid}",
+                    "attack": f"attack {nid}",
+                    "shop": bool(data.get("shop")),
+                }
+            )
+        containers = []
+        for cid, box in (self.room().get("containers") or {}).items():
+            if not isinstance(box, dict):
+                box = {"name": cid}
+            containers.append(
+                {
+                    "id": cid,
+                    "label": loc(box.get("name") or cid, self.lang),
+                    "command": f"open {cid}",
+                }
+            )
+        inv = []
+        eq = set((p.equipment or {}).values())
+        for iid in p.inventory:
+            item = self.world.items.get(iid) or {}
+            inv.append(
+                {
+                    "id": iid,
+                    "label": self.item_name(iid),
+                    "equipped": iid in eq,
+                    "type": item.get("type") or "misc",
+                }
+            )
+        return {
+            "mode": mode,
+            "title": loc(self.world.title, self.lang),
+            "location_id": self.state.location,
+            "location": self.loc_name(self.state.location),
+            "player": p.name,
+            "hp": p.hp,
+            "max_hp": p.max_hp,
+            "mp": p.mp,
+            "max_mp": p.max_mp,
+            "gold": p.gold,
+            "xp": p.xp,
+            "level": p.level,
+            "ended": self.state.ended,
+            "dark": self.is_dark(),
+            "exits": exits,
+            "items": items,
+            "npcs": npcs,
+            "containers": containers,
+            "inventory": inv,
+            "choices": list(self.ui_choices),
+            "can_rest": self.room().get("rest") is not False,
+            "recipes": [
+                {"id": rid, "label": loc(r.get("name") or rid, self.lang), "command": f"craft {rid}"}
+                for rid, r in self.world.recipes.items()
+                if (r.get("station") in (None, self.state.location))
+                or self.state.location in (self.room().get("tags") or [])
+                or r.get("station") in (self.room().get("tags") or [])
+            ],
+        }
 
     # ------------------------------------------------------------------ setup
     def _new_state(self, language: str, seed: int) -> GameState:
@@ -136,6 +234,8 @@ class Game:
         self.hooks.call("on_enter", self, self.state.location)
         self._fire_enter(self.state.location)
         while self.running and not self.state.ended:
+            if not self.in_combat and not self.in_dialogue and not self.in_shop:
+                self.set_choices([])
             line = self.ui.read(t(self.lang, "prompt"))
             self.handle(line)
             if self.running and not self.state.ended:
@@ -1109,6 +1209,7 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
     npc = game.world.npcs.get(npc_id) or {}
     stock_src = npc.get("shop") or []
     key = npc_id
+    game.in_shop = True
     if key not in game.state.shop_stock:
         game.state.shop_stock[key] = []
         for row in stock_src:
@@ -1139,60 +1240,80 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
             name = game.item_name(row["item"])
             game.say(f"  {name} — {row['price']} ({row.get('stock', 1)})")
 
+    def shop_choices():
+        ch = []
+        for row in game.state.shop_stock.get(key) or []:
+            if int(row.get("stock", 1)) == 0:
+                continue
+            name = game.item_name(row["item"])
+            ch.append(
+                {
+                    "label": f"{name} — {row['price']}",
+                    "command": f"buy {row['item']}",
+                }
+            )
+        ch.append({"label": t(game.lang, "gui_leave"), "command": "leave"})
+        game.set_choices(ch)
+
     show()
     commands = [preset] if preset else []
-    while True:
-        if commands:
-            raw = commands.pop(0)
-        else:
-            raw = (game.ui.read(t(game.lang, "prompt")) or "").strip()
-        if not raw:
-            continue
-        low = raw.lower()
-        if low in ("leave", "уйти", "выход", "quit", "0", "back"):
-            game.say(t(game.lang, "left"))
-            return
-        parts = low.split(None, 1)
-        verb, rest = parts[0], parts[1] if len(parts) > 1 else ""
-        if verb in ("list", "смотреть", "look", "список"):
-            show()
-            continue
-        if verb in ("buy", "купить"):
-            row = _shop_match(game, key, rest)
-            if not row:
-                game.say(t(game.lang, "gone"))
+    try:
+        while True:
+            if commands:
+                raw = commands.pop(0)
+            else:
+                shop_choices()
+                raw = (game.ui.read(t(game.lang, "prompt")) or "").strip()
+            if not raw:
                 continue
-            price = int(row["price"])
-            if game.state.player.gold < price:
-                game.say(t(game.lang, "not_enough_gold"))
+            low = raw.lower()
+            if low in ("leave", "уйти", "выход", "quit", "0", "back"):
+                game.say(t(game.lang, "left"))
+                return
+            parts = low.split(None, 1)
+            verb, rest = parts[0], parts[1] if len(parts) > 1 else ""
+            if verb in ("list", "смотреть", "look", "список"):
+                show()
                 continue
-            if int(row.get("stock", 1)) == 0:
-                game.say(t(game.lang, "shop_empty"))
+            if verb in ("buy", "купить"):
+                row = _shop_match(game, key, rest)
+                if not row:
+                    game.say(t(game.lang, "gone"))
+                    continue
+                price = int(row["price"])
+                if game.state.player.gold < price:
+                    game.say(t(game.lang, "not_enough_gold"))
+                    continue
+                if int(row.get("stock", 1)) == 0:
+                    game.say(t(game.lang, "shop_empty"))
+                    continue
+                game.state.player.gold -= price
+                game.give_item(row["item"], silent=True)
+                if int(row.get("stock", 1)) > 0:
+                    row["stock"] = int(row["stock"]) - 1
+                game.say(t(game.lang, "bought", name=game.item_name(row["item"]), n=price))
+                if preset:
+                    return
                 continue
-            game.state.player.gold -= price
-            game.give_item(row["item"], silent=True)
-            if int(row.get("stock", 1)) > 0:
-                row["stock"] = int(row["stock"]) - 1
-            game.say(t(game.lang, "bought", name=game.item_name(row["item"]), n=price))
+            if verb in ("sell", "продать"):
+                iid = game._match_inv(rest)
+                if not iid:
+                    game.say(t(game.lang, "no_item"))
+                    continue
+                item = game.world.items.get(iid) or {}
+                price = max(1, int(item.get("value") or 1) // 2)
+                game.take_from_inv(iid, silent=True)
+                game.state.player.gold += price
+                game.say(t(game.lang, "sold", name=game.item_name(iid), n=price))
+                if preset:
+                    return
+                continue
+            game.say(t(game.lang, "shop_hint"))
             if preset:
                 return
-            continue
-        if verb in ("sell", "продать"):
-            iid = game._match_inv(rest)
-            if not iid:
-                game.say(t(game.lang, "no_item"))
-                continue
-            item = game.world.items.get(iid) or {}
-            price = max(1, int(item.get("value") or 1) // 2)
-            game.take_from_inv(iid, silent=True)
-            game.state.player.gold += price
-            game.say(t(game.lang, "sold", name=game.item_name(iid), n=price))
-            if preset:
-                return
-            continue
-        game.say(t(game.lang, "shop_hint"))
-        if preset:
-            return
+    finally:
+        game.in_shop = False
+        game.set_choices([])
 
 
 def _shop_match(game: Game, key: str, query: str) -> Optional[dict]:

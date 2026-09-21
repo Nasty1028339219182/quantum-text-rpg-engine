@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 — 2026-09-21
+
+- Window UI (Tk): log, HP/gold, clickable exits/items/NPCs, inventory actions, command line
+- `python -m quantum_rpg` / `python -m quantum_rpg gui` opens the window
+- Terminal `play` is unchanged
+- Windows player `QuantumRPG.exe` (GitHub Actions) + author zip pack
+- Saves from the frozen exe go to `%APPDATA%/quantum-rpg/saves`
+
 ## 1.0.0 — 2026-09-21
 
 First public release.

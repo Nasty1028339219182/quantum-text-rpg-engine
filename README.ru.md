@@ -2,11 +2,12 @@
 
 **RU** · [English](README.md)
 
-Движок для **полностью текстовых** RPG. Без графики, без картинок, без браузера. Игра пишется YAML-файлами (комнаты, предметы, NPC, квесты, бой, диалоги). Python-хуки — по желанию, только если YAML не хватает.
+Движок для **полностью текстовых** RPG. Без графики, без картинок, без браузера. Игра — YAML. Python-хуки по желанию.
 
-Копируешь кусок из документации, подставляешь свои названия, запускаешь.
+**1.1.0** — окно Windows: лог, кнопки выходов/предметов/NPC, инвентарь и строка команды.
 
 ```text
+python -m quantum_rpg
 python -m quantum_rpg play shadow_keep
 ```
 
@@ -14,6 +15,7 @@ python -m quantum_rpg play shadow_keep
 
 - Python 3.10+
 - PyYAML (`pip install pyyaml`)
+- Окно использует Tkinter (в Windows идёт с Python)
 
 ## Установка
 
@@ -21,42 +23,29 @@ python -m quantum_rpg play shadow_keep
 git clone https://github.com/Nasty1028339219182/quantum-text-rpg-engine.git
 cd quantum-text-rpg-engine
 pip install -r requirements.txt
+python -m quantum_rpg
 ```
 
-Либо `pip install .` — появится команда `quantum-rpg`.
+Игрок без Python: **QuantumRPG.exe** из [Releases](https://github.com/Nasty1028339219182/quantum-text-rpg-engine/releases). Автор: zip **author pack** там же.
 
-## Демо: фэнтези-данжен
+## Играть
 
-```bash
-python -m quantum_rpg play shadow_keep
-python -m quantum_rpg play shadow_keep --lang en
-python -m quantum_rpg play shadow_keep --name Герой --seed 7
-```
+Окно (по умолчанию): `python -m quantum_rpg`
 
-**Тень Крепости** — короткий данжен: запертые двери, поиск, крысы, узник с истинным именем, часовня, журнал капитана, оружейная, крипта, демон. Две концовки (убийство / сделка).
+Терминал: `python -m quantum_rpg play shadow_keep`
 
-Интерфейс — строка ввода. Команда `помощь`.
+В окне жми кнопки справа или набирай `взять ключ` внизу.
 
-## Своя игра без кода движка
+## Своя игра
 
 ```bash
 python -m quantum_rpg new my_game
-# правишь games/my_game/*.yaml
 python -m quantum_rpg validate my_game
-python -m quantum_rpg play my_game
 ```
 
-Идентификаторы — на английском (`iron_key`). То, что видит игрок:
+В окне — **Открыть папку…** → `games/my_game`.
 
-```yaml
-name: {ru: железный ключ, en: iron key}
-```
-
-Полный гайд с копипастой: [docs/AUTHORING.ru.md](docs/AUTHORING.ru.md)
-
-Справочник полей: [docs/YAML_REFERENCE.md](docs/YAML_REFERENCE.md)
-
-Хуки: [docs/HOOKS.md](docs/HOOKS.md)
+Гайд: [docs/AUTHORING.ru.md](docs/AUTHORING.ru.md)
 
 ## Лицензия
 
