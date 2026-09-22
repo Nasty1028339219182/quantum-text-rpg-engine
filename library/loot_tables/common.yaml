@@ -1,0 +1,13 @@
+traveler_pouch:
+  - {item: copper_coin, chance: 80}
+  - {item: bread, chance: 40}
+  - {item: bandage, chance: 15}
+
+beast_remains:
+  - {item: wolf_pelt, chance: 70}
+  - {item: fang, chance: 40}
+
+dungeon_junk:
+  - {item: copper_coin, chance: 50}
+  - {item: rat_tooth, chance: 30}
+  - {item: brass_key, chance: 8}

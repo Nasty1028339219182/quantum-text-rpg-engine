@@ -332,11 +332,10 @@ def _victory(game: "Game", enc: dict, enemies: list[Fighter]) -> None:
     loot = list(enc.get("loot") or [])
     for e in enemies:
         loot.extend(e.loot)
-    for drop in loot:
-        if isinstance(drop, str):
-            iid, chance = drop, 100
-        else:
-            iid, chance = drop.get("item") or drop.get("id"), int(drop.get("chance") or 100)
+    from .loot import resolve_loot
+
+    for drop in resolve_loot(game.world, loot):
+        iid, chance = drop.get("item"), int(drop.get("chance") or 100)
         if not iid:
             continue
         if roll("1d100", game.rng) <= chance:

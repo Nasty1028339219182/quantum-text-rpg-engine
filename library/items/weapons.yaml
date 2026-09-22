@@ -1,0 +1,53 @@
+short_sword:
+  name: {ru: короткий меч, en: short sword}
+  aliases: [меч, sword, короткий]
+  description: {ru: Короткий клинок ополченца., en: A militia short blade.}
+  type: weapon
+  slot: weapon
+  damage: 1d6+1
+  hit: 1
+  weight: 2
+  value: 12
+
+wood_axe:
+  name: {ru: топор, en: wood axe}
+  aliases: [топор, axe]
+  description: {ru: Лесорубский топор. Тяжёлый, честный., en: A woodcutter's axe. Heavy and honest.}
+  type: weapon
+  slot: weapon
+  damage: 1d8
+  hit: 0
+  weight: 4
+  value: 8
+
+dagger:
+  name: {ru: кинжал, en: dagger}
+  aliases: [кинжал, dagger, нож]
+  description: {ru: Узкий нож. Легко спрятать., en: A slim knife. Easy to hide.}
+  type: weapon
+  slot: weapon
+  damage: 1d4+1
+  hit: 2
+  weight: 1
+  value: 6
+
+club:
+  name: {ru: дубина, en: club}
+  aliases: [дубина, club, палка]
+  description: {ru: Сук с гвоздём., en: A branch with a nail.}
+  type: weapon
+  slot: weapon
+  damage: 1d4
+  weight: 3
+  value: 2
+
+hunting_bow:
+  name: {ru: охотничий лук, en: hunting bow}
+  aliases: [лук, bow]
+  description: {ru: Простой лук. Вблизи — неудобен, но лучше кулаков., en: A simple bow. Awkward up close, better than fists.}
+  type: weapon
+  slot: weapon
+  damage: 1d6
+  hit: 1
+  weight: 2
+  value: 14

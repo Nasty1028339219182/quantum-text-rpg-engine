@@ -24,3 +24,10 @@ true_name:
   done_text:
     ru: Имя у тебя. Осталось сказать его тому, кто его боится.
     en: You have the name. Left is to say it to the one who fears it.
+
+deserter_mercy:
+  name: {ru: Человек на стене, en: The man on the wall}
+  description: {ru: Решить, что делать с дезертиром на зубцах., en: Decide what to do with the deserter on the battlements.}
+  start_text: {ru: На стене прячется живой. Это уже редкость., en: A living man hides on the wall. That is already rare.}
+  done_text: {ru: Ты выбрал за него., en: You chose for him.}
+

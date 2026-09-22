@@ -1,0 +1,7 @@
+travel_torch:
+  name: {ru: факел, en: torch}
+  aliases: [факел, torch]
+  type: misc
+  light: true
+  weight: 1
+  value: 1

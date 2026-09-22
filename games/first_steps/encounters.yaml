@@ -1,0 +1,11 @@
+straw_man:
+  name: {ru: Чучело, en: Dummy}
+  hp: 4
+  attack: 1d2
+  defense: 0
+  xp: 5
+  appear: {ru: Чучело качается на шесте. Оно не живое, но бьёт., en: The dummy sways on the pole. It is not alive. It still hits.}
+  flee_dc: 5
+  on_win:
+    - set_flag: dummy_down
+    - message: {ru: Солома сыплется. Калитка на западе открыта., en: Straw spills. The west gate is open.}

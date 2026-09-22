@@ -1,0 +1,47 @@
+leather_jerkin:
+  name: {ru: кожаная куртка, en: leather jerkin}
+  aliases: [куртка, jerkin, кожа]
+  type: armor
+  slot: armor
+  ac: 2
+  weight: 4
+  value: 15
+
+wooden_shield:
+  name: {ru: деревянный щит, en: wooden shield}
+  aliases: [щит, shield]
+  type: shield
+  slot: shield
+  ac: 1
+  weight: 3
+  value: 8
+
+rope:
+  name: {ru: верёвка, en: rope}
+  aliases: [верёвка, веревка, rope]
+  type: misc
+  weight: 2
+  value: 3
+
+travel_torch:
+  name: {ru: дорожный факел, en: travel torch}
+  aliases: [факел, torch]
+  type: misc
+  light: true
+  weight: 1
+  value: 2
+
+lantern:
+  name: {ru: фонарь, en: lantern}
+  aliases: [фонарь, lantern]
+  type: misc
+  light: true
+  weight: 2
+  value: 9
+
+copper_coin:
+  name: {ru: медный грош, en: copper coin}
+  aliases: [монета, coin, грош]
+  type: misc
+  weight: 0
+  value: 1

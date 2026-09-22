@@ -1,0 +1,34 @@
+village_elder:
+  name: {ru: Староста, en: Elder}
+  aliases: [староста, elder, старик]
+  description: {ru: Седая борода, клюка, взгляд человека, который считает рты., en: Grey beard, a stick, the eyes of someone who counts mouths.}
+  location: lib_square
+  dialogue: village_elder
+
+innkeeper:
+  name: {ru: Трактирщик, en: Innkeeper}
+  aliases: [трактирщик, innkeeper, хозяин]
+  description: {ru: Руки в муке, фартук в пиве., en: Flour on the hands, beer on the apron.}
+  location: lib_inn
+  dialogue: innkeeper
+  shop:
+    - {item: bread, price: 2, stock: 6}
+    - {item: health_potion, price: 14, stock: 1}
+
+merchant:
+  name: {ru: Торговец, en: Merchant}
+  aliases: [торговец, merchant, купец]
+  description: {ru: Весы, улыбка, пальцы без мозолей., en: Scales, a smile, uncalloused fingers.}
+  location: lib_stall
+  dialogue: merchant
+  shop:
+    - {item: dagger, price: 8, stock: 1}
+    - {item: rope, price: 4, stock: 3}
+    - {item: bandage, price: 5, stock: 4}
+
+miller:
+  name: {ru: Мельник, en: Miller}
+  aliases: [мельник, miller]
+  description: {ru: Белая пыль в бровях. Говорит коротко., en: White dust in the brows. Short sentences.}
+  location: lib_square
+  dialogue: miller

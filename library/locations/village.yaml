@@ -1,0 +1,30 @@
+lib_square:
+  name: {ru: Площадь, en: Square}
+  description:
+    ru: Колодец, доски объявлений, запах дыма из трактира.
+    en: A well, notice boards, inn-smoke.
+  rest: true
+  exits:
+    west: lib_inn
+    east: lib_stall
+  npcs: [village_elder]
+
+lib_inn:
+  name: {ru: Трактир, en: Inn}
+  description:
+    ru: Низкий потолок, стол у очага, кружки.
+    en: Low ceiling, a table by the hearth, mugs.
+  rest: true
+  exits:
+    east: lib_square
+  npcs: [innkeeper]
+  tags: [inn]
+
+lib_stall:
+  name: {ru: Прилавок, en: Stall}
+  description:
+    ru: Навес, гири, запах кожи и лука.
+    en: An awning, weights, the smell of leather and onion.
+  exits:
+    west: lib_square
+  npcs: [merchant]

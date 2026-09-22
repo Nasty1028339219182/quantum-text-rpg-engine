@@ -1,0 +1,38 @@
+id: first_steps
+title:
+  ru: Первые шаги
+  en: First Steps
+author: Quantum
+version: "1.3.0"
+language: ru
+include:
+  - items/weapons.yaml
+  - items/consumables.yaml
+  - items/keys.yaml
+start:
+  location: yard
+intro:
+  ru: |
+    Учебный двор. Здесь нет демонов — только команды.
+    Возьми факел. Поговори с наставником. Найди ключ. Победи чучело.
+  en: |
+    A practice yard. No demons here — only commands.
+    Take the torch. Talk to the tutor. Find the key. Beat the dummy.
+win:
+  flags: [lesson_done]
+  text:
+    ru: Наставник кивает. Ты умеешь ходить, брать, говорить и бить. Остальное — в настоящей игре.
+    en: The tutor nods. You can walk, take, talk and hit. The rest is a real game.
+lose:
+  text:
+    ru: Даже чучело тебя уделало. Попробуй ещё раз.
+    en: Even the dummy got you. Try again.
+player:
+  name_prompt: false
+  name: {ru: Ученик, en: Pupil}
+  stats: {str: 12, dex: 12, int: 10, con: 12, cha: 10, per: 12}
+  hp: 20
+  max_hp: 20
+  gold: 5
+  inventory: [short_sword]
+  equipment: {weapon: short_sword}

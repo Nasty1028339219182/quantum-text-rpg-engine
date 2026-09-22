@@ -21,6 +21,7 @@ KNOWN_FILES = (
     "recipes",
     "events",
     "skills",
+    "loot_tables",
 )
 
 
@@ -37,6 +38,7 @@ class World:
     recipes: dict = field(default_factory=dict)
     events: list = field(default_factory=list)
     skills: dict = field(default_factory=dict)
+    loot_tables: dict = field(default_factory=dict)
     warnings: list = field(default_factory=list)
     errors: list = field(default_factory=list)
 
@@ -121,6 +123,9 @@ def load_world(game_dir: str | Path) -> World:
     world.encounters = _index(raw.get("encounters"), "encounters")
     world.recipes = _index(raw.get("recipes"), "recipes")
     world.skills = _index(raw.get("skills"), "skills")
+    world.loot_tables = _loot_tables(raw.get("loot_tables"))
+    if isinstance(game.get("loot_tables"), dict):
+        world.loot_tables.update(_loot_tables(game.get("loot_tables")))
     events = raw.get("events")
     if isinstance(events, dict):
         world.events = []
@@ -135,8 +140,59 @@ def load_world(game_dir: str | Path) -> World:
         world.events = []
 
     _attach_ids(world)
+    _apply_includes(world, path)
+    _attach_ids(world)
     _validate(world)
     return world
+
+
+def _loot_tables(data: Any) -> dict:
+    if not isinstance(data, dict):
+        return {}
+    out = {}
+    for k, v in data.items():
+        if isinstance(v, dict) and "drops" in v:
+            out[str(k)] = v["drops"]
+        else:
+            out[str(k)] = v
+    return out
+
+
+def _apply_includes(world: World, game_dir: Path) -> None:
+    from .library import load_include
+    from .util import as_list
+
+    rels = as_list(world.game.get("include") or world.game.get("includes"))
+    for rel in rels:
+        pack = load_include(str(rel), game_dir)
+        if not pack:
+            world.warnings.append(f"include not found: {rel}")
+            continue
+        _merge_kind(world.locations, pack.get("locations"))
+        _merge_kind(world.items, pack.get("items"))
+        _merge_kind(world.npcs, pack.get("npcs"))
+        _merge_kind(world.dialogues, pack.get("dialogues"))
+        _merge_kind(world.quests, pack.get("quests"))
+        _merge_kind(world.encounters, pack.get("encounters"))
+        _merge_kind(world.recipes, pack.get("recipes"))
+        extra_loot = pack.get("loot_tables") or {}
+        for k, v in extra_loot.items():
+            if k not in world.loot_tables:
+                if isinstance(v, dict) and "drops" in v:
+                    world.loot_tables[k] = v["drops"]
+                elif isinstance(v, dict) and v.get("id") and "drops" not in v:
+                    # entity-shaped; skip
+                    world.loot_tables[k] = v.get("drops") or v
+                else:
+                    world.loot_tables[k] = v
+
+
+def _merge_kind(dest: dict, src: Optional[dict]) -> None:
+    if not src:
+        return
+    for k, v in src.items():
+        if k not in dest:
+            dest[k] = v
 
 
 def _attach_ids(world: World) -> None:

@@ -1,0 +1,135 @@
+square:
+  name: {ru: Площадь Брода, en: Ford square}
+  description:
+    ru: |
+      Колодец, кривая ограда, запах муки с востока. На западе — трактир «Кружка».
+      На юге дорога в лес. Староста Бран сидит на скамье и считает ворон.
+    en: |
+      A well, a crooked fence, mill-dust from the east. West — the Mug inn.
+      South — the forest road. Elder Bran sits on a bench counting crows.
+  rest: true
+  exits:
+    west: inn
+    east: mill
+    south: road
+    north: shrine
+  npcs: [bran]
+  on_enter:
+    - when:
+        all:
+          - flag: mira_saved
+          - not_flag: mira_home
+      effects:
+        - set_flag: mira_home
+        - complete_quest: missing_mira
+        - message:
+            ru: Мира бежит к колодцу. Бран встаёт — первый раз за день.
+            en: Mira runs to the well. Bran stands up — first time today.
+
+inn:
+  name: {ru: Трактир «Кружка», en: The Mug}
+  description:
+    ru: Низко, тепло, пахнет луком. Хильда протирает стол так, будто оттирает грех.
+    en: Low, warm, onion-scented. Hilda wipes the table as if wiping a sin.
+  rest: true
+  exits:
+    east: square
+  npcs: [hilda]
+  tags: [inn]
+
+mill:
+  name: {ru: Мельница, en: Mill}
+  description:
+    ru: Колесо стучит. Осип в белой пыли. За мельницей — мокрые следы на юг.
+    en: The wheel knocks. Osip is white with dust. Behind the mill, wet tracks go south.
+  exits:
+    west: square
+  npcs: [osip]
+  items: [bread]
+
+road:
+  name: {ru: Дорога в лес, en: Road to the woods}
+  description:
+    ru: Колея, лужи, воронье. Север — деревня. Юг — чаща.
+    en: Ruts, puddles, crows. North is the village. South is the thicket.
+  exits:
+    north: square
+    south: forest
+  random_encounters:
+    chance: 35
+    once: true
+    table:
+      - {encounter: wolf, weight: 3}
+      - {encounter: snake, weight: 1}
+
+forest:
+  name: {ru: Кромка леса, en: Forest edge}
+  description:
+    ru: |
+      Ели, мох, тишина нечестная. На востоке — яма под корнями.
+      На юге — запах костра, не крестьянского.
+    en: |
+      Spruce, moss, a dishonest quiet. East — a pit under roots.
+      South — a fire smell that is not a farmer's.
+  exits:
+    north: road
+    east: den
+    south: camp
+  search:
+    dc: 9
+    skill: perception
+    text:
+      ru: В грязи — маленькая подошва. Девочка шла не одна.
+      en: A small sole in the mud. The girl did not walk alone.
+    effects:
+      - journal:
+          ru: В лесу следы Миры. Рядом — сапог взрослого.
+          en: Mira's tracks in the woods. An adult boot beside them.
+
+den:
+  name: {ru: Волчья яма, en: Wolf pit}
+  description:
+    ru: Шерсть, кости, ни девочки. Зверь здесь был. Или будет.
+    en: Fur, bones, no girl. The beast was here. Or will be.
+  exits:
+    west: forest
+  on_enter:
+    - when:
+        not_flag: wolves_cleared
+      start_combat: wolf
+  on_first_enter:
+    - journal:
+        ru: В логове нет Миры. Значит, не зверь унёс.
+        en: Mira is not in the den. So it was not the beast that took her.
+
+camp:
+  name: {ru: Стоянка, en: Camp}
+  description:
+    ru: Навес из плаща, котелок, конская узда без лошади. Кайн сидит, как дома.
+    en: A cloak for a roof, a pot, a bridle with no horse. Kain sits as if at home.
+  exits:
+    north: forest
+  npcs: [kain, mira]
+  on_first_enter:
+    - journal:
+        ru: На стоянке — люди. И Мира.
+        en: People at the camp. And Mira.
+
+shrine:
+  name: {ru: Камень у брода, en: Stone by the ford}
+  description:
+    ru: Валун старше деревни. В выбоине — ржавые гроши. Мох тёплый даже в дождь.
+    en: A boulder older than the village. Rusty coppers in the hollow. The moss is warm even in rain.
+  rest: true
+  exits:
+    south: square
+  on_first_enter:
+    - heal: 4
+    - add_status:
+        id: bless
+        name: {ru: благословение, en: blessing}
+        turns: 8
+        attack: 1
+    - message:
+        ru: Камень отдаёт тепло. Руки перестают дрожать.
+        en: The stone gives heat. The hands stop shaking.

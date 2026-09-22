@@ -1,0 +1,38 @@
+lib_road:
+  name: {ru: Лесная дорога, en: Forest road}
+  description:
+    ru: Колея в грязи. Слева чаща, впереди развилка к камню.
+    en: A rut in the mud. Thickets left, a fork toward a standing stone.
+  exits:
+    north: lib_shrine
+    east: lib_den
+  random_encounters:
+    chance: 25
+    once: true
+    table:
+      - {encounter: wolf, weight: 2}
+      - {encounter: snake, weight: 1}
+
+lib_shrine:
+  name: {ru: Придорожный камень, en: Wayside stone}
+  description:
+    ru: Серый валун с выбоиной для монет. Мох тёплый.
+    en: A grey boulder with a coin-hollow. The moss is warm.
+  rest: true
+  exits:
+    south: lib_road
+  on_first_enter:
+    - heal: 4
+    - message: {ru: От камня идёт тепло. Раны ноют тише., en: Heat from the stone. The wounds ache quieter.}
+
+lib_den:
+  name: {ru: Логово, en: Den}
+  description:
+    ru: Яма под корнями. Шерсть, кости зайцев.
+    en: A pit under roots. Fur, hare bones.
+  exits:
+    west: lib_road
+  on_enter:
+    - when:
+        not_flag: wolves_cleared
+      start_combat: wolf

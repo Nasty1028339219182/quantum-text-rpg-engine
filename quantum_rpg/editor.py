@@ -67,6 +67,8 @@ class EditorWindow:
         top.pack(fill="x")
         self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=font_ui(11, True))
         self.title_lbl.pack(side="left", padx=12, pady=8)
+        Btn(top, text=self.tr("ed_help"), command=self._help, anchor="center").pack(side="right", padx=4, pady=6)
+        Btn(top, text=self.tr("ed_library"), command=self._library, anchor="center").pack(side="right", pady=6)
         Btn(top, text=self.tr("gui_menu"), command=self._leave, anchor="center").pack(side="right", padx=8, pady=6)
         Btn(top, text=self.tr("gui_play"), command=self._play, anchor="center").pack(side="right", pady=6)
         Btn(top, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="right", padx=4, pady=6)
@@ -268,6 +270,70 @@ class EditorWindow:
         self.frame.destroy()
         self.on_exit()
 
+    def _help(self) -> None:
+        from .cheatsheet import HELP
+
+        win = tk.Toplevel(self.root)
+        win.title(self.tr("ed_help"))
+        win.configure(bg=C["bg"])
+        win.geometry("560x520")
+        body = Text(win, height=30)
+        body.insert("1.0", HELP.get(self.lang) or HELP["en"])
+        body.configure(state="disabled")
+        body.pack(fill="both", expand=True, padx=8, pady=8)
+
+    def _library(self) -> None:
+        from .library import catalog
+
+        bricks = catalog()
+        if not bricks:
+            messagebox.showinfo("Quantum RPG", self.tr("ed_lib_empty"))
+            return
+        win = tk.Toplevel(self.root)
+        win.title(self.tr("ed_library"))
+        win.configure(bg=C["bg"])
+        win.geometry("520x480")
+        lb = tk.Listbox(
+            win, bg=C["panel"], fg=C["fg"], selectbackground=C["accent"],
+            selectforeground=C["bg"], relief="flat", font=font_ui(10),
+            highlightthickness=0,
+        )
+        lb.pack(fill="both", expand=True, padx=8, pady=8)
+        for b in bricks:
+            lb.insert("end", "  " + b.label(self.lang))
+
+        def insert():
+            sel = lb.curselection()
+            if not sel:
+                return
+            brick = bricks[sel[0]]
+            table = self.project.table(brick.kind) if brick.kind in dict(KINDS) or hasattr(self.project, brick.kind) else None
+            if table is None:
+                if brick.kind == "loot_tables":
+                    game = self.project.game
+                    tables = dict(game.get("loot_tables") or {})
+                    tables[brick.eid] = brick.data.get("drops") or brick.data
+                    game["loot_tables"] = tables
+                else:
+                    return
+            else:
+                eid = brick.eid
+                if eid in table:
+                    eid = eid + "_copy"
+                    n = 2
+                    while eid in table:
+                        eid = f"{brick.eid}_{n}"
+                        n += 1
+                row = dict(brick.data)
+                row["id"] = eid
+                table[eid] = row
+            self.project.dirty = True
+            self._fill_tree((brick.kind, brick.eid if brick.kind != "loot_tables" else ""))
+            self.status.configure(text=self.tr("ed_imported", id=brick.eid), fg=C["ok"])
+            self._set_title()
+
+        Btn(win, text=self.tr("ed_import"), command=insert, anchor="center").pack(pady=8)
+
 
 # ----- form helpers ----------------------------------------------------------
 
@@ -382,6 +448,9 @@ class GameForm(_Base):
             ",".join(str(stats.get(k, 10)) for k in ("str", "dex", "int", "con", "cha", "per")),
         )
         self.inv = _labeled(parent, "player.inventory", csv_load(player.get("inventory")))
+        self.include = _labeled(parent, "include (library files)", csv_load(g.get("include") or g.get("includes")))
+        self.class_prompt = _check(parent, "class_prompt", bool(g.get("classes")) if g.get("class_prompt") is None else bool(g.get("class_prompt")))
+        self.classes = _yaml_field(parent, "classes (YAML)", yaml_dump_text(g.get("classes")))
 
     def collect(self) -> None:
         g = self.ed.project.game
@@ -407,6 +476,17 @@ class GameForm(_Base):
         keys = ("str", "dex", "int", "con", "cha", "per")
         p["stats"] = {k: int(nums[i]) if i < len(nums) else 10 for i, k in enumerate(keys)}
         p["inventory"] = csv_dump(_get(self.inv))
+        inc = csv_dump(_get(self.include))
+        if inc:
+            g["include"] = inc
+        else:
+            g.pop("include", None)
+        g["class_prompt"] = bool(self.class_prompt.get())
+        classes = yaml_load_text(_get(self.classes))
+        if classes:
+            g["classes"] = classes
+        else:
+            g.pop("classes", None)
 
 
 def _labeled(parent, label: str, value: str) -> Entry:

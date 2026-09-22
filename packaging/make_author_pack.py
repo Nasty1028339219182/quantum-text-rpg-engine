@@ -19,6 +19,7 @@ INCLUDE = [
     "pyproject.toml",
     "quantum_rpg",
     "games",
+    "library",
     "docs",
     "examples",
     "tests",

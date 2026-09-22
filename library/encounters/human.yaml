@@ -1,0 +1,27 @@
+bandit:
+  name: {ru: Бандит, en: Bandit}
+  hp: 10
+  attack: 1d6
+  defense: 1
+  xp: 14
+  loot: traveler_pouch
+  appear: {ru: Человек с ножом улыбается недобро., en: A man with a knife smiles the wrong way.}
+  flee_dc: 12
+
+bandits:
+  name: {ru: Бандиты, en: Bandits}
+  appear: {ru: Их двое. Один молчит, второй говорит за обоих., en: Two of them. One silent, one talking for both.}
+  enemies: [bandit]
+  xp: 10
+  flee_dc: 13
+  on_win:
+    - set_flag: bandits_cleared
+
+thug:
+  name: {ru: Головорез, en: Thug}
+  hp: 12
+  attack: 1d6+1
+  defense: 1
+  xp: 16
+  appear: {ru: Широкий, в коже, без лишних слов., en: Broad, in leather, no extra words.}
+  flee_dc: 14

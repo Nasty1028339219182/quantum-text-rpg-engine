@@ -1,0 +1,73 @@
+village_elder:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Деревня ещё стоит. Это уже удача. Тебе нужна работа — или крыша?
+        en: The village still stands. That is luck enough. Do you need work — or a roof?
+      choices:
+        - text: {ru: "Есть работа?", en: "Any work?"}
+          goto: work
+        - text: {ru: Просто прохожу., en: Just passing through.}
+          end: true
+    work:
+      text:
+        ru: Всегда есть. Волк, пропажа, долг. Выбери одно и не бросай на середине.
+        en: There always is. A wolf, a missing person, a debt. Pick one and don't drop it halfway.
+      effects:
+        - start_quest: fetch_key
+      choices:
+        - text: {ru: Хорошо., en: All right.}
+          end: true
+
+innkeeper:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Кровать — три монеты. Слух — бесплатно, если кружка не пустая.
+        en: A bed is three coins. A rumor is free if the mug isn't empty.
+      choices:
+        - text: {ru: Кровать. (3 золота), en: A bed. (3 gold)}
+          when: {gold_gte: 3}
+          effects:
+            - take_gold: 3
+            - rest: true
+          end: true
+        - text: {ru: "Что слышно?", en: "What have you heard?"}
+          goto: rumor
+        - text: {ru: Лавка., en: Shop.}
+          shop: true
+        - text: {ru: Уйти., en: Leave.}
+          end: true
+    rumor:
+      text:
+        ru: В лесу воют. На дороге — люди, которым не место за столом.
+        en: The woods howl. On the road — people who don't belong at a table.
+      choices:
+        - text: {ru: Понял., en: Understood.}
+          end: true
+
+merchant:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Не граблю. Не благотворю. Цены на доске.
+        en: I don't rob. I don't charity. Prices are on the board.
+      choices:
+        - text: {ru: Смотреть товар., en: See the goods.}
+          shop: true
+        - text: {ru: Уйти., en: Leave.}
+          end: true
+
+miller:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Колесо крутится. Следы на юг, если ты про девочку. Не про меня.
+        en: The wheel turns. Tracks south, if you're here about the girl. Not about me.
+      choices:
+        - text: {ru: Спасибо., en: Thanks.}
+          end: true

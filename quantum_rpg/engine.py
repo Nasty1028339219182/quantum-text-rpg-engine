@@ -26,6 +26,7 @@ class Game:
         language: str = "ru",
         seed: int = 1,
         ask_name: bool = True,
+        player_class: Optional[str] = None,
     ):
         self.world = world
         self.hooks = hooks or Hooks(None)
@@ -36,9 +37,12 @@ class Game:
         self.combat_id = ""
         self.last_skill_roll = (0, 0, False)
         self.ask_name = ask_name
+        self.player_class = player_class or ""
         self.in_shop = False
         self.ui_choices: list = []
         self.state = self._new_state(language, seed)
+        if self.player_class:
+            self.apply_class(self.player_class, silent=True)
 
     @property
     def lang(self) -> str:
@@ -230,6 +234,12 @@ class Game:
             name = (self.ui.read(prompt + " ") or "").strip()
             if name and name.lower() not in ("quit", "выход"):
                 self.state.player.name = name
+        classes = self.world.game.get("classes") or {}
+        prompt_class = self.world.game.get("class_prompt")
+        if prompt_class is None:
+            prompt_class = bool(classes)
+        if classes and prompt_class and self.ask_name and not self.player_class:
+            self._pick_class(classes)
         self._look(full=True, first=True)
         self.hooks.call("on_enter", self, self.state.location)
         self._fire_enter(self.state.location)
@@ -249,6 +259,61 @@ class Game:
         else:
             self.say(t(self.lang, "bye"))
         return self.state.ended or "quit"
+
+    def _pick_class(self, classes: dict) -> None:
+        ids = list(classes)
+        self.say(t(self.lang, "pick_class"))
+        choices = []
+        for i, cid in enumerate(ids, 1):
+            spec = classes[cid] or {}
+            label = loc(spec.get("name") or cid, self.lang)
+            text = loc(spec.get("text") or spec.get("description"), self.lang)
+            line = f"  {i}. {label}"
+            if text:
+                line += f" — {text}"
+            self.say(line)
+            choices.append({"label": f"{i}. {label}", "command": str(i)})
+        self.set_choices(choices)
+        raw = (self.ui.read(t(self.lang, "prompt")) or "").strip()
+        self.set_choices([])
+        picked = ""
+        if raw.isdigit() and 1 <= int(raw) <= len(ids):
+            picked = ids[int(raw) - 1]
+        else:
+            q = raw.lower()
+            for cid, spec in classes.items():
+                if q == cid.lower() or q in loc(spec.get("name") or "", self.lang).lower():
+                    picked = cid
+                    break
+        if not picked:
+            picked = ids[0]
+        self.apply_class(picked)
+
+    def apply_class(self, cid: str, silent: bool = False) -> None:
+        spec = (self.world.game.get("classes") or {}).get(cid) or {}
+        if not spec:
+            return
+        p = self.state.player
+        if spec.get("stats"):
+            p.stats.update({k: int(v) for k, v in spec["stats"].items()})
+        if spec.get("hp") or spec.get("max_hp"):
+            p.max_hp = int(spec.get("max_hp") or spec.get("hp") or p.max_hp)
+            p.hp = int(spec.get("hp") or p.max_hp)
+        if spec.get("mp") is not None:
+            p.mp = p.max_mp = int(spec.get("max_mp") or spec.get("mp") or 0)
+        if spec.get("gold") is not None:
+            p.gold = int(spec["gold"])
+        if spec.get("inventory") is not None:
+            p.inventory = list(spec.get("inventory") or [])
+        if spec.get("equipment") is not None:
+            p.equipment = dict(spec.get("equipment") or {})
+        if spec.get("skills"):
+            p.skills.update(spec["skills"])
+        self.player_class = cid
+        self.state.flags.add(f"class_{cid}")
+        if not silent:
+            label = loc(spec.get("name") or cid, self.lang)
+            self.say(t(self.lang, "class_set", name=label))
 
     def handle(self, line: str) -> None:
         cmd = parse(line)
@@ -459,15 +524,25 @@ class Game:
         self._fire_events("enter")
         # random encounter
         table = room.get("random_encounters")
-        if table and not self.state.ended:
-            chance = int(table.get("chance") or 0)
-            if roll("1d100", self.rng) <= chance:
-                entries = table.get("table") or []
-                if entries:
-                    pick = entries[roll(f"1d{len(entries)}", self.rng) - 1]
-                    enc = pick.get("encounter") if isinstance(pick, dict) else pick
+        if table and not self.state.ended and not self.in_combat:
+            key = f"renc:{loc_id}"
+            if table.get("once") and key in self.state.once:
+                pass
+            else:
+                chance = int(table.get("chance") or 0)
+                if roll("1d100", self.rng) <= chance:
+                    from .loot import pick_encounter
+
+                    pick = pick_encounter(table, self.rng)
+                    enc = (pick or {}).get("encounter") if pick else None
                     if enc:
-                        self.start_combat(str(enc))
+                        once_key = f"renc:{loc_id}:{enc}"
+                        if pick.get("once") and once_key in self.state.once:
+                            pass
+                        else:
+                            self.state.once.add(key)
+                            self.state.once.add(once_key)
+                            self.start_combat(str(enc))
 
     def _fire_events(self, kind: str) -> None:
         for ev in self.world.events:

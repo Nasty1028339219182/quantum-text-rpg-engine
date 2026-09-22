@@ -42,3 +42,13 @@ vargos:
   on_death:
     - set_flag: demon_slain
     - complete_quest: investigate
+
+deserter:
+  name: {ru: Дезертир, en: Deserter}
+  aliases: [дезертир, deserter, беглец]
+  description:
+    ru: Молодой, без шлема, пальцы в крови не своей.
+    en: Young, unhelmed, fingers in blood that is not his.
+  location: battlements
+  dialogue: deserter
+

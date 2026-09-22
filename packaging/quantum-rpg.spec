@@ -10,6 +10,9 @@ a = Analysis(
     datas=[
         (str(root / "games" / "shadow_keep"), "games/shadow_keep"),
         (str(root / "games" / "template"), "games/template"),
+        (str(root / "games" / "greyford"), "games/greyford"),
+        (str(root / "games" / "first_steps"), "games/first_steps"),
+        (str(root / "library"), "library"),
     ],
     hiddenimports=[
         "yaml",
@@ -18,6 +21,9 @@ a = Analysis(
         "quantum_rpg.engine",
         "quantum_rpg.project",
         "quantum_rpg.theme",
+        "quantum_rpg.library",
+        "quantum_rpg.loot",
+        "quantum_rpg.cheatsheet",
     ],
     hookspath=[],
     hooksconfig={},

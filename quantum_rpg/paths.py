@@ -26,6 +26,13 @@ def games_dir() -> Path:
     return bundle_root() / "games"
 
 
+def library_dir() -> Path:
+    env = os.environ.get("QUANTUM_RPG_LIBRARY")
+    if env:
+        return Path(env)
+    return bundle_root() / "library"
+
+
 def user_data_dir() -> Path:
     if os.name == "nt":
         base = Path(os.environ.get("APPDATA") or (Path.home() / "AppData" / "Roaming"))

@@ -218,6 +218,13 @@ STRINGS: dict[str, dict[str, str]] = {
         "ru": "Есть несохранённые правки. Выйти?",
         "en": "Unsaved changes. Leave anyway?",
     },
+    "pick_class": {"ru": "Выбери класс:", "en": "Choose a class:"},
+    "class_set": {"ru": "Класс: {name}.", "en": "Class: {name}."},
+    "ed_library": {"ru": "Библиотека", "en": "Library"},
+    "ed_help": {"ru": "Справка", "en": "Help"},
+    "ed_import": {"ru": "Вставить", "en": "Insert"},
+    "ed_imported": {"ru": "Вставлено: {id}", "en": "Inserted: {id}"},
+    "ed_lib_empty": {"ru": "Библиотека пуста.", "en": "Library is empty."},
 }
 
 DIRS = {

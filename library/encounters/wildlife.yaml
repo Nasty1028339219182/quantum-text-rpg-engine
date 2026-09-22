@@ -1,0 +1,37 @@
+wolf:
+  name: {ru: Волк, en: Wolf}
+  hp: 8
+  attack: 1d4+1
+  defense: 0
+  xp: 12
+  loot: beast_remains
+  appear: {ru: Из кустов выходит волк. Рёбра видны., en: A wolf steps from the brush. You can see its ribs.}
+  flee_dc: 12
+
+wolves:
+  name: {ru: Волки, en: Wolves}
+  appear: {ru: Воют двое., en: Two of them howl.}
+  enemies: [wolf, wolf]
+  xp: 8
+  flee_dc: 14
+  on_win:
+    - set_flag: wolves_cleared
+
+giant_rat:
+  name: {ru: Гигантская крыса, en: Giant rat}
+  hp: 5
+  attack: 1d3
+  xp: 6
+  loot: [{item: rat_tooth, chance: 50}]
+  appear: {ru: Крыса размером с кота., en: A cat-sized rat.}
+  flee_dc: 8
+
+snake:
+  name: {ru: Гадюка, en: Adder}
+  hp: 4
+  attack: 1d3
+  xp: 7
+  appear: {ru: В траве щёлкает гадюка., en: An adder clicks in the grass.}
+  on_win:
+    - message: {ru: Змея ещё дёргается., en: The snake still twitches.}
+  flee_dc: 10

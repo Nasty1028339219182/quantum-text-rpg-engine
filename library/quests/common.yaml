@@ -1,0 +1,20 @@
+fetch_key:
+  name: {ru: Принести ключ, en: Fetch the key}
+  description: {ru: Найти ключ и вернуть его., en: Find the key and bring it back.}
+  start_text: {ru: Ключ куда-то дел. Без него дверь молчит., en: The key went somewhere. Without it the door stays mute.}
+  done_text: {ru: Ключ на месте., en: The key is back.}
+
+slay_beasts:
+  name: {ru: Вычистить зверей, en: Clear the beasts}
+  description: {ru: Убить хищников у дороги., en: Kill the predators by the road.}
+  start_text: {ru: Пока зверь жив, скот не выводят., en: While the beast lives, they won't take the cattle out.}
+  done_text: {ru: Дорога тише., en: The road is quieter.}
+  reward:
+    - give_gold: 12
+    - add_xp: 15
+
+missing_person:
+  name: {ru: Пропавший, en: Missing}
+  description: {ru: Найти человека и вернуть домой., en: Find a person and bring them home.}
+  start_text: {ru: Без вести. Ищут все, находят не все., en: Missing. Everyone searches. Not everyone finds.}
+  done_text: {ru: Живой. Это редкость., en: Alive. That is rare.}

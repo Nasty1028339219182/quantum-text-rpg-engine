@@ -1,0 +1,5 @@
+lesson:
+  name: {ru: Урок, en: Lesson}
+  auto_start: true
+  description: {ru: Взять факел, найти ключ, победить чучело, выйти., en: Take the torch, find the key, beat the dummy, leave.}
+  done_text: {ru: Урок сдан., en: Lesson done.}

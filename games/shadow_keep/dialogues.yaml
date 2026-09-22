@@ -196,3 +196,35 @@ vargos:
       effects:
         - start_combat: vargos
       end: true
+
+deserter:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Не зови стражу. Я не полез в крипту. Я живой. Это уже измена, да?
+        en: Don't call the guard. I did not go into the crypt. I am alive. That's treason already, yes?
+      effects:
+        - start_quest: deserter_mercy
+      choices:
+        - text: {ru: Уходи. Я тебя не видел., en: Go. I didn't see you.}
+          effects:
+            - set_flag: deserter_freed
+            - complete_quest: deserter_mercy
+            - give_gold: 8
+            - remove_npc: deserter
+            - message:
+                ru: Он кивает и растворяется в дожде. На парапете звенит мешок.
+                en: He nods and vanishes into the rain. A pouch clinks on the parapet.
+          end: true
+        - text: {ru: Вернись к Грому. Живым., en: Go back to Grom. Alive.}
+          effects:
+            - set_flag: deserter_sent
+            - complete_quest: deserter_mercy
+            - remove_npc: deserter
+            - message:
+                ru: Он сплёвывает и идёт к лестнице. Это тоже храбрость, только другая.
+                en: He spits and walks toward the stair. That is courage too, just another kind.
+          end: true
+        - text: {ru: Молчи и сиди., en: Be quiet and sit.}
+          end: true

@@ -1,0 +1,28 @@
+lib_skeleton:
+  name: {ru: Скелет, en: Skeleton}
+  hp: 9
+  attack: 1d4
+  defense: 1
+  xp: 14
+  appear: {ru: Кости встают сами., en: The bones stand up on their own.}
+  flee_dc: 13
+  on_win:
+    - set_flag: skeleton_down
+
+lib_zombie:
+  name: {ru: Ходячий, en: Walker}
+  hp: 12
+  attack: 1d4
+  defense: 0
+  xp: 12
+  appear: {ru: Труп идёт, как пьяный., en: The corpse walks like a drunk.}
+  flee_dc: 11
+
+lib_wight:
+  name: {ru: Упырь, en: Wight}
+  hp: 14
+  attack: 1d6
+  defense: 2
+  xp: 22
+  appear: {ru: Холод выходит из ниши вместе с ним., en: Cold comes out of the niche with him.}
+  flee_dc: 15

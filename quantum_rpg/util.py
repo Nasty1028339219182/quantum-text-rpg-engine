@@ -78,6 +78,27 @@ def as_list(value: Any) -> list:
     return [value]
 
 
+def weighted_choice(entries: list, rng):
+    if not entries:
+        return None
+    weights = []
+    for e in entries:
+        if isinstance(e, dict):
+            weights.append(max(1, int(e.get("weight") or 1)))
+        else:
+            weights.append(1)
+    total = sum(weights) or 1
+    r = rng.randint(1, total)
+    acc = 0
+    picked = entries[-1]
+    for e, w in zip(entries, weights):
+        acc += w
+        if r <= acc:
+            picked = e
+            break
+    return picked
+
+
 def as_effects(value: Any) -> list[dict]:
     """Normalize effects to a list of dicts."""
     if not value:

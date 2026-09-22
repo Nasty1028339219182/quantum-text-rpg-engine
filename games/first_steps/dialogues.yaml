@@ -1,0 +1,10 @@
+tutor:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Возьми факел. В сарае поищи ключ. Чучело на севере. Калитка откроется после боя. Команды можно набирать или жать кнопки.
+        en: Take the torch. Search the shed for a key. Dummy is north. The gate opens after the fight. Type commands or press buttons.
+      choices:
+        - text: {ru: Понял., en: Got it.}
+          end: true

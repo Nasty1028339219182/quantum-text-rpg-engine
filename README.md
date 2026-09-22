@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**1.2.0** — window player **and** a form editor in the same app. Still no graphics, no browser.
+**1.3.0** — library of YAML bricks, classes, two extra games (Greyford, First Steps). Still no graphics, no browser.
 
 ```text
 python -m quantum_rpg
@@ -44,7 +44,13 @@ python -m quantum_rpg play shadow_keep
 python -m quantum_rpg play shadow_keep --lang en
 ```
 
-**Shadow Keep / Тень Крепости** — a short dungeon: locked doors, a search, rats, a prisoner who knows a true name, a chapel, a captain's journal, an armory, a crypt, a demon. Two endings (kill / bargain).
+**Shadow Keep / Тень Крепости** — dungeon. **Greyford / Седой Брод** — village and road. **First Steps / Первые шаги** — tutorial.
+
+```yaml
+include:
+  - items/weapons.yaml
+  - encounters/wildlife.yaml
+```
 
 In the window: click **восток** / **take key** / **говорить: Гром**, or type `взять ключ` at the bottom.
 
@@ -78,7 +84,9 @@ Then in the window: **Редактор** or **Новая игра**. Guide: [doc
 | Status | bless, poison, defend |
 | Language | `language ru` / `language en` at runtime |
 | Window UI | buttons + command line (1.1.0) |
-| Editor | forms for YAML games (1.2.0) |
+| Editor | forms + library insert (1.2–1.3) |
+| Classes | `classes:` in game.yaml |
+| Library | `library/` + `include:` |
 
 ## License
 

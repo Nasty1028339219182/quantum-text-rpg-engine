@@ -3,9 +3,41 @@ title:
   ru: Тень Крепости
   en: Shadow Keep
 author: Quantum
-version: "1.0.0"
+version: "1.3.0"
 language: ru
 languages: [ru, en]
+class_prompt: true
+classes:
+  warrior:
+    name: {ru: Воин, en: Warrior}
+    text: {ru: Крепче и злее в бою., en: Tougher, meaner in a fight.}
+    stats: {str: 15, dex: 11, int: 9, con: 15, cha: 8, per: 10}
+    hp: 36
+    max_hp: 36
+    gold: 14
+    inventory: [torch, rusty_sword]
+    equipment: {weapon: rusty_sword}
+    skills: {athletics: 2, persuasion: 0, lockpick: 0, perception: 1}
+  rogue:
+    name: {ru: Ловкач, en: Rogue}
+    text: {ru: Тише шаг, зорче глаз, замок не спор., en: Quieter step, sharper eye, locks don't argue.}
+    stats: {str: 10, dex: 15, int: 12, con: 11, cha: 10, per: 14}
+    hp: 26
+    max_hp: 26
+    gold: 22
+    inventory: [torch, rusty_sword]
+    equipment: {weapon: rusty_sword}
+    skills: {lockpick: 2, perception: 2, athletics: 0, persuasion: 0}
+  speaker:
+    name: {ru: Говорун, en: Speaker}
+    text: {ru: Слово дешевле меча. Иногда работает., en: A word is cheaper than a sword. Sometimes it works.}
+    stats: {str: 10, dex: 11, int: 12, con: 12, cha: 15, per: 12}
+    hp: 28
+    max_hp: 28
+    gold: 26
+    inventory: [torch, rusty_sword]
+    equipment: {weapon: rusty_sword}
+    skills: {persuasion: 2, perception: 1, lockpick: 0, athletics: 0}
 start:
   location: courtyard
 intro:

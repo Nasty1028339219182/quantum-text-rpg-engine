@@ -233,7 +233,23 @@ captain:
       signet of the garrison. A map on the wall is marked with a cross under the keep.
   exits:
     down: tower_stairs
+    north: battlements
   items: [captain_journal, armory_key, signet]
+
+battlements:
+  name: {ru: Зубцы стены, en: Battlements}
+  description:
+    ru: |
+      Ветер, мокрый парапет, вид на чёрный лес. За бойницей сидит человек
+      без шлема — дезертир, если называть прямо.
+    en: |
+      Wind, a wet parapet, black woods below. Behind a crenel sits a man
+      without a helm — a deserter, if you name it plainly.
+  rest: true
+  exits:
+    south: captain
+  npcs: [deserter]
+  items: [health_potion]
 
 crypt:
   name: {ru: Крипта, en: Crypt}

@@ -1,0 +1,42 @@
+bran:
+  name: {ru: Бран, en: Bran}
+  aliases: [бран, староста, elder, bran]
+  description: {ru: Староста Седого Брода. Считает рты. Сегодня не сходится., en: Greyford's elder. He counts mouths. Today the number is wrong.}
+  location: square
+  dialogue: bran
+
+hilda:
+  name: {ru: Хильда, en: Hilda}
+  aliases: [хильда, трактирщица, hilda]
+  description: {ru: Хозяйка «Кружки». Слышит всё, говорит треть., en: Keeper of the Mug. Hears everything, says a third.}
+  location: inn
+  dialogue: hilda
+  shop:
+    - {item: bread, price: 2, stock: 6}
+    - {item: cheese, price: 3, stock: 3}
+    - {item: health_potion, price: 12, stock: 1}
+
+osip:
+  name: {ru: Осип, en: Osip}
+  aliases: [осип, мельник, osip]
+  description: {ru: Мельник. Пыль в бровях, мало слов., en: The miller. Dust in the brows, few words.}
+  location: mill
+  dialogue: osip
+
+kain:
+  name: {ru: Кайн, en: Kain}
+  aliases: [кайн, бандит, kain]
+  description: {ru: Худой, в чужой куртке. Говорит мягко, как продавец., en: Thin, in someone else's coat. Speaks softly, like a salesman.}
+  location: camp
+  dialogue: kain
+  encounter: kain_fight
+  hostile: false
+  on_death:
+    - set_flag: mira_saved
+
+mira:
+  name: {ru: Мира, en: Mira}
+  aliases: [мира, девочка, mira, girl]
+  description: {ru: Лет двенадцати. Грязь до локтей, взгляд взрослее., en: About twelve. Mud to the elbows, an older gaze.}
+  location: camp
+  dialogue: mira

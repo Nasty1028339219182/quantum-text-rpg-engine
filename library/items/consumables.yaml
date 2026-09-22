@@ -1,0 +1,59 @@
+health_potion:
+  name: {ru: зелье лечения, en: health potion}
+  aliases: [зелье, potion]
+  type: consumable
+  heal: 8
+  weight: 1
+  value: 12
+  use:
+    consume: true
+    text: {ru: Горько. Раны стягиваются., en: Bitter. The wounds pull shut.}
+    effects:
+      - heal: 8
+
+bread:
+  name: {ru: хлеб, en: bread}
+  aliases: [хлеб, bread]
+  type: consumable
+  weight: 1
+  value: 2
+  use:
+    consume: true
+    effects:
+      - heal: 2
+      - message: {ru: Ты ешь хлеб., en: You eat the bread.}
+
+cheese:
+  name: {ru: сыр, en: cheese}
+  aliases: [сыр, cheese]
+  type: consumable
+  weight: 1
+  value: 3
+  use:
+    consume: true
+    effects:
+      - heal: 3
+
+bandage:
+  name: {ru: бинт, en: bandage}
+  aliases: [бинт, bandage]
+  type: consumable
+  weight: 0
+  value: 4
+  use:
+    consume: true
+    effects:
+      - heal: 5
+      - message: {ru: Ты перевязываешь рану., en: You bind the wound.}
+
+antitoxin:
+  name: {ru: противоядие, en: antitoxin}
+  aliases: [противоядие, antitoxin]
+  type: consumable
+  weight: 1
+  value: 16
+  use:
+    consume: true
+    effects:
+      - remove_status: poison
+      - message: {ru: Горько, но яд отпускает., en: Bitter, but the poison lets go.}

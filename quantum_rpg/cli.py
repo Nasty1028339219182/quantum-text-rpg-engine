@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     p_play.add_argument("--script", help="File with one command per line (for tests)")
     p_play.add_argument("--name", help="Player name (skips prompt)")
     p_play.add_argument("--echo", action="store_true", help="Echo scripted commands")
-    p_play.add_argument("--ui", choices=["cli", "tk"], default="cli")
+    p_play.add_argument("--class", dest="player_class", default=None, help="Class id (skips prompt)")
 
     p_val = sub.add_parser("validate", help="Check a game folder for errors")
     p_val.add_argument("game", nargs="?", default="shadow_keep")
@@ -141,7 +141,8 @@ def cmd_play(args) -> int:
         ui=ui,
         language=lang,
         seed=args.seed,
-        ask_name=not bool(args.name),
+        ask_name=not bool(args.name or args.script),
+        player_class=getattr(args, "player_class", None),
     )
     if args.name:
         game.state.player.name = args.name

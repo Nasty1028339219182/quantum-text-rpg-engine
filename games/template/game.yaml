@@ -1,6 +1,15 @@
 # Copy this folder:  python -m quantum_rpg new my_game
 # Then replace the example values. IDs stay in English; player-facing text can be ru/en.
 
+# include:
+#   - items/weapons.yaml
+#   - encounters/wildlife.yaml
+# class_prompt: true
+# classes:
+#   warrior:
+#     name: {ru: Воин, en: Warrior}
+#     hp: 28
+#     inventory: [torch]
 id: my_game
 title:
   ru: Моя игра

@@ -27,6 +27,14 @@ version: string
 language: ru|en
 start: {location: room_id}
 intro: loc
+include: [items/weapons.yaml, encounters/wildlife.yaml]   # from library/
+class_prompt: true
+classes:
+  warrior:
+    name: loc
+    text: loc
+    stats: {str, dex, int, con, cha, per}
+    hp, gold, inventory, equipment, skills
 win: {flags: [flag], flag: flag, when: condition, text: loc, pact_text: loc}
 lose: {when: condition, text: loc}
 player:
@@ -61,7 +69,17 @@ features:
   id: {name, aliases, description, on_examine}
 search: {dc, skill, reveal, reveal_exit, text, effects}
 on_enter / on_first_enter / on_rest: effects
-random_encounters: {chance: 0-100, table: [{encounter, weight}]}
+random_encounters: {chance: 0-100, once: true, table: [{encounter, weight}]}
+
+## loot_tables.yaml
+
+```
+table_id:
+  - {item: id, chance: 0-100}
+```
+
+Encounter `loot:` may be an item id, a table id, `{table: id}`, or a list of those.
+
 ```
 
 Directions: `north south east west up down`.

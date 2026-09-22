@@ -1,0 +1,14 @@
+kain_fight:
+  name: {ru: Кайн, en: Kain}
+  appear:
+    ru: Кайн достаёт нож без спешки.
+    en: Kain draws a knife without hurry.
+  enemies: [bandit]
+  xp: 10
+  flee_dc: 12
+  on_win:
+    - set_flag: mira_saved
+    - set_flag: bandits_cleared
+    - message:
+        ru: Кайн падает. Мира не кричит.
+        en: Kain falls. Mira does not shout.

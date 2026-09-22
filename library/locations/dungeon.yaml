@@ -1,0 +1,40 @@
+lib_dark_cell:
+  name: {ru: Тёмная камера, en: Dark cell}
+  description:
+    ru: Камень потный. Кольцо в стене. Выход на север — коридор.
+    en: The stone sweats. A ring in the wall. North is a corridor.
+  dark: true
+  exits:
+    north: lib_trap_hall
+  items: [travel_torch]
+  search:
+    dc: 8
+    skill: perception
+    reveal: [brass_key]
+    text: {ru: В щели — латунный ключ., en: A brass key in the crack.}
+
+lib_trap_hall:
+  name: {ru: Коридор с плитой, en: Slab corridor}
+  description:
+    ru: Пол из плит. Одна чуть выше. Дальше — ниша с костями.
+    en: Slab floor. One sits higher. Ahead — a bone niche.
+  exits:
+    south: lib_dark_cell
+    north:
+      to: lib_crypt_nook
+      trap:
+        skill: dex
+        dc: 10
+        damage: 1d4
+        once: true
+        text_fail: {ru: Плита проваливается. Шип царапает ногу., en: The slab drops. A spike grazes the leg.}
+        text_success: {ru: Ты обходишь плиту., en: You step around the slab.}
+
+lib_crypt_nook:
+  name: {ru: Костяная ниша, en: Bone niche}
+  description:
+    ru: Тишина, известь, чужая брошь в пыли.
+    en: Silence, lime, a stranger's brooch in the dust.
+  exits:
+    south: lib_trap_hall
+  rest: true

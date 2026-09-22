@@ -1,0 +1,20 @@
+wolf_pelt:
+  name: {ru: волчья шкура, en: wolf pelt}
+  aliases: [шкура, pelt]
+  type: misc
+  weight: 2
+  value: 8
+
+fang:
+  name: {ru: клык, en: fang}
+  aliases: [клык, fang]
+  type: misc
+  weight: 0
+  value: 3
+
+rat_tooth:
+  name: {ru: крысиный зуб, en: rat tooth}
+  aliases: [зуб, tooth]
+  type: misc
+  weight: 0
+  value: 1

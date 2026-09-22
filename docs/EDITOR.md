@@ -21,6 +21,8 @@ python -m quantum_rpg editor shadow_keep
 
 Unknown YAML (traps, `on_enter`, containers) stays in **extra YAML** and is not deleted on save.
 
-Buttons: **Сохранить**, **Проверить**, **Играть**, **В меню**.
+Buttons: **Сохранить**, **Проверить**, **Играть**, **Библиотека**, **Справка**, **В меню**.
+
+**Библиотека** inserts a brick from `library/` (id collision → `_copy`). **Справка** lists effects, conditions, loot, classes, include.
 
 New games go to `games/` (Python) or `%APPDATA%\quantum-rpg\games` (exe). Bundled games are copied there before editing.

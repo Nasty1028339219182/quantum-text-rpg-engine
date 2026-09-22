@@ -1,0 +1,141 @@
+bran:
+  start: start
+  start_if:
+    - when: {flag: mira_home}
+      node: home
+    - when: {flag: mira_saved}
+      node: wait
+  nodes:
+    start:
+      text:
+        ru: Внучка Мира ушла за хворостом и не вернулась. Волки, говорят. Или те, кто хуже волков. Приведёшь живую — ложка серебра и моя совесть на день спокойнее.
+        en: Granddaughter Mira went for brushwood and did not come back. Wolves, they say. Or worse than wolves. Bring her alive — a silver spoon, and my conscience quieter for a day.
+      effects:
+        - start_quest: missing_mira
+      choices:
+        - text: {ru: Пойду., en: I'll go.}
+          end: true
+        - text: {ru: Мне не до детей., en: Not my children.}
+          end: true
+    wait:
+      text:
+        ru: Ну. Ведите её на площадь. Я тут.
+        en: Well. Bring her to the square. I am here.
+      choices:
+        - text: {ru: Уже идём., en: We're coming.}
+          end: true
+    home:
+      text:
+        ru: Живая. Ложку держи. И хлеб. И больше не пропадай ты тоже.
+        en: Alive. Keep the spoon. And bread. And don't you go missing either.
+      effects:
+        - give_gold: 20
+        - give_item: bread
+      end: true
+
+hilda:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Ночлег — три монеты. Слухи — если спросишь прямо.
+        en: A night is three coins. Rumors — if you ask straight.
+      choices:
+        - text: {ru: Переночевать. (3), en: Stay the night. (3)}
+          when: {gold_gte: 3}
+          effects:
+            - take_gold: 3
+            - rest: true
+            - message: {ru: Утро. В плече меньше ломит., en: Morning. The shoulder aches less.}
+          end: true
+        - text: {ru: "Где Мира?", en: "Where is Mira?"}
+          goto: mira
+        - text: {ru: Купить еды., en: Buy food.}
+          shop: true
+        - text: {ru: Уйти., en: Leave.}
+          end: true
+    mira:
+      text:
+        ru: В лес ходила. Осип видел следы к югу. Волки воют, да. Но волки не ставят котелки.
+        en: She went to the woods. Osip saw tracks south. The wolves howl, yes. Wolves don't set pots.
+      effects:
+        - journal:
+            ru: "Хильда: Мира ушла в лес. Южнее дороги — костёр не крестьянский."
+            en: "Hilda: Mira went to the woods. South of the road — not a farmer's fire."
+      choices:
+        - text: {ru: Понял., en: Got it.}
+          end: true
+
+osip:
+  start: start
+  nodes:
+    start:
+      text:
+        ru: Колесо крутится. Девочка шла югом. Рядом — сапог. Не её.
+        en: The wheel turns. The girl went south. A boot beside hers. Not hers.
+      choices:
+        - text: {ru: Спасибо., en: Thanks.}
+          end: true
+
+kain:
+  start: start
+  start_if:
+    - when: {flag: mira_saved}
+      node: gone
+  nodes:
+    start:
+      text:
+        ru: Гостья. Нет — товар. Деревня забудет, мы уйдём. Можешь купить её за пятнадцать. Можешь попробовать взять. Можешь уйти и сказать старику, что волки.
+        en: A guest. No — goods. The village will forget, we'll leave. You can buy her for fifteen. You can try to take her. You can leave and tell the old man it was wolves.
+      choices:
+        - text: {ru: Она идёт со мной. Сейчас., en: She walks with me. Now.}
+          effects:
+            - set_flag: mira_saved
+            - message:
+                ru: Кайн разводит руками. Ему не нужны лишние трупы рядом с бродом.
+                en: Kain opens his hands. He doesn't need extra corpses by the ford.
+          end: true
+        - text: {ru: Плачу пятнадцать., en: I pay fifteen.}
+          when: {gold_gte: 15}
+          effects:
+            - take_gold: 15
+            - set_flag: mira_saved
+            - set_flag: paid_kain
+            - message:
+                ru: Кайн кивает. Мира встаёт, не смотрит на него.
+                en: Kain nods. Mira stands and does not look at him.
+          end: true
+        - text: {ru: Тогда будем драться., en: Then we fight.}
+          effects:
+            - start_combat: kain_fight
+          end: true
+        - text: {ru: Уйти., en: Leave.}
+          end: true
+    gone:
+      text:
+        ru: Бери. Нам ещё идти.
+        en: Take her. We still have walking to do.
+      choices:
+        - text: {ru: Уходим., en: We're going.}
+          end: true
+
+mira:
+  start: start
+  start_if:
+    - when: {flag: mira_saved}
+      node: saved
+  nodes:
+    start:
+      text:
+        ru: Не орёшь. Хорошо. Дед на площади. Если ты за мной — скажи этому.
+        en: You're not shouting. Good. Grandad is in the square. If you're here for me — tell that one.
+      choices:
+        - text: {ru: Скажу., en: I will.}
+          end: true
+    saved:
+      text:
+        ru: Пойдём. Пока он не передумал.
+        en: Let's go. Before he changes his mind.
+      choices:
+        - text: {ru: На площадь., en: To the square.}
+          end: true

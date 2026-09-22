@@ -1,0 +1,6 @@
+tutor:
+  name: {ru: Наставник, en: Tutor}
+  aliases: [наставник, tutor, учитель]
+  description: {ru: Седой, без оружия. Учит голосом., en: Grey, unarmed. He teaches with his voice.}
+  location: yard
+  dialogue: tutor

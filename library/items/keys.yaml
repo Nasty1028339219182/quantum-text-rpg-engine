@@ -1,0 +1,18 @@
+brass_key:
+  name: {ru: латунный ключ, en: brass key}
+  aliases: [ключ, key, латунный]
+  type: key
+  weight: 0
+  value: 0
+
+chest_key:
+  name: {ru: ключ от сундука, en: chest key}
+  aliases: [сундучный, chest]
+  type: key
+  weight: 0
+
+iron_gate_key:
+  name: {ru: ключ от ворот, en: gate key}
+  aliases: [воротный, gate]
+  type: key
+  weight: 0

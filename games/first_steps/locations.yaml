@@ -1,0 +1,68 @@
+yard:
+  name: {ru: Учебный двор, en: Practice yard}
+  description:
+    ru: Песок, чучело на севере, сарай на востоке, калитка на западе. Наставник ждёт. У ног — факел.
+    en: Sand, a dummy to the north, a shed east, a gate west. The tutor waits. A torch at your feet.
+  rest: true
+  exits:
+    east: shed
+    north: dummy
+    west:
+      to: gate
+      when:
+        flag: dummy_down
+      blocked_text:
+        ru: "Наставник качает головой: сначала чучело."
+        en: "The tutor shakes his head: the dummy first."
+  items: [travel_torch]
+  npcs: [tutor]
+  on_first_enter:
+    - journal:
+        ru: Двор. Факел, наставник, чучело, сарай.
+        en: Yard. Torch, tutor, dummy, shed.
+
+shed:
+  name: {ru: Сарай, en: Shed}
+  description:
+    ru: Метлы, паутина, сундук. Ключ кто-то сунул в щепу.
+    en: Brooms, cobwebs, a chest. Someone shoved a key into the kindling.
+  exits:
+    west: yard
+  hidden_items: [chest_key]
+  search:
+    dc: 6
+    skill: perception
+    reveal: [chest_key]
+    text: {ru: Ключ в щепе. Глупо спрятан., en: A key in the kindling. Hidden badly.}
+  containers:
+    chest:
+      name: {ru: сундук, en: chest}
+      aliases: [сундук, chest, ящик]
+      locked: true
+      key: chest_key
+      items: [bread]
+
+dummy:
+  name: {ru: Площадка с чучелом, en: Dummy ground}
+  description:
+    ru: Соломенный противник на шесте. Бить можно без угрызений.
+    en: A straw opponent on a pole. You may hit it without guilt.
+  exits:
+    south: yard
+  on_enter:
+    - when:
+        not_flag: dummy_down
+      start_combat: straw_man
+
+gate:
+  name: {ru: Калитка, en: Gate}
+  description:
+    ru: За калиткой — настоящая дорога. Наставник больше не держит.
+    en: Beyond the gate — a real road. The tutor no longer holds you.
+  exits:
+    east: yard
+  on_first_enter:
+    - set_flag: lesson_done
+    - message:
+        ru: Урок кончен.
+        en: The lesson is over.

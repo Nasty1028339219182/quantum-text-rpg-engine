@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0 — 2026-09-22
+
+- YAML library (`library/`) — rooms, items, NPCs, dialogues, quests, fights, loot tables
+- `include:` in game.yaml (library files; local ids win)
+- Editor: **Библиотека** insert + **Справка** (effects/conditions)
+- Classes at start (`classes:` + `class_prompt`)
+- Loot tables (`loot_tables.yaml` or `loot: table_id`)
+- Random encounters: weights + `once`
+- New games: **Седой Брод / Greyford**, **Первые шаги / First Steps**
+- Shadow Keep: classes, battlements, deserter side-quest
+
 ## 1.2.0 — 2026-09-21
 
 - Game editor in the same window / same `QuantumRPG.exe`
