@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**1.3.0** — library of YAML bricks, classes, two extra games (Greyford, First Steps). Still no graphics, no browser.
+**1.3.1** — bugfix: class buttons, bilingual names, loot/quest double-pay. Still no graphics.
 
 ```text
 python -m quantum_rpg

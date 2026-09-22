@@ -63,6 +63,7 @@ gate:
     east: yard
   on_first_enter:
     - set_flag: lesson_done
+    - complete_quest: lesson
     - message:
         ru: Урок кончен.
         en: The lesson is over.

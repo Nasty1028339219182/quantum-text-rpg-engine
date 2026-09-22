@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.1 — 2026-09-22
+
+- Player `name: {ru, en}` no longer stored as a Python dict string
+- Class pick shows numbered buttons in the window (mode `prompt`)
+- Combat loot: one message, no duplicate table from the same enemy
+- `complete_quest` does not pay the reward twice
+- Loot tables with `{id, drops}` no longer spawn the table id as an item
+
 ## 1.3.0 — 2026-09-22
 
 - YAML library (`library/`) — rooms, items, NPCs, dialogues, quests, fights, loot tables

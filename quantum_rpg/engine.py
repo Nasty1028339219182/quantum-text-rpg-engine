@@ -94,6 +94,8 @@ class Game:
             mode = "shop"
         elif self.in_dialogue:
             mode = "dialogue"
+        elif self.ui_choices:
+            mode = "prompt"
         exits = []
         for d, dest in self.visible_exits().items():
             exits.append(
@@ -181,8 +183,15 @@ class Game:
         pdata = g.get("player") or {}
         stats = {k: 10 for k in STAT_KEYS}
         stats.update(pdata.get("stats") or {})
+        raw_name = pdata.get("name")
+        if isinstance(raw_name, dict):
+            pname = loc(raw_name, language)
+        elif raw_name:
+            pname = str(raw_name)
+        else:
+            pname = loc({"ru": "Герой", "en": "Hero"}, language)
         player = Player(
-            name=str(pdata.get("name") or loc({"ru": "Герой", "en": "Hero"}, language)),
+            name=pname,
             stats=stats,
             hp=int(pdata.get("hp") or pdata.get("max_hp") or 20),
             max_hp=int(pdata.get("max_hp") or pdata.get("hp") or 20),

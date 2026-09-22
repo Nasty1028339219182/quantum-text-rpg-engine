@@ -42,16 +42,17 @@ def _walk(spec: Any, tables: dict, out: list, depth: int) -> None:
         if spec.get("table"):
             _walk(spec["table"], tables, out, depth + 1)
             return
-        if spec.get("item") or spec.get("id"):
-            row = {
-                "item": spec.get("item") or spec.get("id"),
-                "chance": int(spec.get("chance") or 100),
-            }
-            out.append(row)
+        if spec.get("drops"):
+            _walk(spec["drops"], tables, out, depth + 1)
             return
-        # mapping of table_id -> rows used as a table itself
+        if spec.get("item") or spec.get("id"):
+            iid = spec.get("item") or spec.get("id")
+            if iid:
+                out.append({"item": iid, "chance": int(spec.get("chance") or 100)})
+            return
         for v in spec.values():
-            _walk(v, tables, out, depth + 1)
+            if isinstance(v, (list, dict)):
+                _walk(v, tables, out, depth + 1)
 
 
 def pick_encounter(table: dict, rng) -> Optional[dict]:

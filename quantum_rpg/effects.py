@@ -106,14 +106,17 @@ def _apply_one(game: "Game", eff: dict) -> None:
                 game.say(desc)
     if "complete_quest" in eff:
         qid = str(eff["complete_quest"])
-        st.quests[qid] = "done"
-        q = game.world.quests.get(qid, {})
-        reward = q.get("reward")
-        if reward:
-            apply(game, reward)
-        text = loc(q.get("done_text"), lang)
-        if text:
-            game.say(text)
+        if st.quests.get(qid) == "done":
+            pass
+        else:
+            st.quests[qid] = "done"
+            q = game.world.quests.get(qid, {})
+            reward = q.get("reward")
+            if reward:
+                apply(game, reward)
+            text = loc(q.get("done_text"), lang)
+            if text:
+                game.say(text)
     if "fail_quest" in eff:
         st.quests[str(eff["fail_quest"])] = "failed"
     if "start_combat" in eff:

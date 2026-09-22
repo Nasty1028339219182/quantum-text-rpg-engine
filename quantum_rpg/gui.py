@@ -344,11 +344,12 @@ class PlayWindow:
         s = self.snap or {}
         mode = s.get("mode") or "play"
         choices = s.get("choices") or []
-        if mode in ("combat", "dialogue", "shop") and choices:
+        if mode in ("combat", "dialogue", "shop", "prompt") and choices:
             title = {
                 "combat": t(self.lang, "combat"),
                 "dialogue": t(self.lang, "people_here"),
                 "shop": t(self.lang, "shop"),
+                "prompt": t(self.lang, "pick_class"),
             }.get(mode, "")
             self._head(title)
             for ch in choices:

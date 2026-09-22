@@ -329,9 +329,12 @@ def _victory(game: "Game", enc: dict, enemies: list[Fighter]) -> None:
     xp = int(enc.get("xp") or 0) + sum(e.xp for e in enemies)
     if xp:
         game.add_xp(xp)
-    loot = list(enc.get("loot") or [])
-    for e in enemies:
-        loot.extend(e.loot)
+    if enc.get("enemies"):
+        loot = list(enc.get("loot") or [])
+        for e in enemies:
+            loot.extend(e.loot)
+    else:
+        loot = list(enc.get("loot") or [])
     from .loot import resolve_loot
 
     for drop in resolve_loot(game.world, loot):
@@ -339,6 +342,6 @@ def _victory(game: "Game", enc: dict, enemies: list[Fighter]) -> None:
         if not iid:
             continue
         if roll("1d100", game.rng) <= chance:
-            game.give_item(str(iid), silent=False)
-            game.say(t(lang, "got_loot", name=game.item_name(str(iid))))
+            if game.give_item(str(iid), silent=True):
+                game.say(t(lang, "got_loot", name=game.item_name(str(iid))))
     game.state.defeated.add(enc.get("id") or game.combat_id)
