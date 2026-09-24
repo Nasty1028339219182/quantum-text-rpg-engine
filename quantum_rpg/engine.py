@@ -14,7 +14,7 @@ from .loader import World, initial_location_items, initial_location_npcs, load_w
 from .parser import parse
 from .state import GameState, Player, StatusEffect, STAT_KEYS
 from .ui import ScriptedIO, TerminalIO
-from .clock import advance, clock, phase_name
+from .clock import advance, clock, encounter_chance, phase_name, shop_is_open
 from .util import as_list, loc, match_entity, modifier, roll, wrap
 
 
@@ -422,6 +422,40 @@ class Game:
         if npc_id not in lst:
             lst.append(npc_id)
 
+    def add_follower(self, info) -> None:
+        if isinstance(info, str):
+            nid, spec = str(info), {}
+        elif isinstance(info, dict):
+            nid = str(info.get("npc") or info.get("id") or "")
+            spec = info
+        else:
+            return
+        if not nid or nid in self.state.followers:
+            return
+        npc = self.world.npcs.get(nid) or {}
+        combat_spec = spec.get("combat") or npc.get("combat") or {}
+        hp = int(combat_spec.get("hp") or spec.get("hp") or 8)
+        self.state.followers[nid] = {
+            "hp": hp,
+            "max_hp": hp,
+            "attack": str(combat_spec.get("attack") or spec.get("attack") or "1d4"),
+        }
+        self.place_npc(self.state.location, nid)
+        self.say(t(self.lang, "follows_now", name=self.npc_name(nid)))
+
+    def remove_follower(self, npc_id: str) -> None:
+        self.state.followers.pop(str(npc_id), None)
+
+    def _bring_followers(self, loc_id: str) -> None:
+        if not self.state.followers:
+            return
+        names = []
+        for fid in list(self.state.followers):
+            self.remove_npc(fid)
+            self.place_npc(loc_id, fid)
+            names.append(self.npc_name(fid))
+        self.say(t(self.lang, "follows", names=", ".join(names)))
+
     def remove_npc(self, npc_id: str) -> None:
         for loc_id, npcs in self.state.location_npcs.items():
             if npc_id in npcs:
@@ -488,6 +522,7 @@ class Game:
         old = self.state.location
         self.hooks.call("on_leave", self, old)
         self.state.location = loc_id
+        self._bring_followers(loc_id)
         if not silent:
             self._look(full=True)
         self.hooks.call("on_enter", self, loc_id)
@@ -541,7 +576,7 @@ class Game:
             if table.get("once") and key in self.state.once:
                 pass
             else:
-                chance = int(table.get("chance") or 0)
+                chance = encounter_chance(self, table)
                 if roll("1d100", self.rng) <= chance:
                     from .loot import pick_encounter
 
@@ -714,7 +749,14 @@ class Game:
             extras.append(
                 f"{t(self.lang, 'items_here')}: {', '.join(self.item_name(i) for i in items)}"
             )
-        npcs = [self.npc_name(n) for n in (self.state.location_npcs.get(self.state.location) or []) if n not in self.state.defeated]
+        npcs = []
+        for n in (self.state.location_npcs.get(self.state.location) or []):
+            if n in self.state.defeated:
+                continue
+            label = self.npc_name(n)
+            if n in self.state.followers:
+                label += f" ({t(self.lang, 'with_you')})"
+            npcs.append(label)
         if npcs:
             extras.append(f"{t(self.lang, 'people_here')}: {', '.join(npcs)}")
         cons = []
@@ -1241,6 +1283,8 @@ class Game:
             return
         effects.apply(self, {"rest": True})
         effects.apply(self, room.get("on_rest"))
+        for data in self.state.followers.values():
+            data["hp"] = data.get("max_hp") or data.get("hp") or 8
         advance(self)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 
@@ -1302,6 +1346,9 @@ class Game:
 
 def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
     npc = game.world.npcs.get(npc_id) or {}
+    if not shop_is_open(game, npc):
+        game.say(t(game.lang, "shop_closed", phase=phase_name(game)))
+        return
     stock_src = npc.get("shop") or []
     key = npc_id
     game.in_shop = True

@@ -1,4 +1,4 @@
-"""Day clock. Foundation for 1.4 — phases only, not a full calendar."""
+"""Day clock: phases, shop hours, night encounters."""
 
 from __future__ import annotations
 
@@ -52,3 +52,34 @@ def advance(game: "Game", hours: int | None = None) -> tuple[int, str]:
         n = int(_cfg(game).get("rest_hours") or 8)
     game.state.time += max(1, int(n))
     return clock(game)
+
+
+def shop_is_open(game: "Game", npc: dict) -> bool:
+    """Shops close on `time.shop_closed` phases. No `time:` block → always open."""
+    cfg = _cfg(game)
+    if not cfg:
+        return True
+    if npc.get("shop_always") or npc.get("shop_hours") == "always":
+        return True
+    phase = clock(game)[1]
+    hours = npc.get("shop_hours")
+    if isinstance(hours, list):
+        return phase in [str(x) for x in hours]
+    closed = cfg.get("shop_closed")
+    if closed is None:
+        closed = ["night"]
+    return phase not in [str(x) for x in (closed or [])]
+
+
+def encounter_chance(game: "Game", table: dict) -> int:
+    chance = int(table.get("chance") or 0)
+    phase = clock(game)[1]
+    if f"chance_{phase}" in table:
+        chance = int(table[f"chance_{phase}"])
+    else:
+        cfg = _cfg(game)
+        if phase == "night":
+            chance += int(cfg.get("night_encounter_bonus") or 0)
+        elif phase == "evening":
+            chance += int(cfg.get("evening_encounter_bonus") or 0)
+    return max(0, min(100, chance))

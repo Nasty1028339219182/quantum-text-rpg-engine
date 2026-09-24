@@ -15,6 +15,7 @@ hilda:
     - {item: bread, price: 2, stock: 6}
     - {item: cheese, price: 3, stock: 3}
     - {item: health_potion, price: 12, stock: 1}
+  shop_always: true
 
 osip:
   name: {ru: Осип, en: Osip}
@@ -33,6 +34,7 @@ kain:
   hostile: false
   on_death:
     - set_flag: mira_saved
+    - follow: mira
 
 mira:
   name: {ru: Мира, en: Mira}
@@ -40,3 +42,6 @@ mira:
   description: {ru: Лет двенадцати. Грязь до локтей, взгляд взрослее., en: About twelve. Mud to the elbows, an older gaze.}
   location: camp
   dialogue: mira
+  combat:
+    hp: 8
+    attack: 1d4

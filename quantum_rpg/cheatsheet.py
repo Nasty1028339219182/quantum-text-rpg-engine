@@ -63,6 +63,16 @@ HELP = {
   when: {phase: night}
   комната: note_night / description_night
   отдых сдвигает часы
+  time.shop_closed: [night]
+  time.night_encounter_bonus: 20
+  npc.shop_always: true
+  chance_night: 60
+
+СПУТНИК
+  effects: [{follow: mira}, {unfollow: mira}]
+  npc.combat: {hp: 8, attack: 1d4}
+  идёт в ту же комнату, в бою бьёт один раз за ход
+
 
 
 INCLUDE
@@ -108,6 +118,10 @@ TIME — game.yaml `time: {day_length, start_hour, rest_hours}`
   when: {phase: night}
   room: note_night / description_night
   rest advances the clock
+  shop_closed: [night], night_encounter_bonus, shop_always: true
+
+FOLLOW — effect `follow: npc_id` / `unfollow: npc_id`
+  npc.combat: {hp, attack}; they walk with you and strike once a round
 
 INCLUDE — `include: [items/weapons.yaml]` from library/; local YAML wins.
 """,

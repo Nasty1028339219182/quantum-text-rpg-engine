@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0 — 2026-09-24
+
+- Shops close at night when the game has a `time:` block (`shop_closed`)
+- Inns can stay open (`shop_always: true`)
+- Night and evening raise random-encounter chance
+- Followers: `follow` / `unfollow`, they change rooms with you
+- A follower strikes once per combat round; rest restores their hp
+- Mira in Greyford walks home instead of teleporting by a flag
+
 ## 1.4.0 — 2026-09-24
 
 - Class abilities (`abilities.yaml`): combat buttons from 5, spend MP

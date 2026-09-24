@@ -201,6 +201,11 @@ def run(game: "Game", encounter_id: str) -> str:
         if not living or game.state.ended or not game.running:
             continue
 
+        _allies_act(game, living)
+        living = [e for e in enemies if e.hp > 0]
+        if not living or game.state.ended or not game.running:
+            continue
+
         ac = player_ac(game) + (2 if defending else 0)
         for enemy in living:
             _enemy_hit(game, enemy, ac)
@@ -247,6 +252,27 @@ def _parse_choice(choice: str) -> tuple[str, str]:
         "выход": "quit",
     }
     return aliases.get(head, "attack"), rest or head if head not in aliases else rest
+
+
+def _allies_act(game: "Game", living: list[Fighter]) -> None:
+    for fid, data in list((game.state.followers or {}).items()):
+        if int(data.get("hp") or 0) <= 0:
+            continue
+        living[:] = [e for e in living if e.hp > 0]
+        if not living:
+            return
+        target = living[0]
+        name = game.npc_name(fid)
+        to_hit = roll("1d20", game.rng) + 2
+        ac = 10 + int(target.defense) + int(target.ac_bonus)
+        if to_hit < ac:
+            game.say(t(game.lang, "ally_miss", name=name))
+            continue
+        dmg = max(1, roll(data.get("attack") or "1d4", game.rng))
+        target.hp -= dmg
+        game.say(t(game.lang, "ally_hit", name=name, dmg=dmg, target=target.name))
+        if target.hp <= 0:
+            game.say(t(game.lang, "enemy_down", name=target.name))
 
 
 def _status(game: "Game", living: list[Fighter]) -> None:

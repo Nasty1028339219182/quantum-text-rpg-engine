@@ -52,7 +52,23 @@ time:
   day_length: 24
   start_hour: 22         # night 21–5, morning 6–11, day 12–17, evening 18–20
   rest_hours: 8
+  shop_closed: [night]   # omitted time: block → shops always open
+  night_encounter_bonus: 20
 ```
+
+NPC shop: `shop_always: true` or `shop_hours: [morning, day]`.
+Room `random_encounters.chance_night` overrides the bonus for that room.
+
+Follower:
+
+```yaml
+# effect
+- follow: mira          # or {npc: mira, hp: 8, attack: 1d4}
+- unfollow: mira
+```
+
+NPC may set `combat: {hp, attack}`. Followers move with you and strike once per combat round. Rest restores their hp.
+
 
 `abilities.yaml` — combat buttons from 5. Shown only if `class:` matches the chosen class.
 

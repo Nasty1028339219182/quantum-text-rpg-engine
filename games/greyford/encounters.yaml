@@ -9,6 +9,7 @@ kain_fight:
   on_win:
     - set_flag: mira_saved
     - set_flag: bandits_cleared
+    - follow: mira
     - message:
         ru: Кайн падает. Мира не кричит.
         en: Kain falls. Mira does not shout.

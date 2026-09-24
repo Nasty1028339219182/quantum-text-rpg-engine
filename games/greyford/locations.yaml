@@ -24,6 +24,7 @@ square:
           - not_flag: mira_home
       effects:
         - set_flag: mira_home
+        - unfollow: mira
         - complete_quest: missing_mira
         - message:
             ru: Мира бежит к колодцу. Бран встаёт — первый раз за день.
@@ -34,6 +35,9 @@ inn:
   description:
     ru: Низко, тепло, пахнет луком. Хильда протирает стол так, будто оттирает грех.
     en: Low, warm, onion-scented. Hilda wipes the table as if wiping a sin.
+  note_night:
+    ru: Очаг не гасят. Ночью «Кружка» — единственный свет в Броде.
+    en: The hearth stays lit. At night the Mug is the only light in Greyford.
   rest: true
   exits:
     east: square
@@ -55,6 +59,9 @@ road:
   description:
     ru: Колея, лужи, воронье. Север — деревня. Юг — чаща.
     en: Ruts, puddles, crows. North is the village. South is the thicket.
+  note_night:
+    ru: Колею не видно. Слышно только чащу.
+    en: The rut is gone. Only the thicket can be heard.
   exits:
     north: square
     south: forest

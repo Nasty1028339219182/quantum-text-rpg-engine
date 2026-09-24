@@ -97,3 +97,5 @@ time:
   day_length: 24
   start_hour: 9
   rest_hours: 8
+  shop_closed: [night]
+  night_encounter_bonus: 25

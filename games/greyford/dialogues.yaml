@@ -91,6 +91,7 @@ kain:
         - text: {ru: Она идёт со мной. Сейчас., en: She walks with me. Now.}
           effects:
             - set_flag: mira_saved
+            - follow: mira
             - message:
                 ru: Кайн разводит руками. Ему не нужны лишние трупы рядом с бродом.
                 en: Kain opens his hands. He doesn't need extra corpses by the ford.
@@ -101,6 +102,7 @@ kain:
             - take_gold: 15
             - set_flag: mira_saved
             - set_flag: paid_kain
+            - follow: mira
             - message:
                 ru: Кайн кивает. Мира встаёт, не смотрит на него.
                 en: Kain nods. Mira stands and does not look at him.

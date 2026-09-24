@@ -166,6 +166,10 @@ def _apply_one(game: "Game", eff: dict) -> None:
     if "remove_npc" in eff:
         nid = str(eff["remove_npc"])
         game.remove_npc(nid)
+    if "follow" in eff:
+        game.add_follower(eff["follow"])
+    if "unfollow" in eff:
+        game.remove_follower(str(eff["unfollow"]))
     if "rest" in eff and eff["rest"]:
         p.hp = p.max_hp
         p.mp = p.max_mp

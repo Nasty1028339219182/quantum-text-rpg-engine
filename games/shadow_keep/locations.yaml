@@ -40,6 +40,9 @@ stables:
     en: |
       The stalls are empty. Hay is piled as if someone searched in a hurry.
       A pitchfork hangs on the wall. It smells of mice and old leather.
+  note_night:
+    ru: В темноте стойла кажутся занятыми.
+    en: In the dark the stalls look occupied.
   exits:
     west: courtyard
   items: [pitchfork]

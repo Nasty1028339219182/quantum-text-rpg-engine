@@ -101,6 +101,7 @@ class GameState:
     player: Player = field(default_factory=Player)
     ended: str = ""  # "", "win", "lose"
     once: set = field(default_factory=set)  # fired once-events
+    followers: dict = field(default_factory=dict)  # npc id -> {hp, max_hp, attack}
 
     def to_dict(self) -> dict:
         return {
@@ -125,6 +126,7 @@ class GameState:
             "player": self.player.to_dict(),
             "ended": self.ended,
             "once": sorted(self.once),
+            "followers": self.followers,
         }
 
     @classmethod
@@ -151,4 +153,5 @@ class GameState:
             player=Player.from_dict(d.get("player") or {}),
             ended=d.get("ended") or "",
             once=set(d.get("once") or []),
+            followers=dict(d.get("followers") or {}),
         )
