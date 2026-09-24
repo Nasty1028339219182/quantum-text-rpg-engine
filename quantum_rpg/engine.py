@@ -14,6 +14,7 @@ from .loader import World, initial_location_items, initial_location_npcs, load_w
 from .parser import parse
 from .state import GameState, Player, StatusEffect, STAT_KEYS
 from .ui import ScriptedIO, TerminalIO
+from .clock import advance, clock, phase_name
 from .util import as_list, loc, match_entity, modifier, roll, wrap
 
 
@@ -154,6 +155,8 @@ class Game:
             "mp": p.mp,
             "max_mp": p.max_mp,
             "gold": p.gold,
+            "phase": clock(self)[1],
+            "hour": clock(self)[0],
             "xp": p.xp,
             "level": p.level,
             "ended": self.state.ended,
@@ -697,7 +700,12 @@ class Game:
             return
         room = self.room()
         self._header()
-        desc = loc(room.get("description"), self.lang)
+        phase = clock(self)[1]
+        alt = room.get(f"description_{phase}")
+        desc = loc(alt if alt else room.get("description"), self.lang)
+        note = loc(room.get(f"note_{phase}"), self.lang)
+        if note:
+            desc = f"{desc}\n{note}".strip() if desc else note
         if desc:
             self.say(desc)
         extras = []
@@ -735,6 +743,7 @@ class Game:
         if p.max_mp:
             bar += f"  {t(self.lang, 'mp')} {p.mp}/{p.max_mp}"
         bar += f"  {t(self.lang, 'gold')} {p.gold}"
+        bar += f"  {phase_name(self)}"
         self.say("")
         self.say(bar)
         self.say("-" * min(72, max(24, len(bar))))
@@ -1232,6 +1241,8 @@ class Game:
             return
         effects.apply(self, {"rest": True})
         effects.apply(self, room.get("on_rest"))
+        advance(self)
+        self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 
     def _cmd_wait(self, cmd) -> None:
         self.say(t(self.lang, "wait"))

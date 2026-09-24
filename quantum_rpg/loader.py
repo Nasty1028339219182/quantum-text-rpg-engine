@@ -22,6 +22,7 @@ KNOWN_FILES = (
     "events",
     "skills",
     "loot_tables",
+    "abilities",
 )
 
 
@@ -39,6 +40,7 @@ class World:
     events: list = field(default_factory=list)
     skills: dict = field(default_factory=dict)
     loot_tables: dict = field(default_factory=dict)
+    abilities: dict = field(default_factory=dict)
     warnings: list = field(default_factory=list)
     errors: list = field(default_factory=list)
 
@@ -126,6 +128,13 @@ def load_world(game_dir: str | Path) -> World:
     world.loot_tables = _loot_tables(raw.get("loot_tables"))
     if isinstance(game.get("loot_tables"), dict):
         world.loot_tables.update(_loot_tables(game.get("loot_tables")))
+    world.abilities = _index(raw.get("abilities"), "abilities")
+    if isinstance(game.get("abilities"), dict):
+        for k, v in game["abilities"].items():
+            if k not in world.abilities and isinstance(v, dict):
+                row = dict(v)
+                row.setdefault("id", k)
+                world.abilities[k] = row
     events = raw.get("events")
     if isinstance(events, dict):
         world.events = []

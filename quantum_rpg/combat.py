@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 from .effects import apply as apply_effects
+from .abilities import available as available_abilities
+from .abilities import resolve_choice as resolve_ability
 from .i18n import t
 from .parser import parse
 from .util import loc, modifier, roll
@@ -129,15 +131,21 @@ def run(game: "Game", encounter_id: str) -> str:
             return "win"
 
         _status(game, living)
+        rows = available_abilities(game)
         game.say(t(game.lang, "combat_menu"))
-        game.set_choices(
-            [
-                {"label": t(game.lang, "attack"), "command": "1"},
-                {"label": t(game.lang, "use_item"), "command": "2"},
-                {"label": t(game.lang, "defend"), "command": "3"},
-                {"label": t(game.lang, "flee"), "command": "4"},
-            ]
-        )
+        choices = [
+            {"label": t(game.lang, "attack"), "command": "1"},
+            {"label": t(game.lang, "use_item"), "command": "2"},
+            {"label": t(game.lang, "defend"), "command": "3"},
+            {"label": t(game.lang, "flee"), "command": "4"},
+        ]
+        for i, (aid, spec) in enumerate(rows, 5):
+            name = loc(spec.get("name") or aid, game.lang)
+            cost = int(spec.get("mp") or 0)
+            label = f"{i}. {name}" + (f" ({cost} MP)" if cost else "")
+            game.say(f"  {label}")
+            choices.append({"label": label, "command": str(i)})
+        game.set_choices(choices)
         choice = (game.ui.read(t(game.lang, "prompt")) or "").strip().lower()
         cmd = parse(choice)
         if cmd and cmd.verb in (
@@ -151,37 +159,43 @@ def run(game: "Game", encounter_id: str) -> str:
                 return "abort"
             game.handle(choice)
             continue
-        action, extra = _parse_choice(choice)
-
-        if action in ("quit", "выход"):
-            game.in_combat = False
-            game.running = False
-            game.set_choices([])
-            return "abort"
-        if action == "flee" or action == "4":
-            dc = int(enc.get("flee_dc") or 12)
-            roll_v = roll("1d20", game.rng) + modifier(int(game.state.player.stats.get("dex", 10)))
-            if roll_v >= dc:
-                game.say(t(game.lang, "fled"))
-                game.in_combat = False
-                game.set_choices([])
-                game.hooks.call("on_combat_end", game, encounter_id, False)
-                return "flee"
-            game.say(t(game.lang, "cant_flee"))
-        elif action in ("defend", "3"):
-            defending = True
-            game.say(t(game.lang, "defending"))
-        elif action in ("use", "2", "item"):
-            _use_in_combat(game, extra, living)
-        elif action in ("say",):
-            handled = game.hooks.call("on_command", game, "say", extra.split() if extra else [])
-            if not handled:
-                game.say(t(game.lang, "nothing_happens"))
-        else:
-            target = _pick_target(game, living, extra)
-            if target:
-                _player_hit(game, target)
+        ability_id = resolve_ability(game, choice)
+        if ability_id:
+            if not _cast(game, ability_id, living):
+                continue
             defending = False
+        else:
+            action, extra = _parse_choice(choice)
+
+            if action in ("quit", "выход"):
+                game.in_combat = False
+                game.running = False
+                game.set_choices([])
+                return "abort"
+            if action == "flee" or action == "4":
+                dc = int(enc.get("flee_dc") or 12)
+                roll_v = roll("1d20", game.rng) + modifier(int(game.state.player.stats.get("dex", 10)))
+                if roll_v >= dc:
+                    game.say(t(game.lang, "fled"))
+                    game.in_combat = False
+                    game.set_choices([])
+                    game.hooks.call("on_combat_end", game, encounter_id, False)
+                    return "flee"
+                game.say(t(game.lang, "cant_flee"))
+            elif action in ("defend", "3"):
+                defending = True
+                game.say(t(game.lang, "defending"))
+            elif action in ("use", "2", "item"):
+                _use_in_combat(game, extra, living)
+            elif action in ("say",):
+                handled = game.hooks.call("on_command", game, "say", extra.split() if extra else [])
+                if not handled:
+                    game.say(t(game.lang, "nothing_happens"))
+            else:
+                target = _pick_target(game, living, extra)
+                if target:
+                    _player_hit(game, target)
+                defending = False
 
         living = [e for e in enemies if e.hp > 0]
         if not living or game.state.ended or not game.running:
@@ -237,10 +251,47 @@ def _parse_choice(choice: str) -> tuple[str, str]:
 
 def _status(game: "Game", living: list[Fighter]) -> None:
     p = game.state.player
-    lines = [f"{t(game.lang, 'you_are')}  {t(game.lang, 'hp')} {p.hp}/{p.max_hp}"]
+    line = f"{t(game.lang, 'you_are')}  {t(game.lang, 'hp')} {p.hp}/{p.max_hp}"
+    if p.max_mp:
+        line += f"  {t(game.lang, 'mp')} {p.mp}/{p.max_mp}"
+    lines = [line]
     for e in living:
         lines.append(f"{e.name}  {t(game.lang, 'hp')} {e.hp}/{e.max_hp}")
     game.say("\n".join(lines))
+
+
+def _cast(game: "Game", ability_id: str, living: list[Fighter]) -> bool:
+    spec = (game.world.abilities or {}).get(ability_id) or {}
+    cost = int(spec.get("mp") or 0)
+    p = game.state.player
+    if p.mp < cost:
+        game.say(t(game.lang, "no_mp"))
+        return False
+    p.mp -= cost
+    text = loc(spec.get("text"), game.lang)
+    if text:
+        game.say(text)
+    target = _pick_target(game, living, "")
+    if not target:
+        return True
+    bonus = player_attack_bonus(game) + int(spec.get("hit") or 0)
+    to_hit = roll("1d20", game.rng) + bonus
+    ac = 10 + int(target.defense) + int(target.ac_bonus)
+    if spec.get("auto_hit"):
+        to_hit = ac
+    if to_hit < ac:
+        game.say(t(game.lang, "you_miss"))
+        return True
+    expr = spec.get("damage") or (player_weapon(game).get("damage") or "1d4")
+    dmg = roll(expr, game.rng) + int(spec.get("bonus") or 0)
+    target.hp -= max(0, dmg)
+    name = loc(spec.get("name") or ability_id, game.lang)
+    game.say(t(game.lang, "you_hit", dmg=dmg, name=name))
+    if spec.get("effects"):
+        apply_effects(game, spec.get("effects"))
+    if target.hp <= 0:
+        game.say(t(game.lang, "enemy_down", name=target.name))
+    return True
 
 
 def _pick_target(game: "Game", living: list[Fighter], extra: str) -> Optional[Fighter]:

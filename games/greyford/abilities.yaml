@@ -1,0 +1,27 @@
+smash:
+  name: {ru: Сокрушить, en: Smash}
+  class: warrior
+  mp: 2
+  damage: 1d8+1
+  text:
+    ru: Топор идёт сверху.
+    en: The axe comes down.
+
+backstab:
+  name: {ru: В спину, en: Backstab}
+  class: rogue
+  mp: 2
+  hit: 3
+  damage: 1d6+2
+  text:
+    ru: Короткий шаг, и нож уже там.
+    en: A short step, and the knife is already there.
+
+unnerve:
+  name: {ru: Запугать, en: Unnerve}
+  class: speaker
+  mp: 2
+  damage: 1d6
+  text:
+    ru: Ты называешь цену их ошибки. Они её слышат.
+    en: You name the price of their mistake. They hear it.

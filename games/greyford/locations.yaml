@@ -7,6 +7,9 @@ square:
     en: |
       A well, a crooked fence, mill-dust from the east. West — the Mug inn.
       South — the forest road. Elder Bran sits on a bench counting crows.
+  note_night:
+    ru: Фонарей нет. Колодец — чёрный круг.
+    en: No lanterns. The well is a black circle.
   rest: true
   exits:
     west: inn

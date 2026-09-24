@@ -14,6 +14,8 @@ classes:
     stats: {str: 15, dex: 11, int: 9, con: 15, cha: 8, per: 10}
     hp: 36
     max_hp: 36
+    mp: 6
+    max_mp: 6
     gold: 14
     inventory: [torch, rusty_sword]
     equipment: {weapon: rusty_sword}
@@ -24,6 +26,8 @@ classes:
     stats: {str: 10, dex: 15, int: 12, con: 11, cha: 10, per: 14}
     hp: 26
     max_hp: 26
+    mp: 4
+    max_mp: 4
     gold: 22
     inventory: [torch, rusty_sword]
     equipment: {weapon: rusty_sword}
@@ -34,6 +38,8 @@ classes:
     stats: {str: 10, dex: 11, int: 12, con: 12, cha: 15, per: 12}
     hp: 28
     max_hp: 28
+    mp: 8
+    max_mp: 8
     gold: 26
     inventory: [torch, rusty_sword]
     equipment: {weapon: rusty_sword}
@@ -112,3 +118,7 @@ player:
 settings:
   inventory_limit: 24
   weight_limit: 40
+time:
+  day_length: 24
+  start_hour: 22
+  rest_hours: 8

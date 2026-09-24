@@ -1,0 +1,28 @@
+smash:
+  name: {ru: Сокрушить, en: Smash}
+  class: warrior
+  mp: 2
+  damage: 1d8+1
+  text:
+    ru: Ты бьёшь всем весом.
+    en: You put your weight behind the blow.
+
+backstab:
+  name: {ru: В спину, en: Backstab}
+  class: rogue
+  mp: 2
+  hit: 3
+  damage: 1d6+2
+  text:
+    ru: Клинок заходит туда, где не ждут.
+    en: The blade goes where they aren't looking.
+
+unnerve:
+  name: {ru: Запугать, en: Unnerve}
+  class: speaker
+  mp: 2
+  damage: 1d6
+  hit: 1
+  text:
+    ru: Ты говоришь тихо. Это хуже крика.
+    en: You speak quietly. That is worse than a shout.

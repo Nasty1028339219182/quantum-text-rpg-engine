@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 — 2026-09-24
+
+- Class abilities (`abilities.yaml`): combat buttons from 5, spend MP
+- Warrior / rogue / speaker each get one ability in Shadow Keep and Greyford
+- Clock foundation: night, morning, day, evening
+- `when: {phase: night}`, `note_night` / `description_night`
+- Rest advances the clock
+- Companions and a fuller day/night simulation stay for 1.5.0
+
 ## 1.3.1 — 2026-09-22
 
 - Player `name: {ru, en}` no longer stored as a Python dict string

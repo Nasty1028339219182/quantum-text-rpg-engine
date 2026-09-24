@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from .util import as_list, modifier, roll
+from .clock import clock
 
 if TYPE_CHECKING:
     from .engine import Game
@@ -94,6 +95,8 @@ def check(game: "Game", cond: Any) -> bool:
         "npc_alive": lambda v: str(v) not in st.defeated,
         "counter_gte": _counter_gte,
         "time_gte": lambda v: st.time >= int(v),
+        "phase": lambda v: clock(game)[1] == str(v),
+        "hour_gte": lambda v: clock(game)[0] >= int(v),
         "equipped": lambda v: str(v) in (p.equipment or {}).values(),
         "once": lambda v: str(v) not in st.once,
         "skill_check": _skill_check,

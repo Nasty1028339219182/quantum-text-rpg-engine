@@ -48,7 +48,27 @@ player:
 settings:
   inventory_limit: int
   weight_limit: int
+time:
+  day_length: 24
+  start_hour: 22         # night 21–5, morning 6–11, day 12–17, evening 18–20
+  rest_hours: 8
 ```
+
+`abilities.yaml` — combat buttons from 5. Shown only if `class:` matches the chosen class.
+
+```yaml
+smash:
+  name: loc
+  class: warrior
+  mp: 2
+  damage: 1d8+1
+  hit: 0
+  text: loc
+```
+
+Room text by phase: `description_night` replaces `description`. `note_night` is appended.
+`when: {phase: night}` or `{hour_gte: 18}`.
+
 
 ## locations.yaml — per room
 

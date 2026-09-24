@@ -64,6 +64,8 @@ classes:
     stats: {str: 15, dex: 11, int: 9, con: 14, cha: 9, per: 10}
     hp: 32
     gold: 8
+    mp: 6
+    max_mp: 6
     inventory: [travel_torch, wood_axe, bandage]
     equipment: {weapon: wood_axe}
     skills: {athletics: 2, persuasion: 0, lockpick: 0, perception: 1}
@@ -73,6 +75,8 @@ classes:
     stats: {str: 10, dex: 15, int: 12, con: 11, cha: 10, per: 14}
     hp: 22
     gold: 14
+    mp: 4
+    max_mp: 4
     inventory: [travel_torch, dagger, rope]
     equipment: {weapon: dagger}
     skills: {lockpick: 2, perception: 2, athletics: 0, persuasion: 0}
@@ -82,8 +86,14 @@ classes:
     stats: {str: 10, dex: 11, int: 12, con: 12, cha: 15, per: 12}
     hp: 24
     gold: 22
+    mp: 8
+    max_mp: 8
     inventory: [travel_torch, dagger, bread]
     equipment: {weapon: dagger}
     skills: {persuasion: 2, perception: 1, lockpick: 0, athletics: 0}
 settings:
   inventory_limit: 20
+time:
+  day_length: 24
+  start_hour: 9
+  rest_hours: 8

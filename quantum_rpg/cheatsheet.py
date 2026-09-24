@@ -46,10 +46,24 @@ HELP = {
   classes:
     warrior:
       name: {ru: Воин, en: Warrior}
-      stats: {str: 15, dex: 11, ...}
-      hp: 36
-      inventory: [torch, short_sword]
-      skills: {athletics: 2}
+      mp: 6
+      max_mp: 6
+
+УМЕНИЯ (abilities.yaml) — кнопка в бою, с 5
+  smash:
+    name: {ru: Сокрушить, en: Smash}
+    class: warrior
+    mp: 2
+    damage: 1d8+1
+    text: {ru: Ты бьёшь всем весом., en: You put your weight behind it.}
+
+ВРЕМЯ (фундамент, game.yaml)
+  time: {day_length: 24, start_hour: 22, rest_hours: 8}
+  фазы: night 21–5, morning 6–11, day 12–17, evening 18–20
+  when: {phase: night}
+  комната: note_night / description_night
+  отдых сдвигает часы
+
 
 INCLUDE
   include:
@@ -85,6 +99,15 @@ RANDOM ENCOUNTERS
   random_encounters: {chance, once, table: [{encounter, weight}]}
 
 CLASSES — game.yaml `classes:` + `class_prompt: true`
+
+ABILITIES — abilities.yaml, combat button from 5, `class:` must match
+  smash: {name, class: warrior, mp: 2, damage: 1d8+1, text}
+
+TIME — game.yaml `time: {day_length, start_hour, rest_hours}`
+  phases: night 21–5, morning 6–11, day 12–17, evening 18–20
+  when: {phase: night}
+  room: note_night / description_night
+  rest advances the clock
 
 INCLUDE — `include: [items/weapons.yaml]` from library/; local YAML wins.
 """,

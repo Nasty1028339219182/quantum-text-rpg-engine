@@ -27,6 +27,9 @@ courtyard:
     - journal:
         ru: Я вошёл во двор крепости. Страж ещё жив.
         en: I entered the courtyard. The guard is still alive.
+  note_morning:
+    ru: Дождь не кончился, но небо уже серое, не чёрное.
+    en: The rain has not stopped, but the sky is grey now, not black.
 
 stables:
   name: {ru: Конюшня, en: Stables}

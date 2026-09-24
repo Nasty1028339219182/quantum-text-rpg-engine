@@ -319,10 +319,12 @@ class PlayWindow:
         locn = (s.get("location") or "").upper()
         hp = f"{t(self.lang, 'hp')} {s.get('hp', 0)}/{s.get('max_hp', 0)}"
         gold = f"{t(self.lang, 'gold')} {s.get('gold', 0)}"
+        phase = s.get("phase")
+        when = f"  {t(self.lang, 'phase_' + phase)}" if phase else ""
         extra = ""
         if s.get("max_mp"):
             extra = f"  {t(self.lang, 'mp')} {s.get('mp')}/{s.get('max_mp')}"
-        self.status.configure(text=f"{locn}    {hp}{extra}    {gold}")
+        self.status.configure(text=f"{locn}    {hp}{extra}    {gold}{when}")
         self.title_lbl.configure(text=s.get("title") or "Quantum RPG")
         self.lang_btn.configure(text=self.lang.upper())
 
