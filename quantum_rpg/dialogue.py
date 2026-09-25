@@ -47,6 +47,7 @@ def run(game: "Game", npc_id: str) -> None:
         if text:
             speaker = loc(npc.get("name") or npc_id, game.lang)
             game.say(f"{speaker}: {text}")
+        _say_rumors(game, npc_id)
         apply_effects(game, node.get("effects"))
         if node.get("end") or node.get("shop"):
             if node.get("shop"):
@@ -104,6 +105,29 @@ def run(game: "Game", npc_id: str) -> None:
             break
     game.in_dialogue = False
     game.set_choices([])
+
+
+def _say_rumors(game: "Game", npc_id: str) -> None:
+    rumors = game.world.game.get("rumors") or {}
+    if not isinstance(rumors, dict):
+        return
+    for rid, spec in rumors.items():
+        if not isinstance(spec, dict):
+            continue
+        knows = [str(x) for x in (spec.get("knows") or [])]
+        if npc_id not in knows:
+            continue
+        if spec.get("when") and not check(game, spec["when"]):
+            continue
+        if str(rid) in game.state.heard_rumors:
+            continue
+        text = loc(spec.get("text"), game.lang)
+        if not text:
+            continue
+        game.state.heard_rumors.add(str(rid))
+        game.say(text)
+        if text not in game.state.journal:
+            game.state.journal.append(text)
 
 
 def _visible_choices(game: "Game", choices: list) -> list[dict]:

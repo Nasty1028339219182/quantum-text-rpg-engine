@@ -76,6 +76,7 @@ class EditorWindow:
         Btn(top, text=self.tr("gui_play"), command=self._play, anchor="center").pack(side="right", pady=6)
         Btn(top, text=self.tr("ed_play_here"), command=self._play_here, anchor="center").pack(side="right", padx=4, pady=6)
         Btn(top, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="right", padx=4, pady=6)
+        Btn(top, text=self.tr("ed_package"), command=self._package, anchor="center").pack(side="right", padx=4, pady=6)
         Btn(top, text=self.tr("gui_save"), command=self._save, anchor="center", font=font_ui(9, True)).pack(
             side="right", pady=6
         )
@@ -240,6 +241,20 @@ class EditorWindow:
         self.status.configure(text=self.tr("ed_saved", path=str(self.project.path)), fg=C["ok"])
         self._set_title()
         return True
+
+    def _package(self) -> None:
+        if not self._save():
+            return
+        from .project import package_game
+
+        dest = self.project.path.parent / f"{self.project.path.name}.zip"
+        try:
+            package_game(self.project.path, dest)
+        except OSError as exc:
+            messagebox.showerror("Quantum RPG", str(exc))
+            return
+        self.status.configure(text=self.tr("ed_packaged", path=str(dest)), fg=C["ok"])
+        messagebox.showinfo("Quantum RPG", self.tr("ed_packaged", path=str(dest)))
 
     def _validate(self) -> None:
         if not self._save():
@@ -501,6 +516,8 @@ class GameForm(_Base):
         )
         self.regions = _yaml_field(parent, "regions (YAML)", yaml_dump_text(g.get("regions")))
         self.roads = _yaml_field(parent, "roads (YAML)", yaml_dump_text(g.get("roads")))
+        self.levels = _yaml_field(parent, "levels (YAML)", yaml_dump_text(g.get("levels")))
+        self.rumors = _yaml_field(parent, "rumors (YAML)", yaml_dump_text(g.get("rumors")))
 
     def collect(self) -> None:
         g = self.ed.project.game
@@ -592,6 +609,16 @@ class GameForm(_Base):
             g["roads"] = roads
         else:
             g.pop("roads", None)
+        levels = yaml_load_text(_get(self.levels))
+        if levels:
+            g["levels"] = levels
+        else:
+            g.pop("levels", None)
+        rumors = yaml_load_text(_get(self.rumors))
+        if rumors:
+            g["rumors"] = rumors
+        else:
+            g.pop("rumors", None)
 
 
 def _labeled(parent, label: str, value: str) -> Entry:
@@ -1227,32 +1254,34 @@ class QuestForm(_Base):
         self.done = _loc(parent, "done_text", q.get("done_text"), height=2)
         self.auto = _check(parent, "auto_start", q.get("auto_start"))
         self.reward = _yaml_field(parent, "reward (YAML effects)", yaml_dump_text(q.get("reward")))
-        _label(parent, "steps  id, ru, en")
+        _label(parent, "steps  id, ru, en, hours")
         self.step_box = tk.Frame(parent, bg=C["bg"])
         self.step_box.pack(fill="x")
         self.step_rows = []
         for step in q.get("steps") or []:
             if isinstance(step, str):
-                self._step_row("", step, "")
+                self._step_row("", step, "", "")
             elif isinstance(step, dict):
                 text = step.get("text") if isinstance(step.get("text"), dict) else {}
                 ru = text.get("ru") if isinstance(text, dict) else str(step.get("text") or "")
                 en = text.get("en") if isinstance(text, dict) else ""
-                self._step_row(str(step.get("id") or ""), str(ru or ""), str(en or ""))
-        Btn(parent, text="+ step", command=lambda: self._step_row("", "", ""), anchor="center").pack(anchor="w", pady=4)
+                self._step_row(str(step.get("id") or ""), str(ru or ""), str(en or ""), str(step.get("within") or ""))
+        Btn(parent, text="+ step", command=lambda: self._step_row("", "", "", ""), anchor="center").pack(anchor="w", pady=4)
 
-    def _step_row(self, sid: str, ru: str, en: str) -> None:
+    def _step_row(self, sid: str, ru: str, en: str, within: str) -> None:
         row = tk.Frame(self.step_box, bg=C["bg"])
         row.pack(fill="x", pady=1)
-        a, b, c = Entry(row, width=12), Entry(row, width=28), Entry(row, width=28)
+        a, b, c, d = Entry(row, width=10), Entry(row, width=24), Entry(row, width=24), Entry(row, width=6)
         a.insert(0, sid)
         b.insert(0, ru)
         c.insert(0, en)
+        d.insert(0, within)
         a.pack(side="left", padx=2)
         b.pack(side="left", padx=2)
         c.pack(side="left", padx=2)
+        d.pack(side="left", padx=2)
         Btn(row, text="×", width=2, anchor="center", command=lambda r=row: self._drop_step(r)).pack(side="left")
-        self.step_rows.append((row, a, b, c))
+        self.step_rows.append((row, a, b, c, d))
 
     def _drop_step(self, row) -> None:
         self.step_rows = [x for x in self.step_rows if x[0] is not row]
@@ -1271,12 +1300,24 @@ class QuestForm(_Base):
         else:
             q.pop("reward", None)
         steps = []
-        for i, (_row, a, b, c) in enumerate(self.step_rows):
+        old = {
+            str(step.get("id")): step
+            for step in (q.get("steps") or [])
+            if isinstance(step, dict)
+        }
+        for i, (_row, a, b, c, d) in enumerate(self.step_rows):
             text = loc_value(b.get(), c.get())
             if not text:
                 continue
             sid = a.get().strip() or f"s{i + 1}"
-            steps.append({"id": sid, "text": text})
+            row = {"id": sid, "text": text}
+            hours = d.get().strip()
+            if hours:
+                row["within"] = int(hours)
+            prev = old.get(sid) or {}
+            if prev.get("on_expire"):
+                row["on_expire"] = prev["on_expire"]
+            steps.append(row)
         if steps:
             q["steps"] = steps
         else:

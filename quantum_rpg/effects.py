@@ -116,6 +116,7 @@ def _apply_one(game: "Game", eff: dict) -> None:
             pass
         else:
             st.quests[qid] = "done"
+            st.quest_deadlines.pop(qid, None)
             q = game.world.quests.get(qid, {})
             reward = q.get("reward")
             if reward:
@@ -124,7 +125,14 @@ def _apply_one(game: "Game", eff: dict) -> None:
             if text:
                 game.say(text)
     if "fail_quest" in eff:
-        st.quests[str(eff["fail_quest"])] = "failed"
+        qid = str(eff["fail_quest"])
+        st.quests[qid] = "failed"
+        st.quest_deadlines.pop(qid, None)
+    if "give_ability" in eff:
+        aid = str(eff["give_ability"])
+        if aid and aid not in p.abilities:
+            p.abilities.append(aid)
+            game.say(t(lang, "ability_learned", name=aid))
     if "start_combat" in eff:
         game.start_combat(str(eff["start_combat"]))
     if "reveal_exit" in eff:

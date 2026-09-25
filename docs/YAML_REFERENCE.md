@@ -307,6 +307,41 @@ roads:
 
 `ехать холм` spends the hours, ticks hunger once an hour, may start the encounter, then puts you in that region's `start`. `both` defaults to true. The map shows only the current region. A room can also set `region: hill`.
 
+## Quest time, levels, rumors
+
+A step may expire. `within` is hours from the moment that step becomes current.
+
+```yaml
+- id: home
+  text: {ru: Привести Миру на площадь., en: Bring Mira to the square.}
+  within: 36
+  on_expire:
+    - fail_quest: missing_mira
+```
+
+`задания` shows the hours left. With no `levels:` list, a level still adds 4 HP. With a list, the player picks one and that replaces the free HP:
+
+```yaml
+levels:
+  - text: {ru: Крепче удары, en: Harder hits}
+    effects: [{modify_stat: {str: 1}}]
+  - text: {ru: Новый приём, en: A new trick}
+    effects: [{give_ability: shove}]
+```
+
+```yaml
+rumors:
+  mira_south:
+    when: {flag: asked_hilda}
+    knows: [osip]
+    text: {ru: Девочка ушла югом., en: The girl went south.}
+```
+
+The NPC says it once, the first time you talk, and it is copied into the journal. `слухи` lists what you have heard.
+
+**Собрать** in the editor zips this game only, and copies `include` files into the zip so it does not need the library beside it.
+
+
 
 
 

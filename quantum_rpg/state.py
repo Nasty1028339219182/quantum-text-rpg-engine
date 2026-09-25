@@ -46,6 +46,7 @@ class Player:
     equipment: dict = field(default_factory=dict)  # slot -> item_id
     skills: dict = field(default_factory=dict)  # skill -> bonus
     status: list = field(default_factory=list)
+    abilities: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -75,6 +76,7 @@ class Player:
             equipment=dict(d.get("equipment") or {}),
             skills=dict(d.get("skills") or {}),
             status=st,
+            abilities=[str(x) for x in (d.get("abilities") or [])],
         )
 
 
@@ -108,6 +110,8 @@ class GameState:
     music_volume: int = -1
     sfx_volume: int = -1
     quest_steps: dict = field(default_factory=dict)
+    quest_deadlines: dict = field(default_factory=dict)
+    heard_rumors: set = field(default_factory=set)
 
     def to_dict(self) -> dict:
         return {
@@ -139,6 +143,8 @@ class GameState:
             "music_volume": self.music_volume,
             "sfx_volume": self.sfx_volume,
             "quest_steps": self.quest_steps,
+            "quest_deadlines": self.quest_deadlines,
+            "heard_rumors": sorted(self.heard_rumors),
         }
 
     @classmethod
@@ -172,4 +178,10 @@ class GameState:
             music_volume=int(d["music_volume"]) if d.get("music_volume") is not None else -1,
             sfx_volume=int(d["sfx_volume"]) if d.get("sfx_volume") is not None else -1,
             quest_steps={str(k): int(v) for k, v in (d.get("quest_steps") or {}).items()},
+            quest_deadlines={
+                str(k): {"at": int((v or {}).get("at") or 0), "step": int((v or {}).get("step") or 0)}
+                for k, v in (d.get("quest_deadlines") or {}).items()
+                if isinstance(v, dict)
+            },
+            heard_rumors=set(d.get("heard_rumors") or []),
         )

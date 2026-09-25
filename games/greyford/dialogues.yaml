@@ -59,6 +59,7 @@ hilda:
         ru: В лес ходила. Осип видел следы к югу. Волки воют, да. Но волки не ставят котелки.
         en: She went to the woods. Osip saw tracks south. The wolves howl, yes. Wolves don't set pots.
       effects:
+        - set_flag: asked_hilda
         - journal:
             ru: "Хильда: Мира ушла в лес. Южнее дороги — костёр не крестьянский."
             en: "Hilda: Mira went to the woods. South of the road — not a farmer's fire."

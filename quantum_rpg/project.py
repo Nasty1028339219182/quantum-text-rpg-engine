@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import zipfile
 from pathlib import Path
 from typing import Any, Optional
 
@@ -253,6 +254,43 @@ def exit_body(to, locked, key, hidden, trap_dc, trap_damage, trap_skill, origina
     if set(body) <= {"to"}:
         return to
     return body
+
+
+def package_game(src: Path, dest_zip: Path) -> Path:
+    """Zip one game. Library includes are copied in. Other games are not."""
+    from .library import _resolve
+    from .util import as_list
+
+    src = Path(src)
+    dest_zip = Path(dest_zip)
+    dest_zip.parent.mkdir(parents=True, exist_ok=True)
+    skip = {"saves", "__pycache__", ".git"}
+    game: dict = {}
+    game_file = src / "game.yaml"
+    if game_file.is_file():
+        raw = yaml.safe_load(game_file.read_text(encoding="utf-8")) or {}
+        if isinstance(raw, dict):
+            game = raw
+    with zipfile.ZipFile(dest_zip, "w", zipfile.ZIP_DEFLATED) as zipped:
+        written = set()
+        for path in src.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(src)
+            if any(part in skip for part in rel.parts):
+                continue
+            arc = str(Path(src.name) / rel)
+            zipped.write(path, arcname=arc)
+            written.add(arc)
+        for rel in as_list(game.get("include") or game.get("includes")):
+            found = _resolve(str(rel), src)
+            if not found:
+                continue
+            arc = str(Path(src.name) / str(rel))
+            if arc not in written:
+                zipped.write(found, arcname=arc)
+                written.add(arc)
+    return dest_zip
 
 
 def csv_load(val: Any) -> str:

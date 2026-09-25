@@ -26,6 +26,10 @@ def available(game: "Game") -> list[tuple[str, dict]]:
     for aid, spec in (game.world.abilities or {}).items():
         if not isinstance(spec, dict):
             continue
+        unlocked = {str(x) for x in (game.state.player.abilities or [])}
+        if str(aid) in unlocked:
+            out.append((str(aid), spec))
+            continue
         need = spec.get("class") or spec.get("classes")
         if need:
             needs = need if isinstance(need, list) else [need]

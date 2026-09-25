@@ -392,6 +392,7 @@ class Game:
             "stats": self._cmd_stats,
             "quests": self._cmd_quests,
             "journal": self._cmd_journal,
+            "rumors": self._cmd_rumors,
             "map": self._cmd_map,
             "travel": self._cmd_travel,
             "rest": self._cmd_rest,
@@ -658,11 +659,39 @@ class Game:
         p.xp += amount
         self.say(t(self.lang, "got_xp", xp=amount))
         # simple curve: 50, 120, 210, ...
-        while p.xp >= self._xp_needed(p.level):
-            p.level += 1
+        while p.xp >= self._xp_needed(p.level) and not self.state.ended:
+            self._level_up()
+
+    def _level_up(self) -> None:
+        p = self.state.player
+        p.level += 1
+        options = self.world.game.get("levels") or []
+        if not isinstance(options, list) or not options:
             p.max_hp += 4
             p.hp = p.max_hp
             self.say(t(self.lang, "level_up", level=p.level))
+            return
+        self.say(t(self.lang, "level_pick", level=p.level))
+        usable = [row for row in options if isinstance(row, dict)]
+        for i, row in enumerate(usable, 1):
+            self.say(f"  {i}. {loc(row.get('text') or row.get('name') or i, self.lang)}")
+        self.set_choices(
+            [{"label": loc(row.get("text") or row.get("name") or i, self.lang), "command": str(i)} for i, row in enumerate(usable, 1)]
+        )
+        picked = None
+        while self.running and not self.state.ended:
+            raw = (self.ui.read(t(self.lang, "prompt")) or "").strip()
+            if raw.isdigit() and 1 <= int(raw) <= len(usable):
+                picked = usable[int(raw) - 1]
+                break
+            if not raw or not usable:
+                picked = usable[0] if usable else None
+                break
+            self.say(t(self.lang, "level_pick", level=p.level))
+        self.set_choices([])
+        if picked:
+            effects.apply(self, picked.get("effects"))
+            self.say(loc(picked.get("text") or picked.get("name"), self.lang))
 
     def _xp_needed(self, level: int) -> int:
         return 40 * level * (level + 1) // 2
@@ -1432,6 +1461,9 @@ class Game:
             step = self.quest_step_text(qid)
             if step and status == "active":
                 self.say(f"    {t(self.lang, 'quest_now', text=step)}")
+            left = self._hours_left(qid)
+            if left is not None and status == "active":
+                self.say(f"    {t(self.lang, 'quest_hours', n=left)}")
 
     def quest_steps(self, qid: str) -> list:
         q = self.world.quests.get(qid) or {}
@@ -1451,6 +1483,7 @@ class Game:
         if not steps or index < 0 or index >= len(steps):
             return
         self.state.quest_steps[qid] = index
+        self._arm_deadline(qid, index)
         text = _step_text(steps[index], self.lang)
         if not text:
             return
@@ -1479,9 +1512,66 @@ class Game:
             if nxt < 0 or nxt <= current:
                 return
         if nxt >= len(steps):
+            self.state.quest_deadlines.pop(qid, None)
             effects.apply(self, {"complete_quest": qid})
             return
         self.note_quest_step(qid, nxt)
+
+    def _arm_deadline(self, qid: str, index: int) -> None:
+        steps = self.quest_steps(qid)
+        step = steps[index] if 0 <= index < len(steps) else None
+        within = step.get("within") if isinstance(step, dict) else None
+        if within is None:
+            self.state.quest_deadlines.pop(qid, None)
+            return
+        self.state.quest_deadlines[qid] = {"at": int(self.state.time) + int(within), "step": index}
+
+    def _hours_left(self, qid: str):
+        spec = self.state.quest_deadlines.get(qid)
+        if not isinstance(spec, dict):
+            return None
+        return int(spec.get("at") or 0) - int(self.state.time)
+
+    def _check_deadlines(self) -> None:
+        for qid, spec in list(self.state.quest_deadlines.items()):
+            if not isinstance(spec, dict):
+                self.state.quest_deadlines.pop(qid, None)
+                continue
+            if self.state.quests.get(qid) != "active":
+                self.state.quest_deadlines.pop(qid, None)
+                continue
+            if int(self.state.quest_steps.get(qid, 0)) != int(spec.get("step") or 0):
+                self.state.quest_deadlines.pop(qid, None)
+                continue
+            if int(self.state.time) < int(spec.get("at") or 0):
+                continue
+            self.state.quest_deadlines.pop(qid, None)
+            steps = self.quest_steps(qid)
+            index = int(spec.get("step") or 0)
+            step = steps[index] if 0 <= index < len(steps) else {}
+            self.say(t(self.lang, "quest_expired"))
+            if isinstance(step, dict):
+                effects.apply(self, step.get("on_expire"))
+
+    def _pass_time(self, hours: int | None = None) -> None:
+        advance(self, hours)
+        self._check_deadlines()
+
+    def _cmd_rumors(self, cmd) -> None:
+        self.say(t(self.lang, "rumors"))
+        rumors = self.world.game.get("rumors") or {}
+        lines = []
+        if isinstance(rumors, dict):
+            for rid in sorted(self.state.heard_rumors):
+                spec = rumors.get(rid) or {}
+                text = loc(spec.get("text") if isinstance(spec, dict) else rid, self.lang)
+                if text:
+                    lines.append(text)
+        if not lines:
+            self.say(t(self.lang, "nothing"))
+            return
+        for line in lines:
+            self.say(f"  - {line}")
 
     def apply_schedules(self, announce: bool = False) -> None:
         phase = clock(self)[1]
@@ -1660,7 +1750,7 @@ class Game:
         hours = max(1, int(road.get("hours") or 1))
         text = loc(road.get("text"), self.lang)
         self.say(text or t(self.lang, "travel", name=self.region_name(dest), hours=hours))
-        advance(self, hours)
+        self._pass_time(hours)
         for _ in range(hours):
             self._hunger_tick()
             if self.state.ended:
@@ -1794,7 +1884,7 @@ class Game:
         if cfg:
             self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
         self.audio.event("rest")
-        advance(self)
+        self._pass_time()
         self.apply_schedules(announce=True)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 

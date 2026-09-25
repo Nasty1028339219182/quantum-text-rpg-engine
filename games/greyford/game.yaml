@@ -128,6 +128,13 @@ roads:
     text:
       ru: Колея уходит от брода на восток, к голому холму.
       en: A track leaves the ford toward a bare hill.
+rumors:
+  mira_south:
+    when: {flag: asked_hilda}
+    knows: [osip]
+    text:
+      ru: Хильда права. Девочка ушла югом, и след был не только её.
+      en: Hilda is right. The girl went south, and the track was not only hers.
 audio:
   music_volume: 80
   sfx_volume: 100

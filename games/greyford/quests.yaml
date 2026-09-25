@@ -10,5 +10,9 @@ missing_mira:
       text: {ru: Идти на юг и найти Миру., en: Go south and find Mira.}
     - id: home
       text: {ru: Привести Миру на площадь., en: Bring Mira to the square.}
+      within: 36
+      on_expire:
+        - fail_quest: missing_mira
+        - message: {ru: Слишком поздно. Бран больше не ждёт., en: Too late. Bran is done waiting.}
   reward:
     - add_xp: 20

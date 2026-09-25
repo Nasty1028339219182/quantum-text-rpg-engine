@@ -110,6 +110,15 @@ HELP = {
   ехать холм
   карта показывает только этот регион
 
+СРОК, УРОВЕНЬ, СЛУХИ
+  шаг within: 8 и on_expire
+  levels: [{text: loc, effects: [...]}]
+  give_ability: id
+  rumors.id.knows / when / text
+  слухи
+  кнопка Собрать — zip одной игры
+
+
 
 
 

@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**3.0.0-snapshot.1** — private snapshot, regions and roads. Not a release. Public line is 2.6.0.
+**3.0.0-snapshot.2** — private snapshot. Deadlines, level choice, rumors, package. Not a release. Public line is 2.6.0.
 
 ```text
 python -m quantum_rpg

@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-snapshot.2 — not a release
+
+Private snapshot. The rest of the original 3.0 plan. Public line is still 2.6.0.
+
+- A quest step can expire with `within` and `on_expire`
+- `levels:` makes level-up a choice. Without it, a level still adds 4 HP
+- `give_ability` unlocks an ability the class did not start with
+- `rumors` are said once by the NPCs who know them
+- **Собрать** zips this game only, with its `include` files inside
+
 ## 3.0.0-snapshot.1 — not a release
 
 Private snapshot. Regions and roads. The public line is still 2.6.0.
