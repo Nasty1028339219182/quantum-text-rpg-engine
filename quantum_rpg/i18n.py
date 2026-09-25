@@ -180,7 +180,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "gui_menu": {"ru": "В меню", "en": "Menu"},
     "gui_games": {"ru": "Игры", "en": "Games"},
     "gui_hint": {
-        "ru": "Кнопки справа — действия. Внизу можно набрать команду вручную.",
+        "ru": "Выбери игру и нажми «Играть». «Редактор» правит её. «Новая игра» создаёт свою. Седой Брод, Тень крепости и Первые шаги уже в списке.",
         "en": "Buttons on the right are actions. You can also type a command below.",
     },
     "gui_type": {"ru": "команда", "en": "command"},

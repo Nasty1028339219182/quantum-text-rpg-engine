@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1 — 2026-09-25
+
+- The window failed to open when the exe was unpacked into a folder whose path is not Latin. Tcl is copied to an ASCII temp folder first
+- If it still fails, the text is written to `QuantumRPG-error.log` next to the exe
+- The author zip has `КАК_НАЧАТЬ.txt` and `ИГРАТЬ.bat`. The games are folders, not programs. The exe is the window: play and editor
+
 ## 3.0.0 — 2026-09-25
 
 No pictures. The 3.0 line is the release.

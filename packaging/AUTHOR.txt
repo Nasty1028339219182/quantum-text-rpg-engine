@@ -1,20 +1,18 @@
 Quantum Text RPG — author pack
 ==============================
 
-Player (no Python): install QuantumRPG.exe from the GitHub release.
+Read КАК_НАЧАТЬ.txt first. This zip has no exe. QuantumRPG.exe is the
+other file in the release: it already plays and edits the bundled games.
 
-You (author):
-  1. Install Python 3.10+
+You (author), if you want the source:
+  1. Install Python 3.10+ and tick Add python.exe to PATH
   2. pip install -r requirements.txt
-  3. packaging\play.bat          → window: play + editor
-     python -m quantum_rpg editor shadow_keep
+  3. ИГРАТЬ.bat
+     python -m quantum_rpg editor greyford
 
-  4. python -m quantum_rpg new my_game
-  5. Edit games\my_game\*.yaml   (see docs\AUTHORING.ru.md)
-  6. python -m quantum_rpg validate my_game
-  7. In the window: «Открыть папку…» and pick games\my_game
+Games are folders, not programs:
+  games\greyford       Седой Брод
+  games\shadow_keep    Тень крепости
+  games\first_steps    Первые шаги
+  games\template       empty game
 
-Build a Windows player exe on a Windows machine:
-  pip install pyinstaller pyyaml
-  pyinstaller --noconfirm packaging\quantum-rpg.spec
-  dist\QuantumRPG.exe

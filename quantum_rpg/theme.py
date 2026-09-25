@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from .tclfix import prepare
+
+prepare()
 import tkinter as tk
 
 C = {

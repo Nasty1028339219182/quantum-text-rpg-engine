@@ -15,6 +15,8 @@ INCLUDE = [
     "README.md",
     "README.ru.md",
     "CHANGELOG.md",
+    "КАК_НАЧАТЬ.txt",
+    "ИГРАТЬ.bat",
     "requirements.txt",
     "pyproject.toml",
     "quantum_rpg",

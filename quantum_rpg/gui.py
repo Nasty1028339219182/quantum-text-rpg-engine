@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import threading
+from .tclfix import prepare
+
+prepare()
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 from pathlib import Path

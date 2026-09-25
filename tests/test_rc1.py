@@ -114,3 +114,9 @@ def test_a_word_in_a_meter_condition_does_not_crash():
     assert check(g, {"meter": {"thirst": "много"}}) is False
     assert check(g, {"meter": {"thirst": {"gte": "много"}}}) is False
     assert check(g, {"meter": {"thirst": {"lte": 0}}}) is True
+
+
+def test_tcl_fix_does_nothing_off_windows():
+    from quantum_rpg.tclfix import prepare
+
+    prepare()
