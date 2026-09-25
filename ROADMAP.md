@@ -4,7 +4,7 @@
 
 | Version | What |
 |---|---|
-| 1.7 | A follower can be knocked down. Text map of visited exits |
+| 1.7 | Done. A follower can be knocked down. Text map of visited exits |
 | 1.8 | Factions and reputation |
 | 1.9 | Hunger |
 | 2.0 | A party of up to four, not one follower |

@@ -207,8 +207,14 @@ def run(game: "Game", encounter_id: str) -> str:
             continue
 
         ac = player_ac(game) + (2 if defending else 0)
+        covered = False
         for enemy in living:
-            _enemy_hit(game, enemy, ac)
+            ally = _cover_ally(game)
+            if ally and not covered:
+                _enemy_hit_ally(game, enemy, ally[0], ally[1])
+                covered = True
+            else:
+                _enemy_hit(game, enemy, ac)
             if game.state.player.hp <= 0:
                 game.say(t(game.lang, "dead"))
                 game.finish("lose")
@@ -254,6 +260,30 @@ def _parse_choice(choice: str) -> tuple[str, str]:
     return aliases.get(head, "attack"), rest or head if head not in aliases else rest
 
 
+def _cover_ally(game: "Game"):
+    for fid, data in (game.state.followers or {}).items():
+        if data.get("cover") is False:
+            continue
+        if int(data.get("hp") or 0) <= 0:
+            continue
+        return fid, data
+    return None
+
+
+def _enemy_hit_ally(game: "Game", enemy: Fighter, fid: str, data: dict) -> None:
+    name = game.npc_name(fid)
+    ac = 10 + int(data.get("ac") or 0)
+    to_hit = roll("1d20", game.rng) + int(enemy.defense)
+    if to_hit < ac:
+        game.say(t(game.lang, "ally_evade", name=name, who=enemy.name))
+        return
+    dmg = max(1, roll(enemy.attack, game.rng))
+    data["hp"] = max(0, int(data.get("hp") or 0) - dmg)
+    game.say(t(game.lang, "ally_hurt", name=name, who=enemy.name, dmg=dmg))
+    if data["hp"] <= 0:
+        game.say(t(game.lang, "ally_down", name=name))
+
+
 def _allies_act(game: "Game", living: list[Fighter]) -> None:
     for fid, data in list((game.state.followers or {}).items()):
         if int(data.get("hp") or 0) <= 0:
@@ -281,6 +311,12 @@ def _status(game: "Game", living: list[Fighter]) -> None:
     if p.max_mp:
         line += f"  {t(game.lang, 'mp')} {p.mp}/{p.max_mp}"
     lines = [line]
+    for fid, data in (game.state.followers or {}).items():
+        name = game.npc_name(fid)
+        if int(data.get("hp") or 0) <= 0:
+            lines.append(f"{name}  {t(game.lang, 'ally_down_short')}")
+        else:
+            lines.append(f"{name}  {t(game.lang, 'hp')} {data.get('hp')}/{data.get('max_hp')}")
     for e in living:
         lines.append(f"{e.name}  {t(game.lang, 'hp')} {e.hp}/{e.max_hp}")
     game.say("\n".join(lines))

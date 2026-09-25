@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.0 — 2026-09-25
+
+- One enemy each round strikes a follower who is covering you
+- At 0 hp they stop fighting until you rest
+- `combat.cover: false` keeps them out of the blows
+- `карта` shows visited rooms and the exits between them
+
 ## 1.6.0 — 2026-09-25
 
 - Editor lists abilities and loot tables

@@ -439,6 +439,8 @@ class Game:
             "hp": hp,
             "max_hp": hp,
             "attack": str(combat_spec.get("attack") or spec.get("attack") or "1d4"),
+            "ac": int(combat_spec.get("ac") or spec.get("ac") or 0),
+            "cover": (combat_spec.get("cover") if "cover" in combat_spec else spec.get("cover", True)) is not False,
         }
         self.place_npc(self.state.location, nid)
         self.say(t(self.lang, "follows_now", name=self.npc_name(nid)))
@@ -755,7 +757,8 @@ class Game:
                 continue
             label = self.npc_name(n)
             if n in self.state.followers:
-                label += f" ({t(self.lang, 'with_you')})"
+                down = int((self.state.followers[n] or {}).get("hp") or 0) <= 0
+                label += f" ({t(self.lang, 'with_you_down' if down else 'with_you')})"
             npcs.append(label)
         if npcs:
             extras.append(f"{t(self.lang, 'people_here')}: {', '.join(npcs)}")
@@ -1265,11 +1268,62 @@ class Game:
         for line in self.state.journal:
             self.say(f"  - {line}")
 
+    def known_exits(self, loc_id: str) -> list[tuple[str, str, bool]]:
+        room = self.world.locations.get(loc_id) or {}
+        revealed = set(self.state.revealed_exits.get(loc_id) or [])
+        out = []
+        for direction, dest in (room.get("exits") or {}).items():
+            hidden = dest.get("hidden") if isinstance(dest, dict) else False
+            if hidden and direction not in revealed:
+                continue
+            target = self.exit_target(dest)
+            locked = False
+            if isinstance(dest, dict):
+                key = f"{loc_id}:{direction}"
+                if key not in self.state.unlocked:
+                    if dest.get("locked") or (
+                        dest.get("lock_flag") and dest.get("lock_flag") not in self.state.flags
+                    ):
+                        locked = True
+            out.append((direction, target, locked))
+        return out
+
+    def _visit_order(self) -> list[str]:
+        visited = set(self.state.visited)
+        start = self.state.location if self.state.location in visited else ""
+        order: list[str] = []
+        seen: set[str] = set()
+        queue = [start] if start else []
+        while queue:
+            loc_id = queue.pop(0)
+            if not loc_id or loc_id in seen or loc_id not in visited:
+                continue
+            seen.add(loc_id)
+            order.append(loc_id)
+            for _d, target, _locked in self.known_exits(loc_id):
+                if target in visited and target not in seen:
+                    queue.append(target)
+        for loc_id in sorted(visited):
+            if loc_id not in seen:
+                order.append(loc_id)
+        return order
+
     def _cmd_map(self, cmd) -> None:
         self.say(t(self.lang, "map"))
-        for loc_id in sorted(self.state.visited):
+        if not self.state.visited:
+            self.say(t(self.lang, "nothing"))
+            return
+        for loc_id in self._visit_order():
             mark = "*" if loc_id == self.state.location else " "
-            self.say(f" {mark} {self.loc_name(loc_id)}")
+            self.say(f"{mark} {self.loc_name(loc_id)}")
+            for direction, target, locked in self.known_exits(loc_id):
+                if target and target in self.state.visited:
+                    dest = self.loc_name(target)
+                else:
+                    dest = "?"
+                if locked:
+                    dest += f" ({t(self.lang, 'locked')})"
+                self.say(f"    {dir_name(direction, self.lang)} — {dest}")
 
     def _cmd_rest(self, cmd) -> None:
         room = self.room()
@@ -1283,8 +1337,15 @@ class Game:
             return
         effects.apply(self, {"rest": True})
         effects.apply(self, room.get("on_rest"))
+        down = [
+            self.npc_name(fid)
+            for fid, data in self.state.followers.items()
+            if int(data.get("hp") or 0) <= 0
+        ]
         for data in self.state.followers.values():
             data["hp"] = data.get("max_hp") or data.get("hp") or 8
+        if down:
+            self.say(t(self.lang, "ally_up", names=", ".join(down)))
         advance(self)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 

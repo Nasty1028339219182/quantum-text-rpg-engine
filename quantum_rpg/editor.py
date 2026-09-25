@@ -811,6 +811,7 @@ class NpcForm(_Base):
             combat = {}
         self.combat_hp = _labeled(parent, "combat.hp", str(combat.get("hp") or ""))
         self.combat_attack = _labeled(parent, "combat.attack", str(combat.get("attack") or ""))
+        self.cover = _check(parent, "combat.cover (enemies can drop them)", combat.get("cover") is not False)
         self.wants = _labeled(parent, "wants", csv_load(n.get("wants")))
         _label(parent, "shop  item, price, stock")
         self.shop_box = tk.Frame(parent, bg=C["bg"])
@@ -860,7 +861,7 @@ class NpcForm(_Base):
             n.pop("shop_always", None)
         hp = _get(self.combat_hp).strip()
         attack = _get(self.combat_attack).strip()
-        if hp or attack:
+        if hp or attack or not self.cover.get():
             combat = dict(n.get("combat") or {}) if isinstance(n.get("combat"), dict) else {}
             if hp:
                 combat["hp"] = int(hp)
@@ -870,7 +871,14 @@ class NpcForm(_Base):
                 combat["attack"] = attack
             else:
                 combat.pop("attack", None)
-            n["combat"] = combat
+            if self.cover.get():
+                combat.pop("cover", None)
+            else:
+                combat["cover"] = False
+            if combat:
+                n["combat"] = combat
+            else:
+                n.pop("combat", None)
         else:
             n.pop("combat", None)
         n["wants"] = csv_dump(_get(self.wants))

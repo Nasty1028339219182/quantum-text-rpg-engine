@@ -70,8 +70,10 @@ HELP = {
 
 СПУТНИК
   effects: [{follow: mira}, {unfollow: mira}]
-  npc.combat: {hp: 8, attack: 1d4}
+  npc.combat: {hp: 8, attack: 1d4, cover: true}
   идёт в ту же комнату, в бою бьёт один раз за ход
+  враг может сбить (cover), отдых поднимает
+  карта: выходы между известными комнатами
 
 РЕДАКТОР
   умения, таблицы лута, time.*, note_night, random.chance

@@ -67,7 +67,10 @@ Follower:
 - unfollow: mira
 ```
 
-NPC may set `combat: {hp, attack}`. Followers move with you and strike once per combat round. Rest restores their hp.
+NPC may set `combat: {hp, attack, ac, cover}`. `cover` defaults to true: one enemy each round strikes that follower instead of you. At 0 hp they stop fighting until you rest. `cover: false` keeps them out of the blows.
+
+`карта` lists visited rooms and the exits between them. An exit you have not walked shows as `?`.
+
 
 
 `abilities.yaml` — combat buttons from 5. Shown only if `class:` matches the chosen class.
