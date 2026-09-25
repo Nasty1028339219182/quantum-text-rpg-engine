@@ -42,14 +42,18 @@ def render(spec: dict, lang: str) -> list[tuple[str, str]]:
         if text:
             out.append((str(text), color or "accent"))
         return out
-    if style == "rule" or not text and style == "rule":
-        return [("────────", color or "dim")]
+    if style in ("rule", "beat") or (not text and style == "rule"):
+        return [("────────" if style == "rule" else " ", color or "dim")]
     if not text:
         return []
     if style == "shout":
         return [(str(text).upper(), color or "accent")]
     if style == "whisper":
         return [(f"… {text}", color or "dim")]
+    if style == "quote":
+        return [(f"« {text} »", color or "dim")]
+    if style == "center":
+        return [(str(text).center(28), color or "accent")]
     if style == "shake":
         return [(f" {text}", color or "danger"), (f"{text} ", color or "danger")]
     if style == "glitch":
@@ -61,7 +65,47 @@ def render(spec: dict, lang: str) -> list[tuple[str, str]]:
 
 
 def play(game: "Game", spec) -> None:
+    if isinstance(spec, list):
+        for step in spec:
+            play(game, step)
+        return
     body = resolve(game, spec)
+    if not body:
+        return
+    if body.get("when"):
+        from .conditions import check
+
+        if not check(game, body.get("when")):
+            return
+    steps = body.get("steps")
+    if isinstance(steps, list):
+        play(game, steps)
+        return
+    repeat = max(1, min(int(body.get("repeat") or 1), 4))
+    for _ in range(repeat):
+        _once(game, body)
+
+
+def run_on(game: "Game", moment: str, key: str = "") -> None:
+    table = game.world.game.get("fx") or {}
+    if not isinstance(table, dict):
+        return
+    hooks = table.get("hooks") or table.get("bind") or {}
+    if not isinstance(hooks, dict) or moment not in hooks:
+        return
+    spec = hooks.get(moment)
+    if isinstance(spec, dict) and not _is_effect(spec):
+        chosen = spec.get(key) if key else None
+        if chosen is None:
+            chosen = spec.get("any")
+        if chosen is None:
+            return
+        play(game, chosen)
+        return
+    play(game, spec)
+
+
+def _once(game: "Game", body: dict) -> None:
     sound = body.get("sound") or body.get("sfx")
     if sound and getattr(game, "audio", None) is not None:
         game.audio.cue(sound)
@@ -75,6 +119,10 @@ def play(game: "Game", spec) -> None:
             game.say(text)
 
 
+def _is_effect(spec: dict) -> bool:
+    return any(key in spec for key in ("style", "text", "line", "steps", "sound", "sfx", "particles", "anim", "repeat"))
+
+
 def _color(style: str) -> str:
     return {
         "shout": "accent",
@@ -83,5 +131,8 @@ def _color(style: str) -> str:
         "glitch": "danger",
         "banner": "accent",
         "rule": "dim",
+        "beat": "dim",
+        "quote": "dim",
+        "center": "accent",
         "particles": "accent",
     }.get(style, "fg")

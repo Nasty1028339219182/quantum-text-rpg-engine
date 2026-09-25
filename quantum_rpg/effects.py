@@ -124,10 +124,16 @@ def _apply_one(game: "Game", eff: dict) -> None:
             text = loc(q.get("done_text"), lang)
             if text:
                 game.say(text)
+            from . import fx
+
+            fx.run_on(game, "quest_done", qid)
     if "fail_quest" in eff:
         qid = str(eff["fail_quest"])
         st.quests[qid] = "failed"
         st.quest_deadlines.pop(qid, None)
+        from . import fx
+
+        fx.run_on(game, "quest_fail", qid)
     if "meter" in eff and isinstance(eff["meter"], dict):
         from . import meters
 

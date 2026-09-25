@@ -180,6 +180,19 @@ fx:
     particles: spark
     color: accent
     text: {ru: Искры., en: Sparks.}
+  quiet:
+    style: quote
+    color: dim
+    text: {ru: В чаще тише, чем надо., en: The thicket is quieter than it should be.}
+  done:
+    steps:
+      - sparks
+      - {style: center, color: accent, text: {ru: КОНЕЦ СЛЕДА, en: END OF THE TRACK}}
+  hooks:
+    enter:
+      forest: quiet
+    quest_done:
+      missing_mira: done
 map:
   ford:
     - ["", shrine, ""]

@@ -138,7 +138,15 @@ HELP = {
 
   fx.blow: {style: shake, color: danger, text: {ru: Удар.}}
   - fx: blow
-  стили: plain, banner, whisper, shout, shake, glitch, rule, particles
+  стили: plain, banner, whisper, shout, shake, glitch, rule, beat, quote, center, particles
+  repeat: 2
+  steps: [sparks, {style: center, text: {ru: СДЕЛАНО}}]
+  when: {flag: asked_hilda}
+  hooks.enter.forest: quiet
+  hooks: enter, combat, hit, kill, quest_done, quest_fail, level, rest, travel, death, ending
+  не пиши on: — в YAML это логическое да
+
+
   anim: type | slow    delay: 16    sound: hit
   particles: spark | rain | dust | pulse | ash
   ui.screens.shop.show: [gold, goods, sell]

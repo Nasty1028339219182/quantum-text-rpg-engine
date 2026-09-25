@@ -10,6 +10,9 @@ Not a public release. 2.6.0 stays the public line until 3.0.0 is finished. No pi
 | 3.0.0-snapshot.4 | Deeper panels. Text animation, symbol particles, audio on an effect. |
 | 3.0.0-snapshot.5 | Deeper meters. Done. |
 | 3.0.0-snapshot.6 | Deeper schematic map. Done. |
-| 3.0.0-snapshot.7 | Deeper text effects. |
+| 3.0.0-snapshot.7 | Deeper text effects. Done. |
+
+These seven snapshots are the 3.0 line so far. No eighth is written yet.
+
 
 Each snapshot after 3.0.0-snapshot.3 goes deeper on one of those four, in order: panels, meters, map, effects.

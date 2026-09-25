@@ -428,7 +428,35 @@ fx:
 - fx: blow
 ```
 
-Styles: `plain`, `banner`, `whisper`, `shout`, `shake`, `glitch`, `rule`, `particles`. Colors: `fg`, `dim`, `accent`, `danger`, `ok`.
+Styles: `plain`, `banner`, `whisper`, `shout`, `shake`, `glitch`, `rule`, `beat`, `quote`, `center`, `particles`. Colors: `fg`, `dim`, `accent`, `danger`, `ok`.
+
+`repeat` plays the same effect again, up to 4. `steps` is a chain. `when` uses the same conditions as the rest of the game. `hooks` binds an effect to a moment, so you do not paste it into every room. The key is `hooks`, not `on`: in YAML the word `on` becomes a boolean.
+
+```yaml
+fx:
+  quiet:
+    style: quote
+    when: {flag: asked_hilda}
+    text: {ru: Тише., en: Quiet.}
+  done:
+    steps:
+      - sparks
+      - {style: center, text: {ru: СДЕЛАНО, en: DONE}}
+  hooks:
+    enter:
+      forest: quiet
+    quest_done:
+      missing_mira: done
+    hit: blow
+    level: done
+    rest: quiet
+    death: blow
+    travel:
+      any: quiet
+```
+
+Moments: `enter`, `combat`, `hit`, `kill`, `quest_done`, `quest_fail`, `level`, `rest`, `travel`, `death`, `ending`. A map of ids can use `any` for the rest.
+
 
 A screen can hide pieces. A custom action is just another button. `anim: type` prints the line letter by letter in the window (the text log still gets the whole line). `anim: slow` does it word by word. `delay` is milliseconds, kept between 12 and 70. `sound` plays a cue from `audio.sfx`. `particles` is a symbol burst: `spark`, `rain`, `dust`, `pulse`, `ash`.
 

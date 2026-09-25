@@ -432,8 +432,12 @@ def _player_hit(game: "Game", target: Fighter) -> None:
     wname = loc(weapon.get("name"), game.lang)
     game.say(t(game.lang, "you_hit", dmg=dmg, name=wname or target.name))
     game.audio.event("hit")
+    from . import fx
+
+    fx.run_on(game, "hit", game.combat_id or "")
     if target.hp <= 0:
         game.say(t(game.lang, "enemy_down", name=target.name))
+        fx.run_on(game, "kill", game.combat_id or "")
 
 
 def _enemy_hit(game: "Game", enemy: Fighter, ac: int) -> None:

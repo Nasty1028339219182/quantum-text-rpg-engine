@@ -6,7 +6,7 @@ import random
 from pathlib import Path
 from typing import Any, Optional
 
-from . import combat, dialogue, effects, gridmap, meters, save
+from . import combat, dialogue, effects, fx, gridmap, meters, save
 from .conditions import check, skill_bonus, step_index
 from .hooks import Hooks
 from .i18n import dir_id, dir_name, t
@@ -692,6 +692,7 @@ class Game:
             p.max_hp += 4
             p.hp = p.max_hp
             self.say(t(self.lang, "level_up", level=p.level))
+            fx.run_on(self, "level", str(p.level))
             return
         self.say(t(self.lang, "level_pick", level=p.level))
         usable = [row for row in options if isinstance(row, dict)]
@@ -714,6 +715,7 @@ class Game:
         if picked:
             effects.apply(self, picked.get("effects"))
             self.say(loc(picked.get("text") or picked.get("name"), self.lang))
+        fx.run_on(self, "level", str(p.level))
 
     def _xp_needed(self, level: int) -> int:
         return 40 * level * (level + 1) // 2
@@ -738,6 +740,7 @@ class Game:
     def start_combat(self, encounter_id: str) -> str:
         if not self.state.ended:
             meters.tick(self, "fight")
+            fx.run_on(self, "combat", encounter_id)
         return combat.run(self, encounter_id)
 
     def finish(self, ending: str) -> None:
@@ -745,6 +748,7 @@ class Game:
             return
         self.state.ended = ending
         self.running = False
+        fx.run_on(self, "death" if ending == "lose" else "ending", ending)
 
     def tick_status(self, in_combat: bool = False) -> None:
         p = self.state.player
@@ -779,6 +783,8 @@ class Game:
                 self.say(fv)
             effects.apply(self, room.get("on_first_enter"))
         effects.apply(self, room.get("on_enter"))
+        if not self.state.ended:
+            fx.run_on(self, "enter", loc_id)
         self._fire_events("enter")
         # random encounter
         table = room.get("random_encounters")
@@ -1837,6 +1843,7 @@ class Game:
         hours = max(1, int(road.get("hours") or 1))
         text = loc(road.get("text"), self.lang)
         self.say(text or t(self.lang, "travel", name=self.region_name(dest), hours=hours))
+        fx.run_on(self, "travel", dest)
         self._pass_time(hours)
         for _ in range(hours):
             self._hunger_tick("hour")
@@ -2037,6 +2044,7 @@ class Game:
         if cfg:
             self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
         meters.rest(self)
+        fx.run_on(self, "rest", self.state.location)
         self.audio.event("rest")
         self._pass_time()
         self.apply_schedules(announce=True)

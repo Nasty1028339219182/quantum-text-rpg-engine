@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0-snapshot.7 — not a release
+
+Private snapshot. Deeper text effects. Public line is still 2.6.0. No pictures.
+
+- `steps` plays a chain. `repeat` plays one effect up to four times. `when` can skip it
+- New styles: `quote`, `center`, `beat`
+- `hooks` binds an effect to a moment: enter, combat, hit, kill, quest_done, quest_fail, level, rest, travel, death, ending
+- The key is `hooks`, not `on`. In YAML the word `on` is a boolean
+
 ## 3.0.0-snapshot.6 — not a release
 
 Private snapshot. Deeper schematic map. Public line is still 2.6.0. No pictures.
