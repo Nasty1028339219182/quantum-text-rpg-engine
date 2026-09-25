@@ -512,6 +512,11 @@ scenes:
 
 `when: {var: {track_name: мох}}` matches the answer. Empty input on a choice takes the first option. `quit` leaves the scene. A choice reads the next line, so do not hang it on `on_enter` if the player is about to type a direction. Put the question in its own scene and call it with `сцена`. Quote any line that contains `?` or a comma, or YAML will cut it.
 
+## Check
+
+`проверить` does not fix the game. It lists what does not join: an exit or a map cell to a missing room, a quest or a rumor pointing at nothing, a hook or a scene calling an effect that is not there, a meter used in `when` that was never defined. If the list is empty, the game says `Всё сходится.` The editor button **Проверить** shows the same list.
+
+
 
 
 

@@ -260,12 +260,12 @@ class EditorWindow:
         if not self._save():
             return
         world = load_world(self.project.path)
-        lines = [f"ERROR: {e}" for e in world.errors] + [f"WARN: {w}" for w in world.warnings]
+        from .check import problems
+
+        found = problems(world)
+        lines = [f"ERROR: {e}" for e in world.errors] + [f"WARN: {w}" for w in world.warnings] + found
         if not lines:
-            lines = [
-                f"OK  {self.project.path.name}: {len(world.locations)} loc, "
-                f"{len(world.items)} items, {len(world.npcs)} npc"
-            ]
+            lines = [self.tr("check_ok")]
             self.status.configure(text=lines[0], fg=C["ok"])
         else:
             self.status.configure(text=lines[0], fg=C["danger"])

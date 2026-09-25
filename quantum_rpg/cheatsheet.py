@@ -161,6 +161,8 @@ HELP = {
   - scene: {id: thicket, again: true}
   сцена thicket — сыграть снова
   when: {var: {track_name: мох}}
+  проверить — не чинит, только список дыр
+
 
 
 

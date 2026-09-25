@@ -415,6 +415,7 @@ class Game:
             "meters": self._cmd_meters,
             "note": self._cmd_note,
             "scene": self._cmd_scene,
+            "check": self._cmd_check,
             "travel": self._cmd_travel,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
@@ -1977,6 +1978,17 @@ class Game:
             self.say(t(self.lang, "no_scene"))
             return
         scenes.play(self, {"scene": name, "again": True})
+
+    def _cmd_check(self, cmd) -> None:
+        from .check import problems
+
+        found = problems(self.world)
+        if not found:
+            self.say(t(self.lang, "check_ok"))
+            return
+        self.say(t(self.lang, "check_bad", n=len(found)))
+        for line in found:
+            self.say(f"  {line}")
 
     def _match_place(self, query: str) -> str:
         q = query.lower()

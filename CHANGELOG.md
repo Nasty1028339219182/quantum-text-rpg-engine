@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0-snapshot.10 — not a release
+
+Private snapshot. The last 3.0 snapshot. Public line is still 2.6.0. No pictures.
+
+- `проверить` lists holes and does not fix them
+- an exit or a map cell to a missing room
+- a quest, a step, or a rumor pointing at nothing
+- a hook or a scene calling an effect that is not there
+- a meter used in `when` that was never defined
+- Greyford says nothing is wrong. The editor button is the same list
+- No snapshot 11. A public release waits until it is asked for
+
 ## 3.0.0-snapshot.9 — not a release
 
 Private snapshot. Combat from YAML. Public line is still 2.6.0. No pictures.

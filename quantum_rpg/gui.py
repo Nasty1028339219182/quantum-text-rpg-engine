@@ -541,6 +541,7 @@ class PlayWindow:
         self._btn(t(self.lang, "journal"), "journal")
         self._btn(t(self.lang, "map"), "map")
         self._btn(t(self.lang, "notes"), "note")
+        self._btn(self._tr("ed_validate"), "check")
         self._btn(t(self.lang, "meters"), "meters")
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")

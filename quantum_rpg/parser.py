@@ -40,6 +40,7 @@ VERBS: dict[str, list[str]] = {
     "meters": ["meters", "meter", "шкалы", "шкала"],
     "note": ["note", "notes", "пометка", "пометки"],
     "scene": ["scene", "scenes", "сцена", "сцены"],
+    "check": ["check", "validate", "проверить", "проверка"],
     "travel": ["travel", "ride", "ехать", "дорога", "путь"],
     "party": ["party", "отряд", "спутники"],
     "order": ["order", "приказ", "прикажи"],
