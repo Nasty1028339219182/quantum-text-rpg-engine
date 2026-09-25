@@ -6,7 +6,7 @@ import random
 from pathlib import Path
 from typing import Any, Optional
 
-from . import combat, dialogue, effects, save
+from . import combat, dialogue, effects, gridmap, meters, save
 from .conditions import check, skill_bonus, step_index
 from .hooks import Hooks
 from .i18n import dir_id, dir_name, t
@@ -60,6 +60,7 @@ class Game:
         self.apply_schedules()
         if self.player_class:
             self.apply_class(self.player_class, silent=True)
+        meters.ensure(self)
 
     @property
     def lang(self) -> str:
@@ -194,6 +195,20 @@ class Game:
             "roads": [
                 {"id": dest, "label": self.region_name(dest), "command": f"travel {dest}"}
                 for dest in self.road_destinations()
+            ],
+            "meters": meters.rows(self),
+            "grid": gridmap.view(self),
+            "panels": self.ui_panels(),
+            "ui_titles": self.ui_titles(),
+            "followers": [
+                {
+                    "id": fid,
+                    "label": self.npc_name(fid),
+                    "hp": data.get("hp"),
+                    "max_hp": data.get("max_hp"),
+                    "order": data.get("order") or "follow",
+                }
+                for fid, data in self.state.followers.items()
             ],
         }
 
@@ -587,6 +602,8 @@ class Game:
         return raw if isinstance(raw, dict) and raw.get("max") else {}
 
     def _hunger_tick(self) -> None:
+        if not self.state.ended:
+            meters.tick(self)
         cfg = self.hunger_cfg()
         if not cfg or self.state.ended:
             return
@@ -1444,6 +1461,25 @@ class Game:
         if p.status:
             names = [loc(getattr(s, "name", s), self.lang) for s in p.status]
             self.say(f"{t(self.lang, 'status')}: {', '.join(names)}")
+        for row in meters.rows(self):
+            self.say(f"{row['label']} {row['value']}/{row['max']}")
+
+    def ui_panels(self) -> list[str]:
+        raw = (self.world.game.get("ui") or {}).get("panels") if isinstance(self.world.game.get("ui"), dict) else None
+        if isinstance(raw, list) and raw:
+            return [str(x) for x in raw]
+        return ["map", "meters", "exits", "people", "items", "containers", "roads", "actions", "party", "inventory"]
+
+    def ui_titles(self) -> dict:
+        ui = self.world.game.get("ui") if isinstance(self.world.game.get("ui"), dict) else {}
+        titles = ui.get("titles") if isinstance(ui.get("titles"), dict) else {}
+        out = {}
+        for key, value in titles.items():
+            out[str(key)] = loc(value, self.lang)
+        return out
+
+    def ui_title(self, key: str, fallback: str) -> str:
+        return self.ui_titles().get(key) or fallback
 
     def _cmd_quests(self, cmd) -> None:
         self.say(t(self.lang, "quests"))
@@ -1788,6 +1824,14 @@ class Game:
         self.travel_to(query)
 
     def _cmd_map(self, cmd) -> None:
+        grid = gridmap.view(self)
+        if grid:
+            self.say(t(self.lang, "map"))
+            rid = self.region_of(self.state.location)
+            if rid:
+                self.say(self.region_name(rid))
+            self.say(gridmap.render(grid))
+            return
         self.say(t(self.lang, "map"))
         rid = self.region_of(self.state.location)
         if rid:
@@ -1883,6 +1927,7 @@ class Game:
         cfg = self.hunger_cfg()
         if cfg:
             self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
+        meters.rest(self)
         self.audio.event("rest")
         self._pass_time()
         self.apply_schedules(announce=True)
@@ -1954,6 +1999,7 @@ class Game:
             self.say(t(self.lang, "no_save"))
             return
         self.state = GameState.from_dict(data)
+        meters.ensure(self)
         self.audio.muted = bool(self.state.muted)
         self._apply_saved_volumes()
         self.apply_schedules()

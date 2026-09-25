@@ -246,6 +246,14 @@ class PlayWindow:
         self.log.configure(yscrollcommand=scroll.set)
         scroll.pack(side="right", fill="y")
         self.log.pack(fill="both", expand=True, padx=1, pady=1)
+        for name, color in (
+            ("fg", C["fg"]),
+            ("dim", C["dim"]),
+            ("accent", C["accent"]),
+            ("danger", C["danger"]),
+            ("ok", C["ok"]),
+        ):
+            self.log.tag_configure(name, foreground=color)
 
         right_wrap = tk.Frame(body, bg=C["bg"], width=280)
         right_wrap.pack(side="right", fill="y", padx=(10, 0))
@@ -278,11 +286,12 @@ class PlayWindow:
     def _on_wheel(self, event) -> None:
         self.side_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    def _append(self, text: str) -> None:
+    def _append(self, text: str, color: str = "") -> None:
         if not text:
             return
         self.log.configure(state="normal")
-        self.log.insert("end", text.rstrip() + "\n")
+        tag = color if color in ("fg", "dim", "accent", "danger", "ok") else "fg"
+        self.log.insert("end", text.rstrip() + "\n", tag)
         self.log.see("end")
         self.log.configure(state="disabled")
 
@@ -295,6 +304,8 @@ class PlayWindow:
                 op = msg.get("op")
                 if op == "write":
                     self._append(msg.get("text") or "")
+                elif op == "fx":
+                    self._append(msg.get("text") or "", msg.get("color") or "fg")
                 elif op == "read":
                     self.waiting = True
                     prompt = (msg.get("prompt") or "> ").strip()
@@ -342,6 +353,9 @@ class PlayWindow:
         fg = C["dim"] if dim else C["fg"]
         Btn(self.side, text=label, fg=fg, command=lambda c=cmd: self._send(c)).pack(fill="x", pady=1)
 
+    def _ui_title(self, key: str, fallback: str) -> str:
+        return ((self.snap or {}).get("ui_titles") or {}).get(key) or fallback
+
     def _render_side(self) -> None:
         self._clear_side()
         s = self.snap or {}
@@ -349,56 +363,130 @@ class PlayWindow:
         choices = s.get("choices") or []
         if mode in ("combat", "dialogue", "shop", "prompt") and choices:
             title = {
-                "combat": t(self.lang, "combat"),
-                "dialogue": t(self.lang, "people_here"),
-                "shop": t(self.lang, "shop"),
-                "prompt": t(self.lang, "pick_class"),
+                "combat": self._ui_title("combat", t(self.lang, "combat")),
+                "dialogue": self._ui_title("dialogue", t(self.lang, "people_here")),
+                "shop": self._ui_title("shop", t(self.lang, "shop")),
+                "prompt": self._ui_title("prompt", t(self.lang, "pick_class")),
             }.get(mode, "")
             self._head(title)
+            if mode == "shop":
+                tk.Label(
+                    self.side,
+                    text=f"{t(self.lang, 'gold')} {s.get('gold', 0)}",
+                    bg=C["bg"], fg=C["accent"], font=font_ui(9), anchor="w",
+                ).pack(fill="x")
             for ch in choices:
                 self._btn(ch.get("label") or ch.get("command"), ch.get("command") or "")
             if mode == "shop":
-                self._head(t(self.lang, "inventory"))
+                self._head(self._ui_title("inventory", t(self.lang, "inventory")))
                 for it in s.get("inventory") or []:
                     self._btn(f"{self._tr('gui_sell')}: {it['label']}", f"sell {it['id']}")
             return
 
-        self._head(t(self.lang, "exits"))
+        panels = s.get("panels") or [
+            "map", "meters", "exits", "people", "items", "containers", "roads", "actions", "party", "inventory"
+        ]
+        draw = {
+            "map": self._panel_map,
+            "meters": self._panel_meters,
+            "exits": self._panel_exits,
+            "people": self._panel_people,
+            "items": self._panel_items,
+            "containers": self._panel_containers,
+            "roads": self._panel_roads,
+            "actions": self._panel_actions,
+            "party": self._panel_party,
+            "inventory": self._panel_inventory,
+        }
+        for name in panels:
+            fn = draw.get(str(name))
+            if fn:
+                fn(s)
+
+    def _panel_map(self, s: dict) -> None:
+        grid = s.get("grid") or []
+        if not grid:
+            return
+        self._head(self._ui_title("map", t(self.lang, "map")))
+        for row in grid:
+            line = tk.Frame(self.side, bg=C["line"])
+            line.pack(fill="x", pady=1)
+            for cell in row:
+                label = cell.get("label") or " "
+                cmd = cell.get("command") or ""
+                if cmd:
+                    Btn(
+                        line, text=label, command=lambda c=cmd: self._send(c),
+                        font=font_log(9), anchor="center", width=4,
+                        fg=C["accent"] if cell.get("here") else C["fg"],
+                    ).pack(side="left", padx=1, expand=True, fill="x")
+                else:
+                    tk.Label(
+                        line, text=label or " ", bg=C["panel"], fg=C["accent"] if cell.get("here") else C["dim"],
+                        font=font_log(9), width=4, anchor="center",
+                    ).pack(side="left", padx=1, expand=True, fill="x")
+
+    def _panel_meters(self, s: dict) -> None:
+        rows = list(s.get("meters") or [])
+        if s.get("hunger_max"):
+            pass
+        if not rows:
+            return
+        self._head(self._ui_title("meters", t(self.lang, "meters")))
+        for row in rows:
+            tk.Label(
+                self.side,
+                text=f"{row['label']}  {row['value']}/{row['max']}",
+                bg=C["bg"], fg=C["fg"], font=font_ui(9), anchor="w",
+            ).pack(fill="x")
+
+    def _panel_exits(self, s: dict) -> None:
+        self._head(self._ui_title("exits", t(self.lang, "exits")))
         for ex in s.get("exits") or []:
             label = ex["label"]
             if ex.get("locked"):
                 label = f"{label} ({t(self.lang, 'locked')})"
             self._btn(label, ex["command"], dim=bool(ex.get("locked")))
 
-        if s.get("items"):
-            self._head(t(self.lang, "items_here"))
-            for it in s["items"]:
-                self._btn(f"{self._tr('gui_take')}: {it['label']}", it["command"])
+    def _panel_people(self, s: dict) -> None:
+        if not s.get("npcs"):
+            return
+        self._head(self._ui_title("people", t(self.lang, "people_here")))
+        for n in s["npcs"]:
+            self._btn(f"{self._tr('gui_talk')}: {n['label']}", n["talk"])
+            if n.get("shop"):
+                self._btn(f"{t(self.lang, 'shop')}: {n['label']}", f"shop {n['id']}")
+            self._btn(f"{self._tr('gui_attack')}: {n['label']}", n["attack"], dim=True)
 
-        if s.get("containers"):
-            self._head(t(self.lang, "containers"))
-            for c in s["containers"]:
-                self._btn(f"{self._tr('gui_open_c')}: {c['label']}", c["command"])
+    def _panel_items(self, s: dict) -> None:
+        if not s.get("items"):
+            return
+        self._head(self._ui_title("items", t(self.lang, "items_here")))
+        for it in s["items"]:
+            self._btn(f"{self._tr('gui_take')}: {it['label']}", it["command"])
 
-        if s.get("npcs"):
-            self._head(t(self.lang, "people_here"))
-            for n in s["npcs"]:
-                self._btn(f"{self._tr('gui_talk')}: {n['label']}", n["talk"])
-                if n.get("shop"):
-                    self._btn(f"{t(self.lang, 'shop')}: {n['label']}", f"shop {n['id']}")
-                self._btn(f"{self._tr('gui_attack')}: {n['label']}", n["attack"], dim=True)
+    def _panel_containers(self, s: dict) -> None:
+        if not s.get("containers"):
+            return
+        self._head(self._ui_title("containers", t(self.lang, "containers")))
+        for c in s["containers"]:
+            self._btn(f"{self._tr('gui_open_c')}: {c['label']}", c["command"])
 
-        self._head(self._tr("gui_actions"))
+    def _panel_roads(self, s: dict) -> None:
+        if not s.get("roads"):
+            return
+        self._head(self._ui_title("roads", t(self.lang, "roads")))
+        for road in s["roads"]:
+            self._btn(road["label"], road["command"])
+
+    def _panel_actions(self, s: dict) -> None:
+        self._head(self._ui_title("actions", self._tr("gui_actions")))
         self._btn(self._tr("gui_look"), "look")
         self._btn(self._tr("gui_search"), "search")
         self._btn(t(self.lang, "stats"), "stats")
         self._btn(t(self.lang, "quests"), "quests")
         self._btn(t(self.lang, "journal"), "journal")
         self._btn(t(self.lang, "map"), "map")
-        if s.get("roads"):
-            self._head(t(self.lang, "roads"))
-            for road in s["roads"]:
-                self._btn(road["label"], road["command"])
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")
         self._btn(t(self.lang, "sound_btn"), "sound")
@@ -407,7 +495,23 @@ class PlayWindow:
         for rec in s.get("recipes") or []:
             self._btn(f"{self._tr('gui_craft')}: {rec['label']}", rec["command"])
 
-        self._head(t(self.lang, "inventory"))
+    def _panel_party(self, s: dict) -> None:
+        people = s.get("followers") or []
+        if not people:
+            return
+        self._head(self._ui_title("party", t(self.lang, "party")))
+        for person in people:
+            tk.Label(
+                self.side,
+                text=f"{person['label']}  {person.get('hp')}/{person.get('max_hp')}  {person.get('order')}",
+                bg=C["bg"], fg=C["fg"], font=font_ui(9), anchor="w",
+            ).pack(fill="x")
+            self._btn(t(self.lang, "order_wait_btn"), f"приказ {person['id']} жди")
+            self._btn(t(self.lang, "order_follow_btn"), f"приказ {person['id']} за мной")
+            self._btn(t(self.lang, "order_hold_btn"), f"приказ {person['id']} не дерись")
+
+    def _panel_inventory(self, s: dict) -> None:
+        self._head(self._ui_title("inventory", t(self.lang, "inventory")))
         inv = s.get("inventory") or []
         if not inv:
             tk.Label(self.side, text=t(self.lang, "empty_inv"), bg=C["bg"], fg=C["dim"],

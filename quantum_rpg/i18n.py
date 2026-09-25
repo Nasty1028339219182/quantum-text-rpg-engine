@@ -110,6 +110,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "journal": {"ru": "Журнал", "en": "Journal"},
     "map": {"ru": "Известные места", "en": "Known places"},
     "roads": {"ru": "Дороги", "en": "Roads"},
+    "meters": {"ru": "Состояние", "en": "Condition"},
     "no_regions": {"ru": "Отсюда нет дальней дороги.", "en": "No long road leaves here."},
     "no_road": {"ru": "Такой дороги нет.", "en": "There is no such road."},
     "travel": {"ru": "Дорога в {name}. Часов в пути: {hours}.", "en": "The road to {name}. Hours: {hours}."},

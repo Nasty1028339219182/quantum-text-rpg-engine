@@ -19,6 +19,9 @@ class TerminalIO:
     def set_choices(self, choices: list) -> None:
         return None
 
+    def fx(self, text: str, color: str = "") -> None:
+        self.write(text)
+
 
 class ScriptedIO:
     """Feed a list of commands. Used by tests and `--script`."""
@@ -46,6 +49,9 @@ class ScriptedIO:
 
     def set_choices(self, choices: list) -> None:
         self.choices = list(choices or [])
+
+    def fx(self, text: str, color: str = "") -> None:
+        self.write(text)
 
     @property
     def text(self) -> str:
@@ -81,6 +87,9 @@ class QueueIO:
     def set_choices(self, choices: list) -> None:
         self.choices = list(choices or [])
         self.out.put({"op": "choices", "choices": self.choices, "snap": self._snap()})
+
+    def fx(self, text: str, color: str = "") -> None:
+        self.out.put({"op": "fx", "text": text, "color": color or "fg", "snap": self._snap()})
 
     def submit(self, line: str) -> None:
         self.inp.put(line)

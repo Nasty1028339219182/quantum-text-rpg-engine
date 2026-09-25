@@ -149,9 +149,12 @@ shrine:
 hill:
   region: hill
   name: {ru: Холм дозорных, en: Watch hill}
+  map_mark: {ru: ХЛ, en: HL}
   description:
     ru: Голый холм над бродом. Ветер, старый столб и ничего, что стоило бы красть.
     en: A bare hill above the ford. Wind, an old post, and nothing worth stealing.
   rest: true
   exits: {}
+  on_enter:
+    - fx: hill
 

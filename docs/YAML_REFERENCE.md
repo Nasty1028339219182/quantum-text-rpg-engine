@@ -341,6 +341,62 @@ The NPC says it once, the first time you talk, and it is copied into the journal
 
 **Собрать** in the editor zips this game only, and copies `include` files into the zip so it does not need the library beside it.
 
+## Panels, meters, a grid, text effects
+
+No pictures. The window already has a shop, a party, exits, and the rest. `ui.panels` is the order. Leave it out and the default order is used. `ui.titles` renames a block.
+
+```yaml
+ui:
+  panels: [map, meters, exits, people, items, actions, party, inventory]
+  titles:
+    shop: {ru: Прилавок, en: Counter}
+    party: {ru: Свои, en: Ours}
+```
+
+A meter is any bar the author wants. Hunger is still the old `hunger:` key. A new one does not replace it.
+
+```yaml
+meters:
+  thirst:
+    name: {ru: Жажда, en: Thirst}
+    max: 10
+    start: 0
+    step: 1
+    damage: 1
+    rest: 0
+    hurt: full
+```
+
+`hurt: empty` is for a bar that falls, like morale. `step` is added on a move, a wait, and each hour of a road.
+
+```yaml
+- meter: {thirst: -4}
+```
+
+The grid is rows of room ids. An empty cell is `""`. `карта` draws the boxes. A neighbor cell is a button: click it to walk that way. Unvisited rooms stay blank. `map_mark` is the two letters in the cell.
+
+```yaml
+map:
+  ford:
+    - ["", shrine, ""]
+    - [inn, square, mill]
+    - ["", road, ""]
+```
+
+Text effects, also with no picture:
+
+```yaml
+fx:
+  blow:
+    style: shake
+    color: danger
+    text: {ru: Удар., en: A blow.}
+- fx: blow
+```
+
+Styles: `plain`, `banner`, `whisper`, `shout`, `shake`, `glitch`, `rule`. Colors: `fg`, `dim`, `accent`, `danger`, `ok`.
+
+
 
 
 

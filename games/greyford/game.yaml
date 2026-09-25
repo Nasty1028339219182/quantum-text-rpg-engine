@@ -135,6 +135,34 @@ rumors:
     text:
       ru: Хильда права. Девочка ушла югом, и след был не только её.
       en: Hilda is right. The girl went south, and the track was not only hers.
+meters:
+  thirst:
+    name: {ru: Жажда, en: Thirst}
+    max: 40
+    start: 0
+    step: 1
+    damage: 1
+    rest: 0
+ui:
+  titles:
+    shop: {ru: Прилавок, en: Counter}
+    party: {ru: Свои, en: Ours}
+    meters: {ru: Состояние, en: Condition}
+    map: {ru: Схема, en: Plan}
+fx:
+  hill:
+    style: banner
+    color: accent
+    text: {ru: Ветер на холме, en: Wind on the hill}
+map:
+  ford:
+    - ["", shrine, ""]
+    - [inn, square, mill]
+    - ["", road, ""]
+    - ["", forest, den]
+    - ["", camp, ""]
+  hill:
+    - [hill]
 audio:
   music_volume: 80
   sfx_volume: 100

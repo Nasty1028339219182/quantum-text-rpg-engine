@@ -128,6 +128,15 @@ def _apply_one(game: "Game", eff: dict) -> None:
         qid = str(eff["fail_quest"])
         st.quests[qid] = "failed"
         st.quest_deadlines.pop(qid, None)
+    if "meter" in eff and isinstance(eff["meter"], dict):
+        from . import meters
+
+        for mid, delta in eff["meter"].items():
+            meters.change(game, str(mid), int(delta))
+    if "fx" in eff:
+        from . import fx
+
+        fx.play(game, eff["fx"])
     if "give_ability" in eff:
         aid = str(eff["give_ability"])
         if aid and aid not in p.abilities:

@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0-snapshot.3 — not a release
+
+Private snapshot. Panels, meters, a room grid, text effects. Public line is still 2.6.0. No pictures.
+
+- `ui.panels` is the order of the side menus. `ui.titles` renames shop, party, and the rest. Leave them out and the default stays
+- `meters` is any bar: thirst, morale, the next idea. Hunger is unchanged
+- `map` is a grid of room ids. `карта` draws the boxes. A neighboring cell is a step
+- `fx` is a text effect: banner, whisper, shout, shake, glitch, rule
+
 ## 3.0.0-snapshot.2 — not a release
 
 Private snapshot. The rest of the original 3.0 plan. Public line is still 2.6.0.

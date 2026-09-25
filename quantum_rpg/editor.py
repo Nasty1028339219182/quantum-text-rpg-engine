@@ -518,6 +518,10 @@ class GameForm(_Base):
         self.roads = _yaml_field(parent, "roads (YAML)", yaml_dump_text(g.get("roads")))
         self.levels = _yaml_field(parent, "levels (YAML)", yaml_dump_text(g.get("levels")))
         self.rumors = _yaml_field(parent, "rumors (YAML)", yaml_dump_text(g.get("rumors")))
+        self.meters = _yaml_field(parent, "meters (YAML)", yaml_dump_text(g.get("meters")))
+        self.map = _yaml_field(parent, "map (YAML)", yaml_dump_text(g.get("map")))
+        self.ui = _yaml_field(parent, "ui (YAML)", yaml_dump_text(g.get("ui")))
+        self.fx = _yaml_field(parent, "fx (YAML)", yaml_dump_text(g.get("fx")))
 
     def collect(self) -> None:
         g = self.ed.project.game
@@ -619,6 +623,17 @@ class GameForm(_Base):
             g["rumors"] = rumors
         else:
             g.pop("rumors", None)
+        for key, widget in (
+            ("meters", self.meters),
+            ("map", self.map),
+            ("ui", self.ui),
+            ("fx", self.fx),
+        ):
+            body = yaml_load_text(_get(widget))
+            if body:
+                g[key] = body
+            else:
+                g.pop(key, None)
 
 
 def _labeled(parent, label: str, value: str) -> Entry:

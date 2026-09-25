@@ -118,6 +118,18 @@ HELP = {
   слухи
   кнопка Собрать — zip одной игры
 
+ПАНЕЛИ, ШКАЛЫ, СХЕМА, ЭФФЕКТ
+  ui.panels: [map, meters, exits, party, inventory]
+  ui.titles.shop: {ru: Прилавок}
+  meters.thirst: {max: 10, step: 1, damage: 1, name: {ru: Жажда}}
+  - meter: {thirst: -4}
+  map.ford: [["", shrine, ""], [inn, square, mill]]
+  клетка соседа — ход
+  fx.blow: {style: shake, color: danger, text: {ru: Удар.}}
+  - fx: blow
+  стили: plain, banner, whisper, shout, shake, glitch, rule
+
+
 
 
 

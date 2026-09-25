@@ -1,0 +1,65 @@
+"""Text effects. No pictures: a line can shout, whisper, shake, or sit in a box."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .util import loc
+
+if TYPE_CHECKING:
+    from .engine import Game
+
+
+def resolve(game: "Game", spec) -> dict:
+    table = game.world.game.get("fx") or {}
+    if isinstance(spec, str):
+        found = table.get(spec) if isinstance(table, dict) else None
+        if isinstance(found, dict):
+            return found
+        return {"text": spec, "style": "plain"}
+    return spec if isinstance(spec, dict) else {}
+
+
+def render(spec: dict, lang: str) -> list[tuple[str, str]]:
+    if not spec:
+        return []
+    style = str(spec.get("style") or "plain")
+    text = loc(spec.get("text") or spec.get("line"), lang)
+    color = str(spec.get("color") or _color(style))
+    if style == "rule" or not text and style == "rule":
+        return [("────────", color or "dim")]
+    if not text:
+        return []
+    if style == "shout":
+        return [(str(text).upper(), color or "accent")]
+    if style == "whisper":
+        return [(f"… {text}", color or "dim")]
+    if style == "shake":
+        return [(f" {text}", color or "danger"), (f"{text} ", color or "danger")]
+    if style == "glitch":
+        return [(f"░▒ {text} ▒░", color or "danger")]
+    if style == "banner":
+        bar = "─" * max(4, len(str(text)))
+        return [(f"┌{bar}┐", color or "accent"), (f"│{text}│", color or "accent"), (f"└{bar}┘", color or "accent")]
+    return [(str(text), color or "fg")]
+
+
+def play(game: "Game", spec) -> None:
+    body = resolve(game, spec)
+    for text, color in render(body, game.lang):
+        fn = getattr(game.ui, "fx", None)
+        if callable(fn):
+            fn(text, color)
+        else:
+            game.say(text)
+
+
+def _color(style: str) -> str:
+    return {
+        "shout": "accent",
+        "whisper": "dim",
+        "shake": "danger",
+        "glitch": "danger",
+        "banner": "accent",
+        "rule": "dim",
+    }.get(style, "fg")
