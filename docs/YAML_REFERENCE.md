@@ -73,6 +73,38 @@ Follower:
 Each enemy strikes one standing follower, then the player. `combat.cover: false` opts out.
 `карта` lists visited rooms and exits. The dialogue editor draws the node graph.
 
+## Sound
+
+WAV only. A missing file is silence. `звук` turns it off.
+
+```yaml
+audio:
+  music:
+    village: audio/village.wav
+  sfx:
+    coin: audio/coin.wav
+    hit: audio/hit.wav
+  cues:
+    take: coin
+    buy: coin
+    sell: coin
+    hit: hit
+    miss: hit
+    hurt: hit
+    use: coin
+    rest: coin
+    step: coin
+    door: coin
+    combat: hit
+    flee: coin
+    win: coin
+    lose: hit
+```
+
+Room or fight: `music: village`. Fight or item: `sound: hit`.
+An effect can also say `- sound: coin` or `- music: village`.
+
+
 
 
 

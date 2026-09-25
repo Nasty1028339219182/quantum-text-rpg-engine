@@ -11,6 +11,7 @@ square:
     ru: Фонарей нет. Колодец — чёрный круг.
     en: No lanterns. The well is a black circle.
   rest: true
+  music: village
   exits:
     west: inn
     east: mill

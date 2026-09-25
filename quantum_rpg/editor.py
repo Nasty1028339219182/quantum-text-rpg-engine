@@ -466,6 +466,7 @@ class GameForm(_Base):
             hunger = {}
         self.hunger_max = _labeled(parent, "hunger.max (empty = off)", str(hunger.get("max") or ""))
         self.hunger_step = _labeled(parent, "hunger.step", str(hunger.get("step") or ""))
+        self.audio = _yaml_field(parent, "audio (YAML)", yaml_dump_text(g.get("audio")))
         clock = g.get("time") or {}
         if not isinstance(clock, dict):
             clock = {}
@@ -526,6 +527,11 @@ class GameForm(_Base):
             g["hunger"] = hunger
         else:
             g.pop("hunger", None)
+        audio = yaml_load_text(_get(self.audio))
+        if audio:
+            g["audio"] = audio
+        else:
+            g.pop("audio", None)
         clock = dict(g.get("time") or {}) if isinstance(g.get("time"), dict) else {}
         hour = _get(self.start_hour).strip()
         rest = _get(self.rest_hours).strip()
@@ -568,6 +574,7 @@ class LocationForm(_Base):
         self.note_night = _loc(parent, "note_night", loc.get("note_night"), height=2)
         self.dark = _check(parent, "dark", loc.get("dark"))
         self.rest = _check(parent, "rest", loc.get("rest") is not False)
+        self.music = _labeled(parent, "music", str(loc.get("music") or ""))
         self.items = _labeled(parent, "items", csv_load(loc.get("items")))
         self.hidden = _labeled(parent, "hidden_items", csv_load(loc.get("hidden_items")))
         self.npcs = _labeled(parent, "npcs", csv_load(loc.get("npcs")))
@@ -664,6 +671,11 @@ class LocationForm(_Base):
             loc.pop("note_night", None)
         loc["dark"] = bool(self.dark.get())
         loc["rest"] = bool(self.rest.get())
+        music = _get(self.music).strip()
+        if music:
+            loc["music"] = music
+        else:
+            loc.pop("music", None)
         loc["items"] = csv_dump(_get(self.items))
         loc["hidden_items"] = csv_dump(_get(self.hidden))
         loc["npcs"] = csv_dump(_get(self.npcs))
@@ -735,12 +747,12 @@ class LocationForm(_Base):
 
 
 KEEP_LOC = {
-    "name", "description", "note_night", "dark", "rest", "items", "hidden_items",
+    "name", "description", "note_night", "dark", "rest", "music", "items", "hidden_items",
     "npcs", "exits", "search", "random_encounters", "id",
 }
 KEEP_ITEM = {
     "name", "aliases", "description", "type", "slot", "damage", "hit", "ac", "light",
-    "heal", "weight", "value", "takeable", "text", "use", "id",
+    "heal", "weight", "value", "takeable", "text", "use", "sound", "id",
 }
 KEEP_NPC = {
     "name", "aliases", "description", "location", "dialogue", "hostile", "encounter",
@@ -764,6 +776,7 @@ class ItemForm(_Base):
         self.heal = _labeled(parent, "heal", str(it.get("heal") or ""))
         self.value = _labeled(parent, "value", str(it.get("value") or ""))
         self.weight = _labeled(parent, "weight", str(it.get("weight") or ""))
+        self.sound = _labeled(parent, "sound", str(it.get("sound") or ""))
         self.light = _check(parent, "light", it.get("light"))
         self.takeable = _check(parent, "takeable", it.get("takeable") is not False)
         use = it.get("use") or {}
@@ -795,6 +808,11 @@ class ItemForm(_Base):
                 it[key] = int(val) if val.isdigit() else val
         it["light"] = bool(self.light.get())
         it["takeable"] = bool(self.takeable.get())
+        sound = _get(self.sound).strip()
+        if sound:
+            it["sound"] = sound
+        else:
+            it.pop("sound", None)
         ut = loc_value(_get(self.use_text[0]), _get(self.use_text[1]))
         fx = yaml_load_text(_get(self.use_fx))
         if ut or fx or self.use_consume.get():
@@ -1155,6 +1173,8 @@ class EncounterForm(_Base):
         self.ac = _labeled(parent, "ac", str(e.get("ac") or 10))
         self.xp = _labeled(parent, "xp", str(e.get("xp") or 0))
         self.flee = _labeled(parent, "flee_dc", str(e.get("flee_dc") or ""))
+        self.sound = _labeled(parent, "sound", str(e.get("sound") or ""))
+        self.music = _labeled(parent, "music", str(e.get("music") or ""))
         self.appear = _loc(parent, "appear", e.get("appear"), height=2)
         self.loot = _labeled(parent, "loot (item ids)", csv_load(_loot_ids(e.get("loot"))))
         self.on_win = _yaml_field(parent, "on_win (YAML)", yaml_dump_text(e.get("on_win")))
@@ -1171,6 +1191,14 @@ class EncounterForm(_Base):
         flee = _get(self.flee).strip()
         if flee:
             e["flee_dc"] = int(flee)
+        else:
+            e.pop("flee_dc", None)
+        for key, widget in (("sound", self.sound), ("music", self.music)):
+            val = _get(widget).strip()
+            if val:
+                e[key] = val
+            else:
+                e.pop(key, None)
         e["appear"] = loc_value(_get(self.appear[0]), _get(self.appear[1]))
         loot = csv_dump(_get(self.loot))
         e["loot"] = [{"item": x, "chance": 100} for x in loot]

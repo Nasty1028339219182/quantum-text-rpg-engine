@@ -396,6 +396,7 @@ class PlayWindow:
         self._btn(t(self.lang, "map"), "map")
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")
+        self._btn(t(self.lang, "sound_btn"), "sound")
         if s.get("can_rest"):
             self._btn(self._tr("gui_rest"), "rest")
         for rec in s.get("recipes") or []:

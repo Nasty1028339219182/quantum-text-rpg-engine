@@ -114,6 +114,7 @@ def run(game: "Game", encounter_id: str) -> str:
         game.say(f"--- {t(game.lang, 'combat')}: {names} ---")
 
     game.hooks.call("on_combat_start", game, encounter_id)
+    game.audio.event("combat")
     if enc.get("music"):
         game.audio.play_music(str(enc.get("music")))
     elif enc.get("sound"):
@@ -154,7 +155,7 @@ def run(game: "Game", encounter_id: str) -> str:
         cmd = parse(choice)
         if cmd and cmd.verb in (
             "save", "load", "language", "help", "stats", "inventory",
-            "quests", "journal", "map", "party", "reputation", "quit",
+            "quests", "journal", "map", "party", "reputation", "sound", "quit",
         ):
             if cmd.verb == "quit":
                 game.in_combat = False
@@ -181,6 +182,7 @@ def run(game: "Game", encounter_id: str) -> str:
                 roll_v = roll("1d20", game.rng) + modifier(int(game.state.player.stats.get("dex", 10)))
                 if roll_v >= dc:
                     game.say(t(game.lang, "fled"))
+                    game.audio.event("flee")
                     game.in_combat = False
                     game.set_choices([])
                     game.hooks.call("on_combat_end", game, encounter_id, False)
@@ -401,6 +403,7 @@ def _player_hit(game: "Game", target: Fighter) -> None:
     ac = 10 + int(target.defense) + int(target.ac_bonus)
     if to_hit < ac:
         game.say(t(game.lang, "you_miss"))
+        game.audio.event("miss")
         return
     dmg = roll(weapon.get("damage") or "1d4", game.rng)
     if game.has_flag("demon_weak") and game.combat_id == "vargos":
@@ -410,6 +413,7 @@ def _player_hit(game: "Game", target: Fighter) -> None:
     target.hp -= dmg
     wname = loc(weapon.get("name"), game.lang)
     game.say(t(game.lang, "you_hit", dmg=dmg, name=wname or target.name))
+    game.audio.event("hit")
     if target.hp <= 0:
         game.say(t(game.lang, "enemy_down", name=target.name))
 
@@ -422,6 +426,7 @@ def _enemy_hit(game: "Game", enemy: Fighter, ac: int) -> None:
         return
     dmg = max(0, roll(enemy.attack, game.rng))
     game.state.player.hp = max(0, game.state.player.hp - dmg)
+    game.audio.event("hurt")
     hit = loc((enemy.phrases or {}).get("hit"), game.lang)
     if hit:
         game.say(hit + f" (−{dmg})")

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0 — 2026-09-25
+
+- WAV music and sound effects from `audio:` in game.yaml
+- A room, a fight, or an item can name a sound. Effects can too
+- Missing files stay silent. `звук` turns sound off
+- Greyford square has a short loop, a coin, and a hit. Replace the files
+
 ## 2.0.1 — 2026-09-25
 
 - Hunger no longer rises when you look, talk, or check a menu. It rises on a step, on wait, and once per combat round

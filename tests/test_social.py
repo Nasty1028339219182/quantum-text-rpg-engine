@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from quantum_rpg.audio import Audio
 from quantum_rpg.conditions import check
 from quantum_rpg.engine import Game
 from quantum_rpg.graph import dialogue_layout
@@ -67,15 +66,21 @@ def test_dialogue_graph_edges():
     assert height > 40
 
 
-def test_audio_stays_quiet_without_files(tmp_path):
-    wav = tmp_path / "hit.wav"
-    wav.write_bytes(b"")  # not a real wav; playback must not raise
-    audio = Audio(tmp_path, {"sfx": {"hit": "hit.wav"}, "music": {"town": "missing.ogg"}})
-    audio.cue("hit")
-    audio.cue({"music": "town", "sfx": "nope"})
-    audio.stop_music()
-    assert audio._resolve("hit", "sfx") == wav
-    assert audio._resolve("town", "music") is None
+def test_sound_ids_and_mute():
+    w = load_world(FORD)
+    ui = ScriptedIO([])
+    g = Game(w, ui=ui, language="ru", seed=1, ask_name=False)
+    played = []
+    g.audio.play = lambda name: played.append(("sfx", name))
+    g.audio.play_music = lambda name, force=False: played.append(("music", name))
+    assert g.audio._resolve("village", "music") is not None
+    g.audio.event("take")
+    g.handle("звук")
+    assert g.audio.muted
+    g.audio.event("hit")
+    assert played == [("sfx", "coin")]
+    assert "выключен" in ui.text
+
 
 
 def test_editor_freeze_ignores_unchanged_open():

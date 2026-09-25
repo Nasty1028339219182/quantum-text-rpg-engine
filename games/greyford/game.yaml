@@ -109,3 +109,15 @@ time:
   rest_hours: 8
   shop_closed: [night]
   night_encounter_bonus: 25
+audio:
+  music:
+    village: audio/village.wav
+  sfx:
+    coin: audio/coin.wav
+    hit: audio/hit.wav
+  cues:
+    take: coin
+    buy: coin
+    sell: coin
+    hit: hit
+    win: coin

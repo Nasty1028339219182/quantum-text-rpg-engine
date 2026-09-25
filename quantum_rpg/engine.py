@@ -44,6 +44,7 @@ class Game:
         self.ui_choices: list = []
         self.state = self._new_state(language, seed)
         self.audio = Audio(world.path, world.game.get("audio"))
+        self.audio.muted = bool(self.state.muted)
         if self.player_class:
             self.apply_class(self.player_class, silent=True)
 
@@ -264,6 +265,9 @@ class Game:
         self._look(full=True, first=True)
         self.hooks.call("on_enter", self, self.state.location)
         self._fire_enter(self.state.location)
+        music = self.room().get("music")
+        if music:
+            self.audio.play_music(str(music))
         while self.running and not self.state.ended:
             if not self.in_combat and not self.in_dialogue and not self.in_shop:
                 self.set_choices([])
@@ -373,6 +377,7 @@ class Game:
             "wait": self._cmd_wait,
             "party": self._cmd_party,
             "reputation": self._cmd_reputation,
+            "sound": self._cmd_sound,
             "save": self._cmd_save,
             "load": self._cmd_load,
             "help": self._cmd_help,
@@ -600,6 +605,7 @@ class Game:
         self.hooks.call("on_enter", self, loc_id)
         self._fire_enter(loc_id)
         self._hunger_tick()
+        self.audio.event("step")
         music = (self.world.locations.get(loc_id) or {}).get("music")
         if music:
             self.audio.play_music(str(music))
@@ -730,6 +736,7 @@ class Game:
             text = loc(block.get("pact_text") or text, self.lang)
         if text:
             self.say(text)
+        self.audio.event("win" if kind == "win" else "lose")
         self.hooks.call("on_ending", self, kind)
 
     def use_item(self, query: str, combat: bool = False) -> None:
@@ -759,6 +766,10 @@ class Game:
                 self.sate(int(sate))
             if use.get("consume", item.get("type") == "consumable"):
                 self.take_from_inv(iid, silent=True)
+            if item.get("sound"):
+                self.audio.play(str(item.get("sound")))
+            else:
+                self.audio.event("use")
             return
         if item.get("type") in ("weapon", "armor", "shield", "accessory"):
             self._equip_id(iid)
@@ -929,6 +940,7 @@ class Game:
             if key and self.has_item(str(key)):
                 self.state.unlocked.add(f"{self.state.location}:{direction}")
                 self.say(t(self.lang, "unlocked"))
+                self.audio.event("door")
             else:
                 self.say(loc(dest_d.get("locked_text"), self.lang) or t(self.lang, "need_key"))
                 return
@@ -986,6 +998,8 @@ class Game:
             return
         if not self.give_item(iid, silent=False):
             loc_items.append(iid)
+            return
+        self.audio.event("take")
 
     def _cmd_drop(self, cmd) -> None:
         if not cmd.argstr:
@@ -1454,12 +1468,25 @@ class Game:
         cfg = self.hunger_cfg()
         if cfg:
             self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
+        self.audio.event("rest")
         advance(self)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 
     def _cmd_wait(self, cmd) -> None:
         self.say(t(self.lang, "wait"))
         self._hunger_tick()
+
+    def _cmd_sound(self, cmd) -> None:
+        self.audio.muted = not self.audio.muted
+        self.state.muted = self.audio.muted
+        if self.audio.muted:
+            self.audio.stop_music()
+            self.say(t(self.lang, "sound_off"))
+            return
+        self.say(t(self.lang, "sound_on"))
+        music = self.room().get("music")
+        if music:
+            self.audio.play_music(str(music), force=True)
 
     def _cmd_save(self, cmd) -> None:
         slot = cmd.argstr or "slot1"
@@ -1474,8 +1501,12 @@ class Game:
             self.say(t(self.lang, "no_save"))
             return
         self.state = GameState.from_dict(data)
+        self.audio.muted = bool(self.state.muted)
         self.say(t(self.lang, "loaded", slot=slot))
         self._look(full=True)
+        music = self.room().get("music")
+        if music:
+            self.audio.play_music(str(music), force=True)
 
     def _cmd_help(self, cmd) -> None:
         self.say(t(self.lang, "help_title"))
@@ -1604,6 +1635,7 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
                 if int(row.get("stock", 1)) > 0:
                     row["stock"] = int(row["stock"]) - 1
                 game.say(t(game.lang, "bought", name=game.item_name(row["item"]), n=price))
+                game.audio.event("buy")
                 if preset:
                     return
                 continue
@@ -1617,6 +1649,7 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
                 game.take_from_inv(iid, silent=True)
                 game.state.player.gold += price
                 game.say(t(game.lang, "sold", name=game.item_name(iid), n=price))
+                game.audio.event("sell")
                 if preset:
                     return
                 continue

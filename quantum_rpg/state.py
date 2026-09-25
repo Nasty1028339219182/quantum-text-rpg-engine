@@ -104,6 +104,7 @@ class GameState:
     followers: dict = field(default_factory=dict)  # npc id -> {hp, max_hp, attack}
     reputation: dict = field(default_factory=dict)
     hunger: int = 0
+    muted: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -131,6 +132,7 @@ class GameState:
             "followers": self.followers,
             "reputation": self.reputation,
             "hunger": self.hunger,
+            "muted": self.muted,
         }
 
     @classmethod
@@ -160,4 +162,5 @@ class GameState:
             followers=dict(d.get("followers") or {}),
             reputation={str(k): int(v) for k, v in (d.get("reputation") or {}).items()},
             hunger=int(d.get("hunger") or 0),
+            muted=bool(d.get("muted") or False),
         )

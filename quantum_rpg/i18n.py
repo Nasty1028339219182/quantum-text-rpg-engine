@@ -112,7 +112,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "говорить <кто>, атаковать <кто>, искать, открыть <что>, читать <что>,\n"
             "купить / продать, создать <рецепт>, дать <предмет> <кому>,\n"
             "характеристики, задания, журнал, карта, отдохнуть, ждать,\n"
-            "сохранить [слот], загрузить [слот], язык ru|en, помощь, выход"
+            "сохранить [слот], загрузить [слот], язык ru|en, звук, помощь, выход"
         ),
         "en": (
             "look, go <dir>, take <item>, drop <item>, examine <thing>,\n"
@@ -120,7 +120,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "attack <who>, search, open <thing>, read <thing>,\n"
             "buy / sell, craft <recipe>, give <item> <who>,\n"
             "stats, quests, journal, map, rest, wait,\n"
-            "save [slot], load [slot], language ru|en, help, quit"
+            "save [slot], load [slot], language ru|en, sound, help, quit"
         ),
     },
     "dirs": {"ru": "направления: север юг восток запад вверх вниз", "en": "dirs: north south east west up down"},
@@ -250,6 +250,9 @@ STRINGS: dict[str, dict[str, str]] = {
     "hungry": {"ru": "Голод скручивает живот (−{n}).", "en": "Hunger twists your gut (−{n})."},
     "starved": {"ru": "Ты умираешь от голода.", "en": "You starve."},
     "sated": {"ru": "Голод спадает. Сейчас {n}.", "en": "The hunger eases. It is {n}."},
+    "sound_on": {"ru": "Звук включён.", "en": "Sound on."},
+    "sound_off": {"ru": "Звук выключен.", "en": "Sound off."},
+    "sound_btn": {"ru": "Звук", "en": "Sound"},
     "ed_library": {"ru": "Библиотека", "en": "Library"},
     "ed_help": {"ru": "Справка", "en": "Help"},
     "ed_import": {"ru": "Вставить", "en": "Insert"},

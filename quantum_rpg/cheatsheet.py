@@ -79,6 +79,15 @@ HELP = {
   hunger.max включает голод, предмет sates
   граф диалога: клик по узлу
 
+ЗВУК (wav, нет файла — тишина)
+  audio.music.village: audio/village.wav
+  audio.sfx.coin: audio/coin.wav
+  audio.cues.take: coin
+  комната music: village
+  предмет или бой sound: hit
+  команда: звук
+
+
 
 РЕДАКТОР
   умения, таблицы лута, time.*, note_night, random.chance
