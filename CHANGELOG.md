@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.0 — 2026-09-25
+
+- Editor **From here** plays the open room and skips the name
+- Validate names a missing WAV and a dialogue that points nowhere
+- An exit row has hidden, and trap dc / damage / skill
+
 ## 2.5.0 — 2026-09-25
 
 - `приказ` tells a follower to wait, follow, or stay out of the fight

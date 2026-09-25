@@ -17,6 +17,7 @@ from .project import (
     csv_load,
     loc_pair,
     loc_value,
+    exit_body,
     yaml_dump_text,
     yaml_load_text,
 )
@@ -73,6 +74,7 @@ class EditorWindow:
         Btn(top, text=self.tr("ed_library"), command=self._library, anchor="center").pack(side="right", pady=6)
         Btn(top, text=self.tr("gui_menu"), command=self._leave, anchor="center").pack(side="right", padx=8, pady=6)
         Btn(top, text=self.tr("gui_play"), command=self._play, anchor="center").pack(side="right", pady=6)
+        Btn(top, text=self.tr("ed_play_here"), command=self._play_here, anchor="center").pack(side="right", padx=4, pady=6)
         Btn(top, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="right", padx=4, pady=6)
         Btn(top, text=self.tr("gui_save"), command=self._save, anchor="center", font=font_ui(9, True)).pack(
             side="right", pady=6
@@ -270,6 +272,27 @@ class EditorWindow:
             self._fill_tree(self.sel)
 
         PlayWindow(self.root, self.project.path, self.lang, on_exit=back)
+
+    def _play_here(self) -> None:
+        kind, eid = self.sel
+        if kind != "locations" or not eid:
+            messagebox.showinfo("Quantum RPG", self.tr("ed_pick_room"))
+            return
+        if not self._save():
+            return
+        world = load_world(self.project.path)
+        if world.errors:
+            messagebox.showerror("Quantum RPG", "\n".join(world.errors))
+            return
+        from .gui import PlayWindow
+
+        self.frame.pack_forget()
+
+        def back():
+            self.frame.pack(fill="both", expand=True)
+            self._fill_tree(self.sel)
+
+        PlayWindow(self.root, self.project.path, self.lang, on_exit=back, start_at=eid)
 
     def _leave(self) -> None:
         self._flush()
@@ -588,20 +611,25 @@ class LocationForm(_Base):
         exits = loc.get("exits") or {}
         rooms = tuple(editor.project.locations) or (eid,)
         if not exits:
-            self._exit_row("north", "", False, "")
+            self._exit_row("north", "", False, "", False, "", "", "")
         else:
             for d, dest in exits.items():
                 if isinstance(dest, dict):
+                    trap = dest.get("trap") if isinstance(dest.get("trap"), dict) else {}
                     self._exit_row(
                         d,
                         str(dest.get("to") or ""),
                         bool(dest.get("locked")),
                         str(dest.get("key") or ""),
+                        bool(dest.get("hidden")),
+                        str(trap.get("dc") or ""),
+                        str(trap.get("damage") or ""),
+                        str(trap.get("skill") or ""),
                         dest,
                     )
                 else:
-                    self._exit_row(d, str(dest or ""), False, "", dest)
-        Btn(parent, text="+ exit", command=lambda: self._exit_row("north", "", False, ""), anchor="center").pack(
+                    self._exit_row(d, str(dest or ""), False, "", False, "", "", "", dest)
+        Btn(parent, text="+ exit", command=lambda: self._exit_row("north", "", False, "", False, "", "", ""), anchor="center").pack(
             pady=6, anchor="w"
         )
         renc = loc.get("random_encounters") or {}
@@ -620,26 +648,40 @@ class LocationForm(_Base):
             elif isinstance(row, dict):
                 self._renc_row(str(row.get("encounter") or ""), str(row.get("weight") or "1"))
         Btn(parent, text="+ encounter", command=lambda: self._renc_row("", "1"), anchor="center").pack(anchor="w", pady=4)
-        self.extra = _yaml_field(parent, "extra YAML (on_enter, containers, trap…)", _extra_yaml(loc, KEEP_LOC))
+        self.extra = _yaml_field(parent, "extra YAML (on_enter, containers…)", _extra_yaml(loc, KEEP_LOC))
 
-    def _exit_row(self, d, to, locked, key, original=None):
+    def _exit_row(self, d, to, locked, key, hidden, trap_dc, trap_damage, trap_skill, original=None):
         row = tk.Frame(self.exit_box, bg=C["bg"])
         row.pack(fill="x", pady=2)
+        line = tk.Frame(row, bg=C["bg"])
+        line.pack(fill="x")
         dv = tk.StringVar(value=d if d in DIRS else "north")
-        tk.OptionMenu(row, dv, *DIRS).pack(side="left")
-        to_e = Entry(row, width=18)
+        tk.OptionMenu(line, dv, *DIRS).pack(side="left")
+        to_e = Entry(line, width=16)
         to_e.insert(0, to)
         to_e.pack(side="left", padx=4)
         lv = tk.BooleanVar(value=locked)
-        tk.Checkbutton(
-            row, text="lock", variable=lv, bg=C["bg"], fg=C["fg"], selectcolor=C["btn"],
-            activebackground=C["bg"], highlightthickness=0,
-        ).pack(side="left")
-        key_e = Entry(row, width=14)
+        hv = tk.BooleanVar(value=hidden)
+        for text, var in (("lock", lv), ("hidden", hv)):
+            tk.Checkbutton(
+                line, text=text, variable=var, bg=C["bg"], fg=C["fg"], selectcolor=C["btn"],
+                activebackground=C["bg"], highlightthickness=0,
+            ).pack(side="left")
+        key_e = Entry(line, width=12)
         key_e.insert(0, key)
         key_e.pack(side="left", padx=4)
-        Btn(row, text="×", command=lambda r=row: self._drop_exit(r), width=2, anchor="center").pack(side="left")
-        self.exit_rows.append((row, dv, to_e, lv, key_e, original))
+        Btn(line, text="×", command=lambda r=row: self._drop_exit(r), width=2, anchor="center").pack(side="left")
+        line2 = tk.Frame(row, bg=C["bg"])
+        line2.pack(fill="x", pady=1)
+        tk.Label(line2, text="trap dc / damage / skill", bg=C["bg"], fg=C["dim"], font=font_ui(8)).pack(side="left")
+        dc_e, dmg_e, skill_e = Entry(line2, width=6), Entry(line2, width=8), Entry(line2, width=8)
+        dc_e.insert(0, trap_dc)
+        dmg_e.insert(0, trap_damage)
+        skill_e.insert(0, trap_skill)
+        dc_e.pack(side="left", padx=2)
+        dmg_e.pack(side="left", padx=2)
+        skill_e.pack(side="left", padx=2)
+        self.exit_rows.append((row, dv, to_e, lv, key_e, hv, dc_e, dmg_e, skill_e, original))
 
     def _renc_row(self, encounter: str, weight: str) -> None:
         row = tk.Frame(self.renc_box, bg=C["bg"])
@@ -691,28 +733,21 @@ class LocationForm(_Base):
         elif "search" in loc and not dc:
             pass
         exits = {}
-        for _row, dv, to_e, lv, key_e, original in self.exit_rows:
+        for _row, dv, to_e, lv, key_e, hv, dc_e, dmg_e, skill_e, original in self.exit_rows:
             d = dv.get()
             to = to_e.get().strip()
             if not to:
                 continue
-            locked, key = bool(lv.get()), key_e.get().strip()
-            if isinstance(original, dict):
-                body = dict(original)
-                body["to"] = to
-                body["locked"] = locked
-                if key:
-                    body["key"] = key
-                elif "key" in body:
-                    body.pop("key", None)
-                exits[d] = body
-            elif locked or key:
-                body = {"to": to, "locked": locked}
-                if key:
-                    body["key"] = key
-                exits[d] = body
-            else:
-                exits[d] = to
+            exits[d] = exit_body(
+                to,
+                bool(lv.get()),
+                key_e.get().strip(),
+                bool(hv.get()),
+                dc_e.get(),
+                dmg_e.get(),
+                skill_e.get(),
+                original,
+            )
         loc["exits"] = exits
         table = []
         for _r, a, b in self.renc_rows:

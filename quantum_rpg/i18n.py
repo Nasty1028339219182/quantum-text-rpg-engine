@@ -210,6 +210,8 @@ STRINGS: dict[str, dict[str, str]] = {
     "ed_events": {"ru": "events.yaml", "en": "events.yaml"},
     "ed_hooks": {"ru": "hooks.py", "en": "hooks.py"},
     "ed_validate": {"ru": "Проверить", "en": "Validate"},
+    "ed_play_here": {"ru": "Отсюда", "en": "From here"},
+    "ed_pick_room": {"ru": "Открой комнату слева, потом «Отсюда».", "en": "Open a room on the left, then From here."},
     "ed_saved": {"ru": "Сохранено: {path}", "en": "Saved: {path}"},
     "ed_copied": {
         "ru": "Игра из комплекта скопирована для правки:\n{path}",

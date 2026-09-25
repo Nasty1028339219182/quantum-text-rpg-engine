@@ -287,6 +287,89 @@ def _validate(world: World) -> None:
             if result and result not in world.items:
                 world.warnings.append(f"[item {iid}] combine.result unknown '{result}'")
 
+    _warn_dialogues(world)
+    _warn_audio(world)
+
+
+def _warn_dialogues(world: World) -> None:
+    for did, dlg in (world.dialogues or {}).items():
+        if not isinstance(dlg, dict):
+            continue
+        nodes = dlg.get("nodes") or {}
+        if not isinstance(nodes, dict):
+            world.warnings.append(f"[dialogue {did}] nodes must be a mapping")
+            continue
+        start = str(dlg.get("start") or "start")
+        if nodes and start not in nodes:
+            world.warnings.append(f"[dialogue {did}] start '{start}' has no node")
+        for rule in dlg.get("start_if") or []:
+            if isinstance(rule, dict) and rule.get("node") and str(rule["node"]) not in nodes:
+                world.warnings.append(f"[dialogue {did}] start_if goes to missing '{rule['node']}'")
+        for nid, node in nodes.items():
+            if not isinstance(node, dict):
+                continue
+            for i, choice in enumerate(node.get("choices") or [], 1):
+                if not isinstance(choice, dict):
+                    continue
+                goto = choice.get("goto")
+                if goto and str(goto) not in nodes:
+                    world.warnings.append(
+                        f"[dialogue {did}.{nid}] choice {i} goes to missing '{goto}'"
+                    )
+
+
+def _warn_audio(world: World) -> None:
+    spec = world.game.get("audio") or {}
+    if not isinstance(spec, dict) or not spec:
+        return
+    root = Path(world.path)
+    music = spec.get("music") if isinstance(spec.get("music"), dict) else {}
+    sfx = spec.get("sfx") if isinstance(spec.get("sfx"), dict) else {}
+
+    def missing(kind: str, name: str, rel: str) -> None:
+        path = Path(str(rel))
+        if not path.is_absolute():
+            path = root / path
+        if not path.is_file():
+            world.warnings.append(f"[audio.{kind}.{name}] missing file '{rel}'")
+
+    for name, rel in music.items():
+        missing("music", str(name), str(rel))
+    for name, rel in sfx.items():
+        missing("sfx", str(name), str(rel))
+
+    def known(table: dict, name: str) -> bool:
+        if name in table:
+            return True
+        path = Path(name)
+        if not path.is_absolute():
+            path = root / path
+        return path.is_file()
+
+    for loc_id, loc in world.locations.items():
+        clip = loc.get("music")
+        if clip and not known(music, str(clip)):
+            world.warnings.append(f"[{loc_id}] music '{clip}' is not in audio.music")
+    for eid, enc in world.encounters.items():
+        for key, table in (("music", music), ("sound", sfx)):
+            clip = enc.get(key)
+            if clip and not known(table, str(clip)):
+                world.warnings.append(f"[encounter {eid}] {key} '{clip}' is not in audio.{key}")
+    for iid, item in world.items.items():
+        clip = item.get("sound")
+        if clip and not known(sfx, str(clip)):
+            world.warnings.append(f"[item {iid}] sound '{clip}' is not in audio.sfx")
+    cues = spec.get("cues") or spec.get("on") or spec.get(True) or {}
+    if isinstance(cues, dict):
+        for event, cue in cues.items():
+            if isinstance(cue, str) and not known(sfx, cue) and not known(music, cue):
+                world.warnings.append(f"[audio.cues.{event}] unknown '{cue}'")
+            elif isinstance(cue, dict):
+                for key, table in (("music", music), ("sfx", sfx), ("sound", sfx)):
+                    clip = cue.get(key)
+                    if clip and not known(table, str(clip)):
+                        world.warnings.append(f"[audio.cues.{event}] {key} '{clip}' has no file")
+
 
 def initial_location_items(world: World) -> dict[str, list]:
     out: dict[str, list] = {}

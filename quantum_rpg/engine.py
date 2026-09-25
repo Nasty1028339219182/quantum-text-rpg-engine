@@ -37,6 +37,7 @@ class Game:
         seed: int = 1,
         ask_name: bool = True,
         player_class: Optional[str] = None,
+        start_at: str = "",
     ):
         self.world = world
         self.hooks = hooks or Hooks(None)
@@ -51,6 +52,8 @@ class Game:
         self.in_shop = False
         self.ui_choices: list = []
         self.state = self._new_state(language, seed)
+        if start_at and start_at in self.world.locations:
+            self.state.location = start_at
         self.audio = Audio(world.path, world.game.get("audio"))
         self.audio.muted = bool(self.state.muted)
         self._apply_saved_volumes()

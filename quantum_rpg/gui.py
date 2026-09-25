@@ -173,7 +173,7 @@ class Launcher:
 
 
 class PlayWindow:
-    def __init__(self, root: tk.Tk, game_path: Path, lang: str, on_exit: Callable):
+    def __init__(self, root: tk.Tk, game_path: Path, lang: str, on_exit: Callable, start_at: str = ""):
         self.root = root
         self.game_path = Path(game_path)
         self.lang = lang
@@ -193,7 +193,8 @@ class PlayWindow:
             ui=self.ui,
             language=lang,
             seed=1,
-            ask_name=True,
+            ask_name=not bool(start_at),
+            start_at=start_at,
         )
         self.ui.game = self.game
         root.geometry("1040x680")

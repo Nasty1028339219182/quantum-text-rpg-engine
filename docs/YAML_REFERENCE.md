@@ -271,5 +271,16 @@ Still at most four. Default is follow, and they fight.
 
 In play: `приказ мира жди`, `приказ мира за мной`, `приказ мира не дерись`. `отряд` shows the order and offers the same three buttons.
 
+## Author tools
+
+**Отсюда** in the editor plays from the open room and skips the name. **Проверить** also warns when:
+
+- an `audio` file is missing
+- a room, fight, item, or cue names a sound that is not there
+- a dialogue `goto` or `start` points at a node that does not exist
+
+An exit row has `hidden` and `trap dc / damage / skill`. Empty trap fields mean no trap. Text for the trap can stay in the exit dict.
+
+
 
 

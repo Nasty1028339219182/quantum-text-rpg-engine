@@ -220,6 +220,41 @@ def loc_value(ru: str, en: str) -> Any:
     return {"ru": ru, "en": en}
 
 
+def exit_body(to, locked, key, hidden, trap_dc, trap_damage, trap_skill, original=None):
+    """Exit as a room id, or a dict when it has a lock, a secret, or a trap."""
+    body = dict(original) if isinstance(original, dict) else {}
+    body["to"] = to
+    if locked:
+        body["locked"] = True
+    else:
+        body.pop("locked", None)
+    if key:
+        body["key"] = key
+    else:
+        body.pop("key", None)
+    if hidden:
+        body["hidden"] = True
+    else:
+        body.pop("hidden", None)
+    if str(trap_dc).strip() or str(trap_damage).strip():
+        trap = dict(body.get("trap") or {}) if isinstance(body.get("trap"), dict) else {}
+        if str(trap_dc).strip():
+            trap["dc"] = int(str(trap_dc).strip())
+        if str(trap_damage).strip():
+            trap["damage"] = str(trap_damage).strip()
+        if str(trap_skill).strip():
+            trap["skill"] = str(trap_skill).strip()
+        else:
+            trap.setdefault("skill", "dex")
+        trap.setdefault("once", True)
+        body["trap"] = trap
+    else:
+        body.pop("trap", None)
+    if set(body) <= {"to"}:
+        return to
+    return body
+
+
 def csv_load(val: Any) -> str:
     if val is None:
         return ""
