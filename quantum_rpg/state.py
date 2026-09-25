@@ -105,6 +105,8 @@ class GameState:
     reputation: dict = field(default_factory=dict)
     hunger: int = 0
     muted: bool = False
+    music_volume: int = -1
+    sfx_volume: int = -1
 
     def to_dict(self) -> dict:
         return {
@@ -133,6 +135,8 @@ class GameState:
             "reputation": self.reputation,
             "hunger": self.hunger,
             "muted": self.muted,
+            "music_volume": self.music_volume,
+            "sfx_volume": self.sfx_volume,
         }
 
     @classmethod
@@ -163,4 +167,6 @@ class GameState:
             reputation={str(k): int(v) for k, v in (d.get("reputation") or {}).items()},
             hunger=int(d.get("hunger") or 0),
             muted=bool(d.get("muted") or False),
+            music_volume=int(d["music_volume"]) if d.get("music_volume") is not None else -1,
+            sfx_volume=int(d["sfx_volume"]) if d.get("sfx_volume") is not None else -1,
         )

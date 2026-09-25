@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0 — 2026-09-25
+
+- Music keeps playing while a sound effect plays
+- `music_volume` and `sfx_volume`, or the command `громкость`
+- `звук` still mutes
+
 ## 2.1.0 — 2026-09-25
 
 - WAV music and sound effects from `audio:` in game.yaml

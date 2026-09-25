@@ -82,6 +82,29 @@ def test_sound_ids_and_mute():
     assert "выключен" in ui.text
 
 
+def test_mixer_keeps_music_and_volume():
+    from quantum_rpg.audio import Audio
+
+    audio = Audio(FORD, {"music_volume": 100, "sfx_volume": 100})
+    audio._music_samples = [1000] * 50
+    audio._music_pos = 0
+    audio._sfx.append({"samples": [1000] * 10, "pos": 0})
+    chunk = audio.render(20)
+    assert audio._music_samples is not None
+    assert audio._music_pos == 20
+    assert chunk[0] == 2000
+    assert chunk[15] == 1000
+    assert audio._sfx == []
+
+    w = load_world(FORD)
+    g = Game(w, ui=ScriptedIO([]), language="ru", seed=1, ask_name=False)
+    g.handle("громкость эффекты 40")
+    assert g.audio.sfx_volume == 40
+    assert g.state.sfx_volume == 40
+    assert g.audio.music_volume == 80
+
+
+
 
 def test_editor_freeze_ignores_unchanged_open():
     from quantum_rpg.project import Project

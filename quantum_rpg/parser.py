@@ -39,6 +39,7 @@ VERBS: dict[str, list[str]] = {
     "party": ["party", "отряд", "спутники"],
     "reputation": ["reputation", "rep", "репутация", "фракции"],
     "sound": ["sound", "mute", "unmute", "звук", "музыка"],
+    "volume": ["volume", "vol", "громкость"],
     "rest": ["rest", "sleep", "отдохнуть", "спать"],
     "wait": ["wait", "ждать"],
     "save": ["save", "сохранить", "сейв"],

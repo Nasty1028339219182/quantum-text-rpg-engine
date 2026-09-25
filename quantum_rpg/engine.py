@@ -45,6 +45,7 @@ class Game:
         self.state = self._new_state(language, seed)
         self.audio = Audio(world.path, world.game.get("audio"))
         self.audio.muted = bool(self.state.muted)
+        self._apply_saved_volumes()
         if self.player_class:
             self.apply_class(self.player_class, silent=True)
 
@@ -268,23 +269,26 @@ class Game:
         music = self.room().get("music")
         if music:
             self.audio.play_music(str(music))
-        while self.running and not self.state.ended:
-            if not self.in_combat and not self.in_dialogue and not self.in_shop:
-                self.set_choices([])
-            line = self.ui.read(t(self.lang, "prompt"))
-            self.handle(line)
-            if self.running and not self.state.ended:
-                self._check_ending()
-            if self.running and not self.state.ended:
-                self.hooks.call("on_turn", self)
-                self._tick()
-                self._check_ending()
-        if self.state.ended == "win":
-            self._show_ending("win")
-        elif self.state.ended == "lose":
-            self._show_ending("lose")
-        else:
-            self.say(t(self.lang, "bye"))
+        try:
+            while self.running and not self.state.ended:
+                if not self.in_combat and not self.in_dialogue and not self.in_shop:
+                    self.set_choices([])
+                line = self.ui.read(t(self.lang, "prompt"))
+                self.handle(line)
+                if self.running and not self.state.ended:
+                    self._check_ending()
+                if self.running and not self.state.ended:
+                    self.hooks.call("on_turn", self)
+                    self._tick()
+                    self._check_ending()
+            if self.state.ended == "win":
+                self._show_ending("win")
+            elif self.state.ended == "lose":
+                self._show_ending("lose")
+            else:
+                self.say(t(self.lang, "bye"))
+        finally:
+            self.audio.shutdown()
         return self.state.ended or "quit"
 
     def _pick_class(self, classes: dict) -> None:
@@ -378,6 +382,7 @@ class Game:
             "party": self._cmd_party,
             "reputation": self._cmd_reputation,
             "sound": self._cmd_sound,
+            "volume": self._cmd_volume,
             "save": self._cmd_save,
             "load": self._cmd_load,
             "help": self._cmd_help,
@@ -1488,6 +1493,43 @@ class Game:
         if music:
             self.audio.play_music(str(music), force=True)
 
+    def _apply_saved_volumes(self) -> None:
+        if int(self.state.music_volume) >= 0:
+            self.audio.music_volume = int(self.state.music_volume)
+        if int(self.state.sfx_volume) >= 0:
+            self.audio.sfx_volume = int(self.state.sfx_volume)
+
+    def _cmd_volume(self, cmd) -> None:
+        parts = (cmd.argstr or "").lower().split()
+        if not parts:
+            self.say(t(self.lang, "volume_now", music=self.audio.music_volume, sfx=self.audio.sfx_volume))
+            return
+        if len(parts) == 1 and parts[0].isdigit():
+            self._set_volume("music", int(parts[0]))
+            self._set_volume("sfx", int(parts[0]))
+            return
+        if len(parts) >= 2 and parts[-1].lstrip("-").isdigit():
+            bus = parts[0]
+            if bus in ("music", "музыка", "m"):
+                self._set_volume("music", int(parts[-1]))
+                return
+            if bus in ("sfx", "fx", "эффекты", "эффект", "звуки"):
+                self._set_volume("sfx", int(parts[-1]))
+                return
+        self.say(t(self.lang, "volume_now", music=self.audio.music_volume, sfx=self.audio.sfx_volume))
+
+    def _set_volume(self, bus: str, value: int) -> None:
+        from .audio import clamp_volume
+
+        value = clamp_volume(value, 0)
+        if bus == "music":
+            self.audio.music_volume = value
+            self.state.music_volume = value
+        else:
+            self.audio.sfx_volume = value
+            self.state.sfx_volume = value
+        self.say(t(self.lang, "volume_now", music=self.audio.music_volume, sfx=self.audio.sfx_volume))
+
     def _cmd_save(self, cmd) -> None:
         slot = cmd.argstr or "slot1"
         save.write_save(self.world.path, slot, self.state)
@@ -1502,6 +1544,7 @@ class Game:
             return
         self.state = GameState.from_dict(data)
         self.audio.muted = bool(self.state.muted)
+        self._apply_saved_volumes()
         self.say(t(self.lang, "loaded", slot=slot))
         self._look(full=True)
         music = self.room().get("music")

@@ -155,7 +155,7 @@ def run(game: "Game", encounter_id: str) -> str:
         cmd = parse(choice)
         if cmd and cmd.verb in (
             "save", "load", "language", "help", "stats", "inventory",
-            "quests", "journal", "map", "party", "reputation", "sound", "quit",
+            "quests", "journal", "map", "party", "reputation", "sound", "volume", "quit",
         ):
             if cmd.verb == "quit":
                 game.in_combat = False

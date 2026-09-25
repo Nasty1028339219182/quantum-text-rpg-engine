@@ -1,16 +1,13 @@
-# 2.0
+# Roadmap
 
-1.7 is done. The next cut is one release, not four stable versions.
+Pictures stay out. Each version is one theme, still YAML.
 
-Snapshot, then the stable tag:
-
-| Snapshot | Was | What |
+| Version | Theme | What |
 |---|---|---|
-| 2.0.0-snapshot | 1.8 | Factions and reputation |
-| 2.0.0-snapshot | 1.9 | Hunger, only if the game sets `hunger.max` |
-| 2.0.0-snapshot | 2.0 | Party of up to four |
-| 2.0.0-snapshot | 2.1 | Dialogue graph in the editor |
+| 2.2 | Mixer | Music and effects play together. Separate music and effect volume. `звук` stays. |
+| 2.3 | Quest steps | A quest is more than taken or done. Journal steps. `advance_quest`. |
+| 2.4 | Day and reputation | An NPC can be in another room at night. Shop price follows reputation. |
+| 2.5 | Party orders | Tell a follower to wait, follow, or stay out of the fight. Still four. |
+| 2.6 | Author tools | Play from this room. Validation names a missing WAV or a dialogue that points nowhere. Exit form gets trap and hidden, not only raw YAML. |
 
-Stable **2.0.0** is that whole snapshot.
-
-Pictures stay out.
+2.2 is the current release.

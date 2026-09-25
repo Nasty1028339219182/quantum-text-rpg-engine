@@ -80,11 +80,10 @@ HELP = {
   граф диалога: клик по узлу
 
 ЗВУК (wav, нет файла — тишина)
-  audio.music.village: audio/village.wav
-  audio.sfx.coin: audio/coin.wav
-  audio.cues.take: coin
-  комната music: village
-  предмет или бой sound: hit
+  audio.music_volume: 80
+  audio.sfx_volume: 100
+  громкость музыка 40 / громкость эффекты 80
+  эффект не обрывает музыку
   команда: звук
 
 

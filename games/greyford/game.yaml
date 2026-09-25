@@ -110,6 +110,8 @@ time:
   shop_closed: [night]
   night_encounter_bonus: 25
 audio:
+  music_volume: 80
+  sfx_volume: 100
   music:
     village: audio/village.wav
   sfx:

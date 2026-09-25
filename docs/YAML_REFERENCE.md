@@ -79,6 +79,8 @@ WAV only. A missing file is silence. `звук` turns it off.
 
 ```yaml
 audio:
+  music_volume: 80
+  sfx_volume: 100
   music:
     village: audio/village.wav
   sfx:
@@ -86,23 +88,12 @@ audio:
     hit: audio/hit.wav
   cues:
     take: coin
-    buy: coin
-    sell: coin
     hit: hit
-    miss: hit
-    hurt: hit
-    use: coin
-    rest: coin
-    step: coin
-    door: coin
-    combat: hit
-    flee: coin
     win: coin
-    lose: hit
 ```
 
-Room or fight: `music: village`. Fight or item: `sound: hit`.
-An effect can also say `- sound: coin` or `- music: village`.
+Music keeps playing under a sound effect. `громкость музыка 40` and `громкость эффекты 80` (or `громкость 50` for both). `звук` still mutes. Room or fight: `music: village`. Fight or item: `sound: hit`.
+
 
 
 

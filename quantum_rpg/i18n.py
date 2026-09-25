@@ -112,7 +112,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "говорить <кто>, атаковать <кто>, искать, открыть <что>, читать <что>,\n"
             "купить / продать, создать <рецепт>, дать <предмет> <кому>,\n"
             "характеристики, задания, журнал, карта, отдохнуть, ждать,\n"
-            "сохранить [слот], загрузить [слот], язык ru|en, звук, помощь, выход"
+            "сохранить [слот], загрузить [слот], язык ru|en, звук, громкость, помощь, выход"
         ),
         "en": (
             "look, go <dir>, take <item>, drop <item>, examine <thing>,\n"
@@ -120,7 +120,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "attack <who>, search, open <thing>, read <thing>,\n"
             "buy / sell, craft <recipe>, give <item> <who>,\n"
             "stats, quests, journal, map, rest, wait,\n"
-            "save [slot], load [slot], language ru|en, sound, help, quit"
+            "save [slot], load [slot], language ru|en, sound, volume, help, quit"
         ),
     },
     "dirs": {"ru": "направления: север юг восток запад вверх вниз", "en": "dirs: north south east west up down"},
@@ -253,6 +253,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "sound_on": {"ru": "Звук включён.", "en": "Sound on."},
     "sound_off": {"ru": "Звук выключен.", "en": "Sound off."},
     "sound_btn": {"ru": "Звук", "en": "Sound"},
+    "volume_now": {"ru": "Музыка {music}, эффекты {sfx}.", "en": "Music {music}, effects {sfx}."},
     "ed_library": {"ru": "Библиотека", "en": "Library"},
     "ed_help": {"ru": "Справка", "en": "Help"},
     "ed_import": {"ru": "Вставить", "en": "Insert"},
