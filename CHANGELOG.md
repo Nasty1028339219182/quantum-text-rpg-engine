@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 — 2026-09-25
+
+Stable cut of the 2.0 snapshot. No pictures.
+
+- Factions and `rep`
+- Hunger when `hunger.max` is set
+- Party of up to four
+- Dialogue graph in the editor
+
 ## 2.0.0-snapshot — 2026-09-25
 
 One snapshot build. It holds the four systems that were going to be 1.8, 1.9, 2.0 and 2.1. Stable 2.0.0 is this same cut.

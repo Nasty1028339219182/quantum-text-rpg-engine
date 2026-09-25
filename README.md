@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**2.0.0-snapshot** — factions, hunger, a party of four, and a dialogue graph. No graphics. Stable 2.0.0 follows this snapshot.
+**2.0.0** — factions, hunger, a party of four, and a dialogue graph. No graphics.
 
 ```text
 python -m quantum_rpg
