@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.0 — 2026-09-25
+
+- A quest may list `steps`
+- `advance_quest` moves to the next step, or to a named step
+- The step past the last one completes the quest
+- The current step shows under Quests and is copied into the journal
+- Quests with no steps are unchanged
+
 ## 2.2.0 — 2026-09-25
 
 - Music keeps playing while a sound effect plays

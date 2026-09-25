@@ -104,6 +104,10 @@ def _apply_one(game: "Game", eff: dict) -> None:
             desc = loc(q.get("start_text") or q.get("description"), lang)
             if desc:
                 game.say(desc)
+            if qid not in st.quest_steps and game.quest_steps(qid):
+                game.note_quest_step(qid, 0)
+    if "advance_quest" in eff:
+        game.advance_quest(eff["advance_quest"])
     if "complete_quest" in eff:
         qid = str(eff["complete_quest"])
         if st.quests.get(qid) == "done":

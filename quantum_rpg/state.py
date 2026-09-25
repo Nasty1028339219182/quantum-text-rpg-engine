@@ -107,6 +107,7 @@ class GameState:
     muted: bool = False
     music_volume: int = -1
     sfx_volume: int = -1
+    quest_steps: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -137,6 +138,7 @@ class GameState:
             "muted": self.muted,
             "music_volume": self.music_volume,
             "sfx_volume": self.sfx_volume,
+            "quest_steps": self.quest_steps,
         }
 
     @classmethod
@@ -169,4 +171,5 @@ class GameState:
             muted=bool(d.get("muted") or False),
             music_volume=int(d["music_volume"]) if d.get("music_volume") is not None else -1,
             sfx_volume=int(d["sfx_volume"]) if d.get("sfx_volume") is not None else -1,
+            quest_steps={str(k): int(v) for k, v in (d.get("quest_steps") or {}).items()},
         )

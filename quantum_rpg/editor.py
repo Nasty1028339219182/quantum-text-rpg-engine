@@ -1146,6 +1146,36 @@ class QuestForm(_Base):
         self.done = _loc(parent, "done_text", q.get("done_text"), height=2)
         self.auto = _check(parent, "auto_start", q.get("auto_start"))
         self.reward = _yaml_field(parent, "reward (YAML effects)", yaml_dump_text(q.get("reward")))
+        _label(parent, "steps  id, ru, en")
+        self.step_box = tk.Frame(parent, bg=C["bg"])
+        self.step_box.pack(fill="x")
+        self.step_rows = []
+        for step in q.get("steps") or []:
+            if isinstance(step, str):
+                self._step_row("", step, "")
+            elif isinstance(step, dict):
+                text = step.get("text") if isinstance(step.get("text"), dict) else {}
+                ru = text.get("ru") if isinstance(text, dict) else str(step.get("text") or "")
+                en = text.get("en") if isinstance(text, dict) else ""
+                self._step_row(str(step.get("id") or ""), str(ru or ""), str(en or ""))
+        Btn(parent, text="+ step", command=lambda: self._step_row("", "", ""), anchor="center").pack(anchor="w", pady=4)
+
+    def _step_row(self, sid: str, ru: str, en: str) -> None:
+        row = tk.Frame(self.step_box, bg=C["bg"])
+        row.pack(fill="x", pady=1)
+        a, b, c = Entry(row, width=12), Entry(row, width=28), Entry(row, width=28)
+        a.insert(0, sid)
+        b.insert(0, ru)
+        c.insert(0, en)
+        a.pack(side="left", padx=2)
+        b.pack(side="left", padx=2)
+        c.pack(side="left", padx=2)
+        Btn(row, text="×", width=2, anchor="center", command=lambda r=row: self._drop_step(r)).pack(side="left")
+        self.step_rows.append((row, a, b, c))
+
+    def _drop_step(self, row) -> None:
+        self.step_rows = [x for x in self.step_rows if x[0] is not row]
+        row.destroy()
 
     def collect(self) -> None:
         q = self.ed.project.quests[self.eid]
@@ -1159,6 +1189,17 @@ class QuestForm(_Base):
             q["reward"] = rw
         else:
             q.pop("reward", None)
+        steps = []
+        for i, (_row, a, b, c) in enumerate(self.step_rows):
+            text = loc_value(b.get(), c.get())
+            if not text:
+                continue
+            sid = a.get().strip() or f"s{i + 1}"
+            steps.append({"id": sid, "text": text})
+        if steps:
+            q["steps"] = steps
+        else:
+            q.pop("steps", None)
 
 
 class EncounterForm(_Base):

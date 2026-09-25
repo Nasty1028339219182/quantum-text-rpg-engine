@@ -10,6 +10,7 @@ kain_fight:
     - set_flag: mira_saved
     - set_flag: bandits_cleared
     - follow: mira
+    - advance_quest: {quest: missing_mira, step: home}
     - message:
         ru: Кайн падает. Мира не кричит.
         en: Kain falls. Mira does not shout.

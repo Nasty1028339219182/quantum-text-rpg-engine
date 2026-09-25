@@ -219,6 +219,26 @@ id: {once, trigger: enter|turn, when, effects}
 
 ## Effects
 
-`message journal set_flag clear_flag toggle_flag give_item take_item give_gold take_gold heal damage restore_mp spend_mp add_xp modify_stat teleport start_quest complete_quest fail_quest start_combat reveal_exit unlock lock spawn_item spawn_npc remove_npc rest game_over add_status remove_status counter_add counter_set hook once_id`
+`message journal set_flag clear_flag toggle_flag give_item take_item give_gold take_gold heal damage restore_mp spend_mp add_xp modify_stat teleport start_quest advance_quest complete_quest fail_quest start_combat reveal_exit unlock lock spawn_item spawn_npc remove_npc rest game_over add_status remove_status counter_add counter_set hook once_id`
 
 `game_over: win|lose`
+
+## Quest steps
+
+Optional. A quest with no `steps` still uses only `start_quest` and `complete_quest`.
+
+```yaml
+steps:
+  - id: ask
+    text: {ru: Спросить., en: Ask.}
+  - id: home
+    text: {ru: Привести домой., en: Bring her home.}
+```
+
+```yaml
+- advance_quest: missing_mira
+- advance_quest: {quest: missing_mira, step: home}
+```
+
+The next step after the last one completes the quest. `задания` shows the current step and copies it into the journal. `when: {quest_step: {missing_mira: home}}`.
+

@@ -10,6 +10,7 @@ HELP = {
   add_xp / modify_stat
   teleport                   id комнаты
   start_quest / complete_quest / fail_quest
+  advance_quest: id   или {quest: id, step: home}
   start_combat               id боя
   reveal_exit / unlock / lock
   spawn_item / spawn_npc / remove_npc
@@ -109,7 +110,7 @@ INCLUDE
   heal / damage
   add_xp / modify_stat
   teleport
-  start_quest / complete_quest / fail_quest
+  start_quest / advance_quest / complete_quest / fail_quest
   start_combat
   reveal_exit / unlock / lock
   spawn_item / spawn_npc / remove_npc

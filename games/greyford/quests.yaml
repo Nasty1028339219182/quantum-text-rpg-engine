@@ -3,5 +3,12 @@ missing_mira:
   description: {ru: Привести внучку Брана домой живой., en: Bring Bran's granddaughter home alive.}
   start_text: {ru: Мира пропала в лесу. Бран ждёт на площади., en: Mira is missing in the woods. Bran waits in the square.}
   done_text: {ru: Мира у колодца. Ложка — твоя., en: Mira is at the well. The spoon is yours.}
+  steps:
+    - id: ask
+      text: {ru: Спросить, куда ушла Мира., en: Ask where Mira went.}
+    - id: find
+      text: {ru: Идти на юг и найти Миру., en: Go south and find Mira.}
+    - id: home
+      text: {ru: Привести Миру на площадь., en: Bring Mira to the square.}
   reward:
     - add_xp: 20

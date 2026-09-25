@@ -75,6 +75,8 @@ osip:
         en: The wheel turns. The girl went south. A boot beside hers. Not hers.
       choices:
         - text: {ru: Спасибо., en: Thanks.}
+          effects:
+            - advance_quest: {quest: missing_mira, step: find}
           end: true
 
 kain:
@@ -92,6 +94,7 @@ kain:
           effects:
             - set_flag: mira_saved
             - follow: mira
+            - advance_quest: {quest: missing_mira, step: home}
             - message:
                 ru: Кайн разводит руками. Ему не нужны лишние трупы рядом с бродом.
                 en: Kain opens his hands. He doesn't need extra corpses by the ford.
@@ -103,6 +106,7 @@ kain:
             - set_flag: mira_saved
             - set_flag: paid_kain
             - follow: mira
+            - advance_quest: {quest: missing_mira, step: home}
             - message:
                 ru: Кайн кивает. Мира встаёт, не смотрит на него.
                 en: Kain nods. Mira stands and does not look at him.

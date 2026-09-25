@@ -50,6 +50,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "quest_active": {"ru": "активно", "en": "active"},
     "quest_done": {"ru": "выполнено", "en": "done"},
     "quest_failed": {"ru": "провалено", "en": "failed"},
+    "quest_now": {"ru": "Сейчас: {text}", "en": "Now: {text}"},
     "saved": {"ru": "Игра сохранена: {slot}", "en": "Game saved: {slot}"},
     "loaded": {"ru": "Игра загружена: {slot}", "en": "Game loaded: {slot}"},
     "no_save": {"ru": "Сохранение не найдено.", "en": "Save not found."},

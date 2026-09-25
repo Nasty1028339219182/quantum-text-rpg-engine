@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from . import combat, dialogue, effects, save
-from .conditions import check, skill_bonus
+from .conditions import check, skill_bonus, step_index
 from .hooks import Hooks
 from .i18n import dir_id, dir_name, t
 from .loader import World, initial_location_items, initial_location_npcs, load_world
@@ -17,6 +17,14 @@ from .ui import ScriptedIO, TerminalIO
 from .clock import advance, clock, encounter_chance, phase_name, shop_is_open
 from .audio import Audio
 from .util import as_list, loc, match_entity, modifier, roll, wrap
+
+
+def _step_text(step, lang: str) -> str:
+    if isinstance(step, str):
+        return step
+    if isinstance(step, dict):
+        return loc(step.get("text") or step.get("name") or step.get("id"), lang)
+    return ""
 
 
 class Game:
@@ -1360,6 +1368,59 @@ class Game:
             desc = loc(q.get("description"), self.lang)
             if desc and status == "active":
                 self.say(f"    {desc}")
+            step = self.quest_step_text(qid)
+            if step and status == "active":
+                self.say(f"    {t(self.lang, 'quest_now', text=step)}")
+
+    def quest_steps(self, qid: str) -> list:
+        q = self.world.quests.get(qid) or {}
+        return [s for s in (q.get("steps") or []) if s]
+
+    def quest_step_text(self, qid: str) -> str:
+        steps = self.quest_steps(qid)
+        if not steps or self.state.quests.get(qid) != "active":
+            return ""
+        index = int(self.state.quest_steps.get(qid, 0))
+        if index < 0 or index >= len(steps):
+            return ""
+        return _step_text(steps[index], self.lang)
+
+    def note_quest_step(self, qid: str, index: int) -> None:
+        steps = self.quest_steps(qid)
+        if not steps or index < 0 or index >= len(steps):
+            return
+        self.state.quest_steps[qid] = index
+        text = _step_text(steps[index], self.lang)
+        if not text:
+            return
+        self.say(f"  — {text}")
+        if text not in self.state.journal:
+            self.state.journal.append(text)
+
+    def advance_quest(self, info) -> None:
+        if isinstance(info, str):
+            qid, target = str(info), None
+        elif isinstance(info, dict):
+            qid = str(info.get("quest") or info.get("id") or "")
+            target = info.get("step", None)
+        else:
+            return
+        if not qid or self.state.quests.get(qid) != "active":
+            return
+        steps = self.quest_steps(qid)
+        if not steps:
+            return
+        current = int(self.state.quest_steps.get(qid, 0))
+        if target is None:
+            nxt = current + 1
+        else:
+            nxt = step_index(steps, target)
+            if nxt < 0 or nxt <= current:
+                return
+        if nxt >= len(steps):
+            effects.apply(self, {"complete_quest": qid})
+            return
+        self.note_quest_step(qid, nxt)
 
     def _cmd_journal(self, cmd) -> None:
         self.say(t(self.lang, "journal"))

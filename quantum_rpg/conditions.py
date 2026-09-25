@@ -90,6 +90,7 @@ def check(game: "Game", cond: Any) -> bool:
         "stat_gte": _stat_gte,
         "stat_lte": _stat_lte,
         "quest": _quest,
+        "quest_step": lambda v: _quest_step_is(game, v),
         "defeated": lambda v: str(v) in st.defeated,
         "npc_here": lambda v: str(v) in (st.location_npcs.get(st.location) or []),
         "npc_alive": lambda v: str(v) not in st.defeated,
@@ -115,6 +116,34 @@ def check(game: "Game", cond: Any) -> bool:
         if not fn(val):
             return False
     return True
+
+
+def _quest_step_is(game: "Game", value) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for qid, want in value.items():
+        qid = str(qid)
+        if game.state.quests.get(qid) != "active":
+            return False
+        steps = game.quest_steps(qid)
+        current = int(game.state.quest_steps.get(qid, 0))
+        if isinstance(want, int) or str(want).isdigit():
+            if current != int(want):
+                return False
+            continue
+        found = step_index(steps, want)
+        if found < 0 or found != current:
+            return False
+    return True
+
+
+def step_index(steps: list, target) -> int:
+    for i, step in enumerate(steps):
+        if isinstance(step, dict) and str(step.get("id") or "") == str(target):
+            return i
+        if str(i) == str(target):
+            return i
+    return -1
 
 
 def _rep_cmp(st, value, gte: bool) -> bool:
