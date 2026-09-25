@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**3.0.0-rc.1** — private release candidate. Bug pass only. Not a release. Public line is 2.6.0. No pictures.
+**3.0.0** — schematic map, meters, text effects, scenes, combat from YAML, `проверить`. No pictures.
 
 ```text
 python -m quantum_rpg

@@ -17,7 +17,8 @@ Not a public release. 2.6.0 stays the public line until 3.0.0 is finished. No pi
 
 No snapshot 11. The public release is not this. It waits until it is asked for.
 
-| 3.0.0-rc.1 | Bug pass. Done. Not a release. |
+| 3.0.0 | Released. |
+
 
 
 Each snapshot after 3.0.0-snapshot.3 goes deeper on one of those four, in order: panels, meters, map, effects.

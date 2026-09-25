@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0 — 2026-09-25
+
+No pictures. The 3.0 line is the release.
+
+- Schematic map: floors, door marks, notes, `карта`
+- Meters besides hunger. A word instead of a number does not crash a turn or a `when`
+- Text effects: banner, particles, typewriter, chains, `hooks`
+- Scenes: a line, a branch, a question. A scene counts only if it finishes
+- Combat from YAML: extra buttons and a phase when the enemy is hurt
+- `проверить` lists holes and does not fix them. Greyford, Shadow Keep, First Steps and the template come back clean
+- UI panels the author can reorder. The same check is a button
+
 ## 3.0.0-rc.1 — not a release
 
 Private release candidate. Bug pass only. No new systems. Public line is still 2.6.0.

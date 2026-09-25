@@ -105,3 +105,12 @@ def test_a_bad_meter_does_not_stop_a_step():
     g.world.game["meters"]["thirst"]["wait"] = "много"
     g.handle("ждать")
     assert g.state.meters["thirst"] == 0
+
+
+def test_a_word_in_a_meter_condition_does_not_crash():
+    from quantum_rpg.conditions import check
+
+    g = _ford()
+    assert check(g, {"meter": {"thirst": "много"}}) is False
+    assert check(g, {"meter": {"thirst": {"gte": "много"}}}) is False
+    assert check(g, {"meter": {"thirst": {"lte": 0}}}) is True

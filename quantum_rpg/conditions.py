@@ -136,19 +136,44 @@ def _meter_is(game: "Game", value) -> bool:
 
     for mid, rule in value.items():
         cur = meters.value(game, str(mid))
+        if isinstance(rule, bool):
+            return False
         if isinstance(rule, (int, float, str)) and not isinstance(rule, dict):
-            if cur < int(rule):
+            n = _whole(rule)
+            if n is None or cur < n:
                 return False
             continue
         if not isinstance(rule, dict):
             return False
-        if "gte" in rule and cur < int(rule["gte"]):
+        if "gte" in rule and not _at_least(cur, rule["gte"]):
             return False
-        if "lte" in rule and cur > int(rule["lte"]):
+        if "lte" in rule and not _at_most(cur, rule["lte"]):
             return False
-        if "eq" in rule and cur != int(rule["eq"]):
+        if "eq" in rule and not _equal(cur, rule["eq"]):
             return False
     return True
+
+
+def _whole(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _at_least(cur: int, value) -> bool:
+    n = _whole(value)
+    return n is not None and cur >= n
+
+
+def _at_most(cur: int, value) -> bool:
+    n = _whole(value)
+    return n is not None and cur <= n
+
+
+def _equal(cur: int, value) -> bool:
+    n = _whole(value)
+    return n is not None and cur == n
 
 
 def _quest_step_is(game: "Game", value) -> bool:
