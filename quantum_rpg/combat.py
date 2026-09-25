@@ -114,6 +114,10 @@ def run(game: "Game", encounter_id: str) -> str:
         game.say(f"--- {t(game.lang, 'combat')}: {names} ---")
 
     game.hooks.call("on_combat_start", game, encounter_id)
+    if enc.get("music"):
+        game.audio.play_music(str(enc.get("music")))
+    elif enc.get("sound"):
+        game.audio.play(str(enc.get("sound")))
 
     defending = False
     while True:
@@ -224,6 +228,7 @@ def run(game: "Game", encounter_id: str) -> str:
                 return "lose"
         defending = False
         game.tick_status(in_combat=True)
+        game._hunger_tick()
 
 
 def _parse_choice(choice: str) -> tuple[str, str]:

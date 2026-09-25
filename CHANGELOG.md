@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1 — 2026-09-25
+
+- Hunger no longer rises when you look, talk, or check a menu. It rises on a step, on wait, and once per combat round
+- Rest no longer spends a hunger step on the same turn
+- A win is not replaced if something else tries to end the game on that turn
+- The editor marks a game dirty only when the form actually changed
+
 ## 2.0.0 — 2026-09-25
 
 Stable cut of the 2.0 snapshot. No pictures.

@@ -15,6 +15,7 @@ from .parser import parse
 from .state import GameState, Player, StatusEffect, STAT_KEYS
 from .ui import ScriptedIO, TerminalIO
 from .clock import advance, clock, encounter_chance, phase_name, shop_is_open
+from .audio import Audio
 from .util import as_list, loc, match_entity, modifier, roll, wrap
 
 
@@ -42,6 +43,7 @@ class Game:
         self.in_shop = False
         self.ui_choices: list = []
         self.state = self._new_state(language, seed)
+        self.audio = Audio(world.path, world.game.get("audio"))
         if self.player_class:
             self.apply_class(self.player_class, silent=True)
 
@@ -267,6 +269,8 @@ class Game:
                 self.set_choices([])
             line = self.ui.read(t(self.lang, "prompt"))
             self.handle(line)
+            if self.running and not self.state.ended:
+                self._check_ending()
             if self.running and not self.state.ended:
                 self.hooks.call("on_turn", self)
                 self._tick()
@@ -595,11 +599,17 @@ class Game:
             self._look(full=True)
         self.hooks.call("on_enter", self, loc_id)
         self._fire_enter(loc_id)
+        self._hunger_tick()
+        music = (self.world.locations.get(loc_id) or {}).get("music")
+        if music:
+            self.audio.play_music(str(music))
 
     def start_combat(self, encounter_id: str) -> str:
         return combat.run(self, encounter_id)
 
     def finish(self, ending: str) -> None:
+        if self.state.ended:
+            return
         self.state.ended = ending
         self.running = False
 
@@ -624,7 +634,6 @@ class Game:
     def _tick(self) -> None:
         self.state.time += 1
         self.tick_status()
-        self._hunger_tick()
         self._fire_events("turn")
 
     def _fire_enter(self, loc_id: str) -> None:
@@ -1450,6 +1459,7 @@ class Game:
 
     def _cmd_wait(self, cmd) -> None:
         self.say(t(self.lang, "wait"))
+        self._hunger_tick()
 
     def _cmd_save(self, cmd) -> None:
         slot = cmd.argstr or "slot1"

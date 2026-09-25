@@ -85,6 +85,25 @@ class Project:
         self.dirty = False
         return dest
 
+    def freeze(self) -> str:
+        import json
+
+        blob = {
+            "game": self.game,
+            "locations": self.locations,
+            "items": self.items,
+            "npcs": self.npcs,
+            "dialogues": self.dialogues,
+            "quests": self.quests,
+            "encounters": self.encounters,
+            "recipes": self.recipes,
+            "abilities": self.abilities,
+            "loot_tables": self.loot_tables,
+            "events": self.events_text,
+            "hooks": self.hooks_text,
+        }
+        return json.dumps(blob, sort_keys=True, ensure_ascii=False, default=str)
+
     def add(self, kind: str, eid: str, data: Optional[dict] = None) -> dict:
         table = self.table(kind)
         eid = _slug(eid)

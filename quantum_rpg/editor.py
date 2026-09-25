@@ -181,11 +181,14 @@ class EditorWindow:
             return
         fn = getattr(self.form, "collect", None)
         if callable(fn):
+            token = self.project.freeze()
             try:
                 fn()
-                self.project.dirty = True
             except Exception as exc:
                 self.status.configure(text=str(exc), fg=C["danger"])
+            else:
+                if self.project.freeze() != token:
+                    self.project.dirty = True
         self._set_title()
 
     def _clear_form(self) -> None:

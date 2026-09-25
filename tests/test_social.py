@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from quantum_rpg.audio import Audio
 from quantum_rpg.conditions import check
 from quantum_rpg.engine import Game
 from quantum_rpg.graph import dialogue_layout
@@ -35,14 +36,23 @@ def test_hunger_damages_only_when_enabled():
     assert quiet.state.hunger == 0
 
     w = load_world(FORD)
-    ui = ScriptedIO([])
+    ui = ScriptedIO(["осмотреться", "ждать"])
     g = Game(w, ui=ui, language="ru", seed=1, ask_name=False)
-    g.state.hunger = 39
+    g.state.hunger = 10
+    g.handle("осмотреться")
     g._tick()
+    assert g.state.hunger == 10
+    g.handle("ждать")
+    assert g.state.hunger == 11
+    g.state.hunger = 39
+    g._hunger_tick()
     assert g.state.hunger == 40
-    assert g.state.player.hp == before - 1 or g.state.player.hp < g.state.player.max_hp
+    assert g.state.player.hp < g.state.player.max_hp
     g.sate(4)
     assert g.state.hunger == 36
+    g.finish("win")
+    g.finish("lose")
+    assert g.state.ended == "win"
 
 
 def test_dialogue_graph_edges():
@@ -55,3 +65,24 @@ def test_dialogue_graph_edges():
     assert ("start", "job") in edges
     assert ("job", "start") in edges
     assert height > 40
+
+
+def test_audio_stays_quiet_without_files(tmp_path):
+    wav = tmp_path / "hit.wav"
+    wav.write_bytes(b"")  # not a real wav; playback must not raise
+    audio = Audio(tmp_path, {"sfx": {"hit": "hit.wav"}, "music": {"town": "missing.ogg"}})
+    audio.cue("hit")
+    audio.cue({"music": "town", "sfx": "nope"})
+    audio.stop_music()
+    assert audio._resolve("hit", "sfx") == wav
+    assert audio._resolve("town", "music") is None
+
+
+def test_editor_freeze_ignores_unchanged_open():
+    from quantum_rpg.project import Project
+
+    p = Project.load(KEEP)
+    token = p.freeze()
+    assert p.freeze() == token
+    p.locations["courtyard"]["name"] = {"ru": "Другой", "en": "Other"}
+    assert p.freeze() != token

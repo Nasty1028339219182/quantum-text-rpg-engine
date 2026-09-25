@@ -27,6 +27,7 @@ a = Analysis(
         "quantum_rpg.clock",
         "quantum_rpg.abilities",
         "quantum_rpg.graph",
+        "quantum_rpg.audio",
     ],
     hookspath=[],
     hooksconfig={},
