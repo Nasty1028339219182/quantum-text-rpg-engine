@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-snapshot.5 — not a release
+
+Private snapshot. Deeper meters. Public line is still 2.6.0. No pictures.
+
+- `move`, `wait`, `hour`, and `fight` each add their own amount. `step` is the fallback. `fight` does not use `step` unless you write it
+- A `band` speaks once when the bar crosses `at`, and again after it falls back
+- `when: {meter: {thirst: {gte: 6}}}` and the same for hunger
+- `шкалы` prints the bars. Hunger uses them too and stays the old key
+- `regen` lowers a bar on rest when `rest` is omitted
+
 ## 3.0.0-snapshot.4 — not a release
 
 Private snapshot. Deeper panels, plus three effect kinds. Public line is still 2.6.0. No pictures.

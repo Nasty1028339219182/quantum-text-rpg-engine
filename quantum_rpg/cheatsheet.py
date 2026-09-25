@@ -121,7 +121,12 @@ HELP = {
 ПАНЕЛИ, ШКАЛЫ, СХЕМА, ЭФФЕКТ
   ui.panels: [map, meters, exits, party, inventory]
   ui.titles.shop: {ru: Прилавок}
-  meters.thirst: {max: 10, step: 1, damage: 1, name: {ru: Жажда}}
+  meters.thirst: {max: 10, move: 1, hour: 2, fight: 1, name: {ru: Жажда}}
+  bands: [{at: 6, text: {ru: В горле сухо.}}]
+  when: {meter: {thirst: {gte: 6}}}
+  regen: 3
+  шкалы
+
   - meter: {thirst: -4}
   map.ford: [["", shrine, ""], [inn, square, mill]]
   клетка соседа — ход

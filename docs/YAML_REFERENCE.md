@@ -367,7 +367,31 @@ meters:
     hurt: full
 ```
 
-`hurt: empty` is for a bar that falls, like morale. `step` is added on a move, a wait, and each hour of a road.
+`hurt: empty` is for a bar that falls, like morale. `step` is the default added on a move, a wait, and each hour of a road. `move`, `wait`, `hour`, and `fight` override that one moment. `fight` does not use `step` unless you write it. `regen` lowers the bar on rest when `rest` is omitted. A band speaks once when the bar crosses `at`, and can speak again after the bar falls back under it.
+
+```yaml
+meters:
+  thirst:
+    name: {ru: Жажда, en: Thirst}
+    max: 10
+    start: 0
+    move: 1
+    wait: 0
+    hour: 2
+    fight: 1
+    damage: 1
+    rest: 0
+    bands:
+      - at: 6
+        text: {ru: В горле сухо., en: The throat is dry.}
+```
+
+`шкалы` prints the bars. Hunger uses the same bars and stays the old `hunger:` key.
+
+```yaml
+when: {meter: {thirst: {gte: 6}}}
+when: {meter: {hunger: {lte: 2}}}
+```
 
 ```yaml
 - meter: {thirst: -4}

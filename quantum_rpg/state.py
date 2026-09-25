@@ -113,6 +113,7 @@ class GameState:
     quest_deadlines: dict = field(default_factory=dict)
     heard_rumors: set = field(default_factory=set)
     meters: dict = field(default_factory=dict)
+    meter_marks: set = field(default_factory=set)
 
     def to_dict(self) -> dict:
         return {
@@ -147,6 +148,7 @@ class GameState:
             "quest_deadlines": self.quest_deadlines,
             "heard_rumors": sorted(self.heard_rumors),
             "meters": self.meters,
+            "meter_marks": sorted(self.meter_marks),
         }
 
     @classmethod
@@ -187,4 +189,5 @@ class GameState:
             },
             heard_rumors=set(d.get("heard_rumors") or []),
             meters={str(k): int(v) for k, v in (d.get("meters") or {}).items()},
+            meter_marks=set(d.get("meter_marks") or []),
         )

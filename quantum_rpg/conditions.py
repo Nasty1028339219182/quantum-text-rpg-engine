@@ -104,6 +104,7 @@ def check(game: "Game", cond: Any) -> bool:
         "once": lambda v: str(v) not in st.once,
         "skill_check": _skill_check,
         "lang": lambda v: st.language == str(v),
+        "meter": lambda v: _meter_is(game, v),
     }
 
     skip = {"all", "any", "not"}
@@ -114,6 +115,28 @@ def check(game: "Game", cond: Any) -> bool:
         if fn is None:
             continue
         if not fn(val):
+            return False
+    return True
+
+
+def _meter_is(game: "Game", value) -> bool:
+    if not isinstance(value, dict):
+        return False
+    from . import meters
+
+    for mid, rule in value.items():
+        cur = meters.value(game, str(mid))
+        if isinstance(rule, (int, float, str)) and not isinstance(rule, dict):
+            if cur < int(rule):
+                return False
+            continue
+        if not isinstance(rule, dict):
+            return False
+        if "gte" in rule and cur < int(rule["gte"]):
+            return False
+        if "lte" in rule and cur > int(rule["lte"]):
+            return False
+        if "eq" in rule and cur != int(rule["eq"]):
             return False
     return True
 

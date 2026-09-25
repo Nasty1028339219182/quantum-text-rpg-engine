@@ -411,6 +411,7 @@ class Game:
             "journal": self._cmd_journal,
             "rumors": self._cmd_rumors,
             "map": self._cmd_map,
+            "meters": self._cmd_meters,
             "travel": self._cmd_travel,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
@@ -603,9 +604,9 @@ class Game:
         raw = self.world.game.get("hunger") or {}
         return raw if isinstance(raw, dict) and raw.get("max") else {}
 
-    def _hunger_tick(self) -> None:
+    def _hunger_tick(self, reason: str = "move") -> None:
         if not self.state.ended:
-            meters.tick(self)
+            meters.tick(self, reason)
         cfg = self.hunger_cfg()
         if not cfg or self.state.ended:
             return
@@ -733,6 +734,8 @@ class Game:
             self.audio.play_music(str(music))
 
     def start_combat(self, encounter_id: str) -> str:
+        if not self.state.ended:
+            meters.tick(self, "fight")
         return combat.run(self, encounter_id)
 
     def finish(self, ending: str) -> None:
@@ -1464,7 +1467,16 @@ class Game:
             names = [loc(getattr(s, "name", s), self.lang) for s in p.status]
             self.say(f"{t(self.lang, 'status')}: {', '.join(names)}")
         for row in meters.rows(self):
-            self.say(f"{row['label']} {row['value']}/{row['max']}")
+            self.say(f"{row['label']} {row['bar']} {row['value']}/{row['max']}")
+
+    def _cmd_meters(self, cmd) -> None:
+        self.say(t(self.lang, "meters"))
+        rows = meters.rows(self)
+        if not rows:
+            self.say(t(self.lang, "nothing"))
+            return
+        for row in rows:
+            self.say(f"{row['label']} {row['bar']} {row['value']}/{row['max']}")
 
     def ui_panels(self) -> list[str]:
         raw = (self.world.game.get("ui") or {}).get("panels") if isinstance(self.world.game.get("ui"), dict) else None
@@ -1825,7 +1837,7 @@ class Game:
         self.say(text or t(self.lang, "travel", name=self.region_name(dest), hours=hours))
         self._pass_time(hours)
         for _ in range(hours):
-            self._hunger_tick()
+            self._hunger_tick("hour")
             if self.state.ended:
                 return
         self.apply_schedules()
@@ -1972,7 +1984,7 @@ class Game:
 
     def _cmd_wait(self, cmd) -> None:
         self.say(t(self.lang, "wait"))
-        self._hunger_tick()
+        self._hunger_tick("wait")
 
     def _cmd_sound(self, cmd) -> None:
         self.audio.muted = not self.audio.muted

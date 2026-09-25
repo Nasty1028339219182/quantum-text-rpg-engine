@@ -481,8 +481,8 @@ class PlayWindow:
         for row in rows:
             tk.Label(
                 self.side,
-                text=f"{row['label']}  {row['value']}/{row['max']}",
-                bg=C["bg"], fg=C["fg"], font=font_ui(9), anchor="w",
+                text=f"{row['label']}  {row.get('bar') or ''}  {row['value']}/{row['max']}",
+                bg=C["bg"], fg=C["danger"] if row.get("warn") else C["fg"], font=font_log(9), anchor="w",
             ).pack(fill="x")
 
     def _panel_exits(self, s: dict) -> None:
@@ -534,6 +534,7 @@ class PlayWindow:
         self._btn(t(self.lang, "quests"), "quests")
         self._btn(t(self.lang, "journal"), "journal")
         self._btn(t(self.lang, "map"), "map")
+        self._btn(t(self.lang, "meters"), "meters")
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")
         self._btn(t(self.lang, "sound_btn"), "sound")

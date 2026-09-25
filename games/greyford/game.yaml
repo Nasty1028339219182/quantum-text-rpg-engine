@@ -141,8 +141,17 @@ meters:
     max: 40
     start: 0
     step: 1
+    move: 1
+    wait: 1
+    hour: 1
+    fight: 1
     damage: 1
     rest: 0
+    bands:
+      - at: 8
+        text: {ru: В горле сухо., en: The throat is dry.}
+      - at: 20
+        text: {ru: Жажда уже мешает., en: Thirst is in the way.}
 ui:
   titles:
     shop: {ru: Прилавок, en: Counter}
