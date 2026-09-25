@@ -756,7 +756,7 @@ KEEP_ITEM = {
 }
 KEEP_NPC = {
     "name", "aliases", "description", "location", "dialogue", "hostile", "encounter",
-    "shop", "shop_always", "wants", "combat", "id",
+    "shop", "shop_always", "shop_faction", "shop_discount", "schedule", "wants", "combat", "id",
 }
 
 
@@ -848,6 +848,14 @@ class NpcForm(_Base):
         self.encounter = _option(parent, "encounter", enc if enc in encs else "", encs)
         self.hostile = _check(parent, "hostile", n.get("hostile"))
         self.shop_always = _check(parent, "shop_always", n.get("shop_always"))
+        self.shop_faction = _labeled(parent, "shop_faction", str(n.get("shop_faction") or n.get("price_rep") or ""))
+        self.shop_discount = _labeled(parent, "shop_discount %", str(n.get("shop_discount") if n.get("shop_discount") is not None else ""))
+        places = ("", "away") + rooms
+        sched = n.get("schedule") if isinstance(n.get("schedule"), dict) else {}
+        self.sched = {}
+        for phase in ("night", "morning", "day", "evening"):
+            cur = str(sched.get(phase) or "")
+            self.sched[phase] = _option(parent, f"schedule.{phase}", cur if cur in places else "", places)
         combat = n.get("combat") or {}
         if not isinstance(combat, dict):
             combat = {}
@@ -901,6 +909,26 @@ class NpcForm(_Base):
             n["shop_always"] = True
         else:
             n.pop("shop_always", None)
+        faction = _get(self.shop_faction).strip()
+        if faction:
+            n["shop_faction"] = faction
+        else:
+            n.pop("shop_faction", None)
+            n.pop("price_rep", None)
+        discount = _get(self.shop_discount).strip()
+        if discount:
+            n["shop_discount"] = int(discount)
+        else:
+            n.pop("shop_discount", None)
+        schedule = {}
+        for phase, widget in self.sched.items():
+            val = widget.get().strip()
+            if val:
+                schedule[phase] = val
+        if schedule:
+            n["schedule"] = schedule
+        else:
+            n.pop("schedule", None)
         hp = _get(self.combat_hp).strip()
         attack = _get(self.combat_attack).strip()
         if hp or attack or not self.cover.get():

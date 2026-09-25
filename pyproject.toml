@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "quantum-text-rpg-engine"
-version = "2.3.0"
+version = "2.4.0"
 description = "Data-driven engine for fully text RPGs. Author games in YAML, optional Python hooks. No graphics."
 readme = "README.md"
 license = {text = "MIT"}

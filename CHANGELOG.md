@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.0 — 2026-09-25
+
+- An NPC `schedule` sends them to another room by time of day, or `away`
+- Followers stay with you
+- After rest, the room says who left and who arrived
+- `shop_faction` and `shop_discount` change buy and sell prices with reputation
+
 ## 2.3.0 — 2026-09-25
 
 - A quest may list `steps`

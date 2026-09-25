@@ -4,6 +4,8 @@ bran:
   description: {ru: Староста Седого Брода. Считает рты. Сегодня не сходится., en: Greyford's elder. He counts mouths. Today the number is wrong.}
   location: square
   dialogue: bran
+  schedule:
+    night: shrine
 
 hilda:
   name: {ru: Хильда, en: Hilda}
@@ -16,6 +18,8 @@ hilda:
     - {item: cheese, price: 3, stock: 3}
     - {item: health_potion, price: 12, stock: 1}
   shop_always: true
+  shop_faction: village
+  shop_discount: 25
 
 osip:
   name: {ru: Осип, en: Osip}

@@ -242,3 +242,21 @@ steps:
 
 The next step after the last one completes the quest. `задания` shows the current step and copies it into the journal. `when: {quest_step: {missing_mira: home}}`.
 
+## Day and reputation
+
+```yaml
+schedule:
+  night: shrine
+  evening: inn
+```
+
+A missing phase uses `location`. `away` means the NPC is nowhere. A follower is not moved. After rest the room hears who left and who arrived.
+
+```yaml
+shop_faction: village
+shop_discount: 25
+```
+
+Each reputation point changes the price by that many percent. Buying gets cheaper, selling pays more. The price stays between 25% and 300% of the list, and never below 1. No `shop_faction` means the list price.
+
+

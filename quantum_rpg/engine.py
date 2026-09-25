@@ -54,6 +54,7 @@ class Game:
         self.audio = Audio(world.path, world.game.get("audio"))
         self.audio.muted = bool(self.state.muted)
         self._apply_saved_volumes()
+        self.apply_schedules()
         if self.player_class:
             self.apply_class(self.player_class, silent=True)
 
@@ -1422,6 +1423,39 @@ class Game:
             return
         self.note_quest_step(qid, nxt)
 
+    def apply_schedules(self, announce: bool = False) -> None:
+        phase = clock(self)[1]
+        here = self.state.location
+        for nid, npc in self.world.npcs.items():
+            schedule = npc.get("schedule")
+            if not isinstance(schedule, dict) or not schedule:
+                continue
+            if nid in self.state.followers or nid in self.state.defeated:
+                continue
+            dest = schedule.get(phase, npc.get("location") or "")
+            dest = "" if str(dest) in ("", "away", "none", "-") else str(dest)
+            if dest and dest not in self.world.locations:
+                continue
+            current = ""
+            for loc_id, ids in self.state.location_npcs.items():
+                if nid in ids:
+                    current = loc_id
+                    break
+            if current == dest:
+                continue
+            for ids in self.state.location_npcs.values():
+                while nid in ids:
+                    ids.remove(nid)
+            if dest:
+                self.place_npc(dest, nid)
+            if not announce:
+                continue
+            name = self.npc_name(nid)
+            if current == here and dest != here:
+                self.say(t(self.lang, "npc_leaves", name=name))
+            if dest == here and current != here:
+                self.say(t(self.lang, "npc_arrives", name=name))
+
     def _cmd_journal(self, cmd) -> None:
         self.say(t(self.lang, "journal"))
         if not self.state.journal:
@@ -1536,6 +1570,7 @@ class Game:
             self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
         self.audio.event("rest")
         advance(self)
+        self.apply_schedules(announce=True)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 
     def _cmd_wait(self, cmd) -> None:
@@ -1606,6 +1641,7 @@ class Game:
         self.state = GameState.from_dict(data)
         self.audio.muted = bool(self.state.muted)
         self._apply_saved_volumes()
+        self.apply_schedules()
         self.say(t(self.lang, "loaded", slot=slot))
         self._look(full=True)
         music = self.room().get("music")
@@ -1674,6 +1710,9 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
                     }
                 )
     game.say(t(game.lang, "shop") + " — " + game.npc_name(npc_id))
+    faction = str(npc.get("shop_faction") or npc.get("price_rep") or "")
+    if faction and int(game.state.reputation.get(faction, 0)):
+        game.say(t(game.lang, "shop_rep", name=game.faction_name(faction), n=int(game.state.reputation.get(faction, 0))))
     game.say(t(game.lang, "shop_hint"))
 
     def show():
@@ -1685,7 +1724,8 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
             if row.get("stock", 1) == 0:
                 continue
             name = game.item_name(row["item"])
-            game.say(f"  {name} — {row['price']} ({row.get('stock', 1)})")
+            price = _rep_price(game, npc, row["price"])
+            game.say(f"  {name} — {price} ({row.get('stock', 1)})")
 
     def shop_choices():
         ch = []
@@ -1693,9 +1733,10 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
             if int(row.get("stock", 1)) == 0:
                 continue
             name = game.item_name(row["item"])
+            price = _rep_price(game, npc, row["price"])
             ch.append(
                 {
-                    "label": f"{name} — {row['price']}",
+                    "label": f"{name} — {price}",
                     "command": f"buy {row['item']}",
                 }
             )
@@ -1727,7 +1768,7 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
                 if not row:
                     game.say(t(game.lang, "gone"))
                     continue
-                price = int(row["price"])
+                price = _rep_price(game, npc, row["price"])
                 if game.state.player.gold < price:
                     game.say(t(game.lang, "not_enough_gold"))
                     continue
@@ -1749,7 +1790,7 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
                     game.say(t(game.lang, "no_item"))
                     continue
                 item = game.world.items.get(iid) or {}
-                price = max(1, int(item.get("value") or 1) // 2)
+                price = _rep_price(game, npc, max(1, int(item.get("value") or 1) // 2), sell=True)
                 game.take_from_inv(iid, silent=True)
                 game.state.player.gold += price
                 game.say(t(game.lang, "sold", name=game.item_name(iid), n=price))
@@ -1763,6 +1804,23 @@ def open_shop(game: Game, npc_id: str, preset: str = "") -> None:
     finally:
         game.in_shop = False
         game.set_choices([])
+
+
+def _rep_price(game: Game, npc: dict, base, sell: bool = False) -> int:
+    base = max(1, int(base))
+    faction = str(npc.get("shop_faction") or npc.get("price_rep") or "")
+    if not faction:
+        return base
+    rep = int(game.state.reputation.get(faction, 0))
+    if rep == 0:
+        return base
+    pct = npc.get("shop_discount")
+    pct = 10 if pct is None else int(pct)
+    if pct == 0:
+        return base
+    factor = (100 + rep * pct) if sell else (100 - rep * pct)
+    factor = max(25, min(300, factor))
+    return max(1, int(base * factor / 100 + 0.5))
 
 
 def _shop_match(game: Game, key: str, query: str) -> Optional[dict]:
