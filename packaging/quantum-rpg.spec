@@ -4,7 +4,7 @@ from pathlib import Path
 root = Path(SPECPATH).parent
 
 a = Analysis(
-    [str(root / "quantum_rpg" / "__main__.py")],
+    [str(root / "launch.py")],
     pathex=[str(root)],
     binaries=[],
     datas=[

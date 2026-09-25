@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.2 — 2026-09-25
+
+- The exe died on start: `ImportError: attempted relative import with no known parent package`. The Windows entry is now `launch.py`, which imports the package by name
+
 ## 3.0.1 — 2026-09-25
 
 - The window failed to open when the exe was unpacked into a folder whose path is not Latin. Tcl is copied to an ASCII temp folder first

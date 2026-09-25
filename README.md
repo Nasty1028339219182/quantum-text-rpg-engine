@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**3.0.1** — window, editor, and the bundled games. No pictures. See [КАК_НАЧАТЬ.txt](КАК_НАЧАТЬ.txt).
+**3.0.2** — window, editor, and the bundled games. No pictures. See [КАК_НАЧАТЬ.txt](КАК_НАЧАТЬ.txt).
 
 ```text
 python -m quantum_rpg

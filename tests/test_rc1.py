@@ -120,3 +120,9 @@ def test_tcl_fix_does_nothing_off_windows():
     from quantum_rpg.tclfix import prepare
 
     prepare()
+
+
+def test_windows_entry_does_not_use_a_relative_import():
+    text = (Path(__file__).resolve().parents[1] / "launch.py").read_text(encoding="utf-8")
+    assert "from quantum_rpg.cli import main" in text
+    assert "from ." not in text
