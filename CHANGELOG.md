@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0-snapshot.8 — not a release
+
+Private snapshot. Scenes. Public line is still 2.6.0. No pictures.
+
+- A scene is a list of beats: `say`, `who`, `fx`, `effects`, `choose`, `goto`, `mark`, `ask`, `scene`
+- `once: true` by default. `сцена id` plays it again. `- scene: {id: ..., again: true}` too
+- `ask` stores the answer. `when: {var: {key: text}}` matches it
+- A choice reads the next line, so the forest only speaks on enter. The branch is `сцена thicket`
+
 ## 3.0.0-snapshot.7 — not a release
 
 Private snapshot. Deeper text effects. Public line is still 2.6.0. No pictures.

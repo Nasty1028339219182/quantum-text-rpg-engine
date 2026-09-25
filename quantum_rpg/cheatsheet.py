@@ -146,6 +146,20 @@ HELP = {
   hooks: enter, combat, hit, kill, quest_done, quest_fail, level, rest, travel, death, ending
   не пиши on: — в YAML это логическое да
 
+СЦЕНА
+  scenes.thicket.beats:
+    - say: {ru: Ели.}
+    - who: bran
+    - choose.options: [{label: {ru: Вверх}, goto: canopy}]
+    - mark: canopy
+    - ask: {prompt: {ru: Имя?}, var: track_name, flag: named_track}
+  once: true по умолчанию
+  - scene: thicket
+  - scene: {id: thicket, again: true}
+  сцена thicket — сыграть снова
+  when: {var: {track_name: мох}}
+
+
 
   anim: type | slow    delay: 16    sound: hit
   particles: spark | rain | dust | pulse | ash

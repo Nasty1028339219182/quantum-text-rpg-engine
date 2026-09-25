@@ -457,6 +457,45 @@ fx:
 
 Moments: `enter`, `combat`, `hit`, `kill`, `quest_done`, `quest_fail`, `level`, `rest`, `travel`, `death`, `ending`. A map of ids can use `any` for the rest.
 
+## Scenes
+
+A scene is one moment. It can speak, branch, and ask. `once: true` is the default, so a second visit stays quiet. `сцена thicket` plays it again anyway. An effect `- scene: thicket` plays it once. `- scene: {id: thicket, again: true}` forces it.
+
+`mark` is a label. `goto` jumps to it. A choice can jump, or carry its own short `beats`. `who` is an npc id or a name. `ask` stores the answer.
+
+```yaml
+scenes:
+  thicket:
+    once: true
+    beats:
+      - say: {ru: Ели сходятся., en: The spruce closes in.}
+      - who: bran
+        say: {ru: Не ходи туда ночью.}
+      - choose:
+          prompt: {ru: Куда смотришь?, en: Where do you look?}
+          options:
+            - label: {ru: Вверх, en: Up}
+              goto: canopy
+            - label: {ru: Под ноги, en: Down}
+              effects:
+                - set_flag: saw_track
+              goto: roots
+      - mark: canopy
+      - say: {ru: Ветки глушат свет.}
+      - goto: end
+      - mark: roots
+      - say: {ru: Мох, и чей-то след.}
+      - mark: end
+      - ask:
+          prompt: {ru: Как назовёшь след?, en: What do you call the track?}
+          var: track_name
+          flag: named_track
+```
+
+`when: {var: {track_name: мох}}` matches the answer. Empty input on a choice takes the first option. `quit` leaves the scene. A choice reads the next line, so do not hang it on `on_enter` if the player is about to type a direction. Put the question in its own scene and call it with `сцена`. Quote any line that contains `?` or a comma, or YAML will cut it.
+
+
+
 
 A screen can hide pieces. A custom action is just another button. `anim: type` prints the line letter by letter in the window (the text log still gets the whole line). `anim: slow` does it word by word. `delay` is milliseconds, kept between 12 and 70. `sound` plays a cue from `audio.sfx`. `particles` is a symbol burst: `spark`, `rain`, `dust`, `pulse`, `ash`.
 

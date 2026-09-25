@@ -116,6 +116,8 @@ STRINGS: dict[str, dict[str, str]] = {
     "no_floor": {"ru": "Нет такого этажа и нет такого хода.", "en": "No such floor and no such step."},
     "noted": {"ru": "Пометка: {text}", "en": "Note: {text}"},
     "notes": {"ru": "Пометки", "en": "Notes"},
+    "scenes": {"ru": "Сцены", "en": "Scenes"},
+    "no_scene": {"ru": "Нет такой сцены.", "en": "No such scene."},
     "no_regions": {"ru": "Отсюда нет дальней дороги.", "en": "No long road leaves here."},
     "no_road": {"ru": "Такой дороги нет.", "en": "There is no such road."},
     "travel": {"ru": "Дорога в {name}. Часов в пути: {hours}.", "en": "The road to {name}. Hours: {hours}."},

@@ -115,6 +115,7 @@ class GameState:
     meters: dict = field(default_factory=dict)
     meter_marks: set = field(default_factory=set)
     map_notes: dict = field(default_factory=dict)
+    vars: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -151,6 +152,7 @@ class GameState:
             "meters": self.meters,
             "meter_marks": sorted(self.meter_marks),
             "map_notes": self.map_notes,
+            "vars": self.vars,
         }
 
     @classmethod
@@ -193,4 +195,5 @@ class GameState:
             meters={str(k): int(v) for k, v in (d.get("meters") or {}).items()},
             meter_marks=set(d.get("meter_marks") or []),
             map_notes={str(k): str(v) for k, v in (d.get("map_notes") or {}).items()},
+            vars={str(k): str(v) for k, v in (d.get("vars") or {}).items()},
         )

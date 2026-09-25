@@ -39,6 +39,7 @@ VERBS: dict[str, list[str]] = {
     "map": ["map", "карта"],
     "meters": ["meters", "meter", "шкалы", "шкала"],
     "note": ["note", "notes", "пометка", "пометки"],
+    "scene": ["scene", "scenes", "сцена", "сцены"],
     "travel": ["travel", "ride", "ехать", "дорога", "путь"],
     "party": ["party", "отряд", "спутники"],
     "order": ["order", "приказ", "прикажи"],

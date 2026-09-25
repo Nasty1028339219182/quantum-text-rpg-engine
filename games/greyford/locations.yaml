@@ -97,6 +97,8 @@ forest:
       - journal:
           ru: В лесу следы Миры. Рядом — сапог взрослого.
           en: Mira's tracks in the woods. An adult boot beside them.
+  on_enter:
+    - scene: hush
 
 den:
   name: {ru: Волчья яма, en: Wolf pit}

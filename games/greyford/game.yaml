@@ -189,10 +189,32 @@ fx:
       - sparks
       - {style: center, color: accent, text: {ru: КОНЕЦ СЛЕДА, en: END OF THE TRACK}}
   hooks:
-    enter:
-      forest: quiet
     quest_done:
       missing_mira: done
+scenes:
+  hush:
+    once: true
+    beats:
+      - say: {ru: "В чаще тише, чем надо.", en: "The thicket is quieter than it should be."}
+  thicket:
+    once: true
+    beats:
+      - say: {ru: "В чаще тише, чем надо.", en: "The thicket is quieter than it should be."}
+      - choose:
+          prompt: {ru: "Куда смотришь?", en: "Where do you look?"}
+          options:
+            - label: {ru: Вверх, en: Up}
+              goto: canopy
+            - label: {ru: "Под ноги", en: Down}
+              effects:
+                - set_flag: saw_track
+              goto: roots
+      - mark: canopy
+      - say: {ru: "Ветки глушат свет.", en: "Branches swallow the light."}
+      - goto: end
+      - mark: roots
+      - say: {ru: "Мох, и чей-то след.", en: "Moss, and a track."}
+      - mark: end
 map:
   ford:
     - ["", shrine, ""]

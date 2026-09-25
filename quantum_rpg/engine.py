@@ -414,6 +414,7 @@ class Game:
             "map": self._cmd_map,
             "meters": self._cmd_meters,
             "note": self._cmd_note,
+            "scene": self._cmd_scene,
             "travel": self._cmd_travel,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
@@ -1958,6 +1959,24 @@ class Game:
             return
         self.state.map_notes[where] = body
         self.say(t(self.lang, "noted", text=body))
+
+    def _cmd_scene(self, cmd) -> None:
+        from . import scenes
+
+        name = (cmd.argstr or "").strip()
+        table = self.world.game.get("scenes") or {}
+        if not name:
+            self.say(t(self.lang, "scenes"))
+            if not isinstance(table, dict) or not table:
+                self.say(t(self.lang, "nothing"))
+                return
+            for sid in table:
+                self.say(f"  {sid}")
+            return
+        if not isinstance(table, dict) or name not in table:
+            self.say(t(self.lang, "no_scene"))
+            return
+        scenes.play(self, {"scene": name, "again": True})
 
     def _match_place(self, query: str) -> str:
         q = query.lower()

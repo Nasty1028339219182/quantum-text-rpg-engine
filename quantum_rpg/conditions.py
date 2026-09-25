@@ -105,6 +105,7 @@ def check(game: "Game", cond: Any) -> bool:
         "skill_check": _skill_check,
         "lang": lambda v: st.language == str(v),
         "meter": lambda v: _meter_is(game, v),
+        "var": lambda v: _var_is(game, v),
     }
 
     skip = {"all", "any", "not"}
@@ -115,6 +116,15 @@ def check(game: "Game", cond: Any) -> bool:
         if fn is None:
             continue
         if not fn(val):
+            return False
+    return True
+
+
+def _var_is(game: "Game", value) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for key, want in value.items():
+        if str(game.state.vars.get(str(key), "")) != str(want):
             return False
     return True
 

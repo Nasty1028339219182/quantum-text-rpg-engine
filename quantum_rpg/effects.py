@@ -139,6 +139,10 @@ def _apply_one(game: "Game", eff: dict) -> None:
 
         for mid, delta in eff["meter"].items():
             meters.change(game, str(mid), int(delta))
+    if "scene" in eff:
+        from . import scenes
+
+        scenes.play(game, eff.get("scene") if isinstance(eff.get("scene"), dict) else str(eff.get("scene")))
     if "fx" in eff:
         from . import fx
 
