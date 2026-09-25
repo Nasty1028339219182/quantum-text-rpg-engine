@@ -1,13 +1,16 @@
-# Later — not 1.6
+# 2.0
 
-1.6 is the editor catching up. The playable ideas below stay split:
+1.7 is done. The next cut is one release, not four stable versions.
 
-| Version | What |
-|---|---|
-| 1.7 | Done. A follower can be knocked down. Text map of visited exits |
-| 1.8 | Factions and reputation |
-| 1.9 | Hunger |
-| 2.0 | A party of up to four, not one follower |
-| 2.1 | Dialogue graph in the editor |
+Snapshot, then the stable tag:
 
-Pictures stay out. The engine is text. A picture layer would be its own version after 2.1, and only if it does not replace the text window.
+| Snapshot | Was | What |
+|---|---|---|
+| 2.0.0-snapshot | 1.8 | Factions and reputation |
+| 2.0.0-snapshot | 1.9 | Hunger, only if the game sets `hunger.max` |
+| 2.0.0-snapshot | 2.0 | Party of up to four |
+| 2.0.0-snapshot | 2.1 | Dialogue graph in the editor |
+
+Stable **2.0.0** is that whole snapshot.
+
+Pictures stay out.

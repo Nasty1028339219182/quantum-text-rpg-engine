@@ -457,6 +457,12 @@ class GameForm(_Base):
         self.include = _labeled(parent, "include (library files)", csv_load(g.get("include") or g.get("includes")))
         self.class_prompt = _check(parent, "class_prompt", bool(g.get("classes")) if g.get("class_prompt") is None else bool(g.get("class_prompt")))
         self.classes = _yaml_field(parent, "classes (YAML)", yaml_dump_text(g.get("classes")))
+        self.factions = _yaml_field(parent, "factions (YAML)", yaml_dump_text(g.get("factions")))
+        hunger = g.get("hunger") or {}
+        if not isinstance(hunger, dict):
+            hunger = {}
+        self.hunger_max = _labeled(parent, "hunger.max (empty = off)", str(hunger.get("max") or ""))
+        self.hunger_step = _labeled(parent, "hunger.step", str(hunger.get("step") or ""))
         clock = g.get("time") or {}
         if not isinstance(clock, dict):
             clock = {}
@@ -502,6 +508,21 @@ class GameForm(_Base):
             g["classes"] = classes
         else:
             g.pop("classes", None)
+        factions = yaml_load_text(_get(self.factions))
+        if factions:
+            g["factions"] = factions
+        else:
+            g.pop("factions", None)
+        hunger = dict(g.get("hunger") or {}) if isinstance(g.get("hunger"), dict) else {}
+        hmax = _get(self.hunger_max).strip()
+        hstep = _get(self.hunger_step).strip()
+        if hmax:
+            hunger["max"] = int(hmax)
+            if hstep:
+                hunger["step"] = int(hstep)
+            g["hunger"] = hunger
+        else:
+            g.pop("hunger", None)
         clock = dict(g.get("time") or {}) if isinstance(g.get("time"), dict) else {}
         hour = _get(self.start_hour).strip()
         rest = _get(self.rest_hours).strip()
@@ -918,6 +939,10 @@ class DialogueForm(_Base):
         Btn(row, text="× node", command=self._del_node, anchor="center").pack(side="left", padx=4)
         self.node_box = tk.Frame(parent, bg=C["bg"])
         self.node_box.pack(fill="x")
+        self.graph = tk.Canvas(parent, height=160, bg=C["panel"], highlightthickness=0, bd=0)
+        self.graph.pack(fill="x", pady=(8, 4))
+        self.graph.bind("<Button-1>", self._graph_click)
+        self._graph_boxes: dict = {}
         self._widgets: dict[str, Any] = {}
         self._load_node()
 
@@ -1004,6 +1029,39 @@ class DialogueForm(_Base):
         Btn(self.node_box, text="+ choice", command=lambda: add_choice(), anchor="center").pack(anchor="w", pady=4)
         fx = _yaml_field(self.node_box, "node effects YAML", yaml_dump_text(node.get("effects")))
         self._widgets = {"name": name, "end": end, "shop": shop, "rows": rows, "fx": fx, "add": add_choice}
+        self._draw_graph()
+
+    def _draw_graph(self) -> None:
+        from .graph import dialogue_layout
+
+        if not hasattr(self, "graph"):
+            return
+        nodes = self._nodes()
+        boxes, edges, height = dialogue_layout(nodes)
+        self._graph_boxes = boxes
+        self.graph.configure(height=max(120, min(height, 280)))
+        self.graph.delete("all")
+        current = self.node_id.get()
+        for src, dst in edges:
+            if src not in boxes or dst not in boxes:
+                continue
+            x1, y1, x2, y2 = boxes[src]
+            a1, b1, a2, b2 = boxes[dst]
+            self.graph.create_line(
+                (x1 + x2) / 2, y2, (a1 + a2) / 2, b1,
+                fill=C["dim"], arrow="last",
+            )
+        for nid, (x1, y1, x2, y2) in boxes.items():
+            fill = C["accent"] if nid == current else C["btn"]
+            fg = C["bg"] if nid == current else C["fg"]
+            self.graph.create_rectangle(x1, y1, x2, y2, fill=fill, outline=C["line"])
+            self.graph.create_text((x1 + x2) / 2, (y1 + y2) / 2, text=nid, fill=fg, font=font_ui(8))
+
+    def _graph_click(self, event) -> None:
+        for nid, (x1, y1, x2, y2) in self._graph_boxes.items():
+            if x1 <= event.x <= x2 and y1 <= event.y <= y2:
+                self._switch(nid)
+                return
 
     def _collect_node(self) -> None:
         if not self._widgets:

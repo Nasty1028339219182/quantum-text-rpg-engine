@@ -95,6 +95,8 @@ def check(game: "Game", cond: Any) -> bool:
         "npc_alive": lambda v: str(v) not in st.defeated,
         "counter_gte": _counter_gte,
         "time_gte": lambda v: st.time >= int(v),
+        "rep_gte": lambda v: _rep_cmp(st, v, True),
+        "rep_lte": lambda v: _rep_cmp(st, v, False),
         "phase": lambda v: clock(game)[1] == str(v),
         "hour_gte": lambda v: clock(game)[0] >= int(v),
         "equipped": lambda v: str(v) in (p.equipment or {}).values(),
@@ -111,6 +113,18 @@ def check(game: "Game", cond: Any) -> bool:
         if fn is None:
             continue
         if not fn(val):
+            return False
+    return True
+
+
+def _rep_cmp(st, value, gte: bool) -> bool:
+    if not isinstance(value, dict):
+        return False
+    for key, n in value.items():
+        have = int(getattr(st, "reputation", {}).get(str(key), 0))
+        if gte and have < int(n):
+            return False
+        if not gte and have > int(n):
             return False
     return True
 

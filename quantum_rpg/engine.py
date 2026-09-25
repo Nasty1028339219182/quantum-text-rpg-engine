@@ -207,6 +207,12 @@ class Game:
             equipment=dict(pdata.get("equipment") or {}),
             skills=dict(pdata.get("skills") or g.get("skills") or {}),
         )
+        state_rep = {}
+        for fid, spec in (g.get("factions") or {}).items():
+            start_rep = 0
+            if isinstance(spec, dict) and spec.get("start") is not None:
+                start_rep = int(spec.get("start") or 0)
+            state_rep[str(fid)] = start_rep
         lang = language or g.get("language") or "ru"
         st = GameState(
             location=start,
@@ -215,6 +221,7 @@ class Game:
             player=player,
             location_items=initial_location_items(self.world),
             location_npcs=initial_location_npcs(self.world),
+            reputation=state_rep,
         )
         for qid, q in self.world.quests.items():
             if q.get("auto_start"):
@@ -360,6 +367,8 @@ class Game:
             "map": self._cmd_map,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
+            "party": self._cmd_party,
+            "reputation": self._cmd_reputation,
             "save": self._cmd_save,
             "load": self._cmd_load,
             "help": self._cmd_help,
@@ -432,6 +441,9 @@ class Game:
             return
         if not nid or nid in self.state.followers:
             return
+        if len(self.state.followers) >= self.party_max():
+            self.say(t(self.lang, "party_full", n=self.party_max()))
+            return
         npc = self.world.npcs.get(nid) or {}
         combat_spec = spec.get("combat") or npc.get("combat") or {}
         hp = int(combat_spec.get("hp") or spec.get("hp") or 8)
@@ -457,6 +469,60 @@ class Game:
             self.place_npc(loc_id, fid)
             names.append(self.npc_name(fid))
         self.say(t(self.lang, "follows", names=", ".join(names)))
+
+    def party_max(self) -> int:
+        settings = self.world.game.get("settings") or {}
+        raw = settings.get("party")
+        if raw is None:
+            raw = settings.get("party_max")
+        if raw is None:
+            raw = 4
+        return max(1, int(raw))
+
+    def change_rep(self, info) -> None:
+        if not isinstance(info, dict):
+            return
+        for fid, delta in info.items():
+            cur = int(self.state.reputation.get(str(fid), 0))
+            self.state.reputation[str(fid)] = cur + int(delta)
+            self.say(t(self.lang, "rep_change", name=self.faction_name(str(fid)), n=int(delta)))
+
+    def set_rep(self, info) -> None:
+        if not isinstance(info, dict):
+            return
+        for fid, value in info.items():
+            self.state.reputation[str(fid)] = int(value)
+            self.say(t(self.lang, "rep_set", name=self.faction_name(str(fid)), n=int(value)))
+
+    def faction_name(self, fid: str) -> str:
+        spec = (self.world.game.get("factions") or {}).get(fid) or {}
+        return loc(spec.get("name") or fid, self.lang)
+
+    def hunger_cfg(self) -> dict:
+        raw = self.world.game.get("hunger") or {}
+        return raw if isinstance(raw, dict) and raw.get("max") else {}
+
+    def _hunger_tick(self) -> None:
+        cfg = self.hunger_cfg()
+        if not cfg or self.state.ended:
+            return
+        step = int(cfg.get("step") or 1)
+        mx = int(cfg.get("max") or 10)
+        self.state.hunger = min(mx, int(self.state.hunger) + max(0, step))
+        if self.state.hunger >= mx:
+            dmg = int(cfg.get("damage") or 1)
+            if dmg:
+                self.state.player.hp = max(0, self.state.player.hp - dmg)
+                self.say(t(self.lang, "hungry", n=dmg))
+                if self.state.player.hp <= 0:
+                    self.say(t(self.lang, "starved"))
+                    self.finish("lose")
+
+    def sate(self, amount: int) -> None:
+        if not self.hunger_cfg() or not amount:
+            return
+        self.state.hunger = max(0, int(self.state.hunger) - int(amount))
+        self.say(t(self.lang, "sated", n=self.state.hunger))
 
     def remove_npc(self, npc_id: str) -> None:
         for loc_id, npcs in self.state.location_npcs.items():
@@ -558,6 +624,7 @@ class Game:
     def _tick(self) -> None:
         self.state.time += 1
         self.tick_status()
+        self._hunger_tick()
         self._fire_events("turn")
 
     def _fire_enter(self, loc_id: str) -> None:
@@ -678,6 +745,9 @@ class Game:
             if "heal" in item and "heal" not in (use.get("effects") or {}):
                 effects.apply(self, {"heal": item.get("heal")})
             effects.apply(self, use.get("effects"))
+            sate = item.get("sates", use.get("sates") if isinstance(use, dict) else None)
+            if sate:
+                self.sate(int(sate))
             if use.get("consume", item.get("type") == "consumable"):
                 self.take_from_inv(iid, silent=True)
             return
@@ -789,6 +859,9 @@ class Game:
             bar += f"  {t(self.lang, 'mp')} {p.mp}/{p.max_mp}"
         bar += f"  {t(self.lang, 'gold')} {p.gold}"
         bar += f"  {phase_name(self)}"
+        if self.hunger_cfg():
+            mx = int(self.hunger_cfg().get("max") or 0)
+            bar += f"  {t(self.lang, 'hunger')} {self.state.hunger}/{mx}"
         self.say("")
         self.say(bar)
         self.say("-" * min(72, max(24, len(bar))))
@@ -1325,6 +1398,29 @@ class Game:
                     dest += f" ({t(self.lang, 'locked')})"
                 self.say(f"    {dir_name(direction, self.lang)} — {dest}")
 
+    def _cmd_party(self, cmd) -> None:
+        self.say(t(self.lang, "party"))
+        if not self.state.followers:
+            self.say(t(self.lang, "party_empty"))
+            return
+        for fid, data in self.state.followers.items():
+            name = self.npc_name(fid)
+            if int(data.get("hp") or 0) <= 0:
+                self.say(f"  {name}  {t(self.lang, 'ally_down_short')}")
+            else:
+                self.say(f"  {name}  {t(self.lang, 'hp')} {data.get('hp')}/{data.get('max_hp')}")
+
+    def _cmd_reputation(self, cmd) -> None:
+        self.say(t(self.lang, "reputation"))
+        factions = self.world.game.get("factions") or {}
+        keys = list(factions) or list(self.state.reputation)
+        if not keys:
+            self.say(t(self.lang, "nothing"))
+            return
+        for fid in keys:
+            n = int(self.state.reputation.get(str(fid), 0))
+            self.say(f"  {self.faction_name(str(fid))}: {n}")
+
     def _cmd_rest(self, cmd) -> None:
         room = self.room()
         if room.get("rest") is False:
@@ -1346,6 +1442,9 @@ class Game:
             data["hp"] = data.get("max_hp") or data.get("hp") or 8
         if down:
             self.say(t(self.lang, "ally_up", names=", ".join(down)))
+        cfg = self.hunger_cfg()
+        if cfg:
+            self.state.hunger = int(cfg.get("rest") if cfg.get("rest") is not None else 0)
         advance(self)
         self.say(t(self.lang, "time_shift", phase=phase_name(self)))
 

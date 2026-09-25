@@ -93,6 +93,16 @@ classes:
     skills: {persuasion: 2, perception: 1, lockpick: 0, athletics: 0}
 settings:
   inventory_limit: 20
+  party: 4
+factions:
+  village:
+    name: {ru: Седой Брод, en: Greyford}
+    start: 0
+hunger:
+  max: 40
+  step: 1
+  damage: 1
+  rest: 0
 time:
   day_length: 24
   start_hour: 9

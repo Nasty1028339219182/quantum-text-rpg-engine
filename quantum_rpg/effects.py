@@ -170,6 +170,10 @@ def _apply_one(game: "Game", eff: dict) -> None:
         game.add_follower(eff["follow"])
     if "unfollow" in eff:
         game.remove_follower(str(eff["unfollow"]))
+    if "rep" in eff:
+        game.change_rep(eff["rep"])
+    if "set_rep" in eff:
+        game.set_rep(eff["set_rep"])
     if "rest" in eff and eff["rest"]:
         p.hp = p.max_hp
         p.mp = p.max_mp

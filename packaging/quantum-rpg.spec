@@ -26,6 +26,7 @@ a = Analysis(
         "quantum_rpg.cheatsheet",
         "quantum_rpg.clock",
         "quantum_rpg.abilities",
+        "quantum_rpg.graph",
     ],
     hookspath=[],
     hooksconfig={},

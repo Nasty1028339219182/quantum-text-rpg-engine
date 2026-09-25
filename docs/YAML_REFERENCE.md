@@ -63,13 +63,16 @@ Follower:
 
 ```yaml
 # effect
-- follow: mira          # or {npc: mira, hp: 8, attack: 1d4}
+- follow: mira
 - unfollow: mira
+- rep: {village: 1}
 ```
 
-NPC may set `combat: {hp, attack, ac, cover}`. `cover` defaults to true: one enemy each round strikes that follower instead of you. At 0 hp they stop fighting until you rest. `cover: false` keeps them out of the blows.
+`settings.party` defaults to 4. `factions:` plus `when: {rep_gte: {village: 2}}`.
+`hunger.max` turns hunger on; item `sates` lowers it. Omit `hunger` and nothing starves.
+Each enemy strikes one standing follower, then the player. `combat.cover: false` opts out.
+`карта` lists visited rooms and exits. The dialogue editor draws the node graph.
 
-`карта` lists visited rooms and the exits between them. An exit you have not walked shows as `?`.
 
 
 

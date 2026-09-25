@@ -150,7 +150,7 @@ def run(game: "Game", encounter_id: str) -> str:
         cmd = parse(choice)
         if cmd and cmd.verb in (
             "save", "load", "language", "help", "stats", "inventory",
-            "quests", "journal", "map", "quit",
+            "quests", "journal", "map", "party", "reputation", "quit",
         ):
             if cmd.verb == "quit":
                 game.in_combat = False
@@ -207,12 +207,11 @@ def run(game: "Game", encounter_id: str) -> str:
             continue
 
         ac = player_ac(game) + (2 if defending else 0)
-        covered = False
-        for enemy in living:
-            ally = _cover_ally(game)
-            if ally and not covered:
-                _enemy_hit_ally(game, enemy, ally[0], ally[1])
-                covered = True
+        allies = _cover_allies(game)
+        for index, enemy in enumerate(living):
+            if index < len(allies):
+                fid, data = allies[index]
+                _enemy_hit_ally(game, enemy, fid, data)
             else:
                 _enemy_hit(game, enemy, ac)
             if game.state.player.hp <= 0:
@@ -260,14 +259,20 @@ def _parse_choice(choice: str) -> tuple[str, str]:
     return aliases.get(head, "attack"), rest or head if head not in aliases else rest
 
 
-def _cover_ally(game: "Game"):
+def _cover_allies(game: "Game") -> list:
+    out = []
     for fid, data in (game.state.followers or {}).items():
         if data.get("cover") is False:
             continue
         if int(data.get("hp") or 0) <= 0:
             continue
-        return fid, data
-    return None
+        out.append((fid, data))
+    return out
+
+
+def _cover_ally(game: "Game"):
+    allies = _cover_allies(game)
+    return allies[0] if allies else None
 
 
 def _enemy_hit_ally(game: "Game", enemy: Fighter, fid: str, data: dict) -> None:

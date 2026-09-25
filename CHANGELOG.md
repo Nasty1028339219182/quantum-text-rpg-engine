@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0-snapshot — 2026-09-25
+
+One snapshot build. It holds the four systems that were going to be 1.8, 1.9, 2.0 and 2.1. Stable 2.0.0 is this same cut.
+
+- Factions: `factions`, `rep`, `when: {rep_gte}`
+- Hunger: only if `hunger.max` is set. `sates` on food
+- Party of up to 4 (`settings.party`)
+- Dialogue graph in the editor: click a node
+
 ## 1.7.0 — 2026-09-25
 
 - One enemy each round strikes a follower who is covering you

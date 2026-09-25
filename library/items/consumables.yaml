@@ -22,6 +22,7 @@ bread:
     effects:
       - heal: 2
       - message: {ru: Ты ешь хлеб., en: You eat the bread.}
+  sates: 4
 
 cheese:
   name: {ru: сыр, en: cheese}
@@ -33,6 +34,7 @@ cheese:
     consume: true
     effects:
       - heal: 3
+  sates: 3
 
 bandage:
   name: {ru: бинт, en: bandage}

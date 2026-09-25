@@ -25,6 +25,7 @@ square:
       effects:
         - set_flag: mira_home
         - unfollow: mira
+        - rep: {village: 2}
         - complete_quest: missing_mira
         - message:
             ru: Мира бежит к колодцу. Бран встаёт — первый раз за день.
