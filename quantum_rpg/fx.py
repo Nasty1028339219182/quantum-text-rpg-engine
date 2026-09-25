@@ -78,12 +78,20 @@ def play(game: "Game", spec) -> None:
         if not check(game, body.get("when")):
             return
     steps = body.get("steps")
+    repeat = _repeat(body)
     if isinstance(steps, list):
-        play(game, steps)
+        for _ in range(repeat):
+            play(game, steps)
         return
-    repeat = max(1, min(int(body.get("repeat") or 1), 4))
     for _ in range(repeat):
         _once(game, body)
+
+
+def _repeat(body: dict) -> int:
+    try:
+        return max(1, min(int(body.get("repeat") or 1), 4))
+    except (TypeError, ValueError):
+        return 1
 
 
 def run_on(game: "Game", moment: str, key: str = "") -> None:

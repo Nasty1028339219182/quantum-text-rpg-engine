@@ -25,7 +25,7 @@ def _apply_one(game: "Game", eff: dict) -> None:
         return
     if "effects" in eff and len(eff) <= 3:
         apply(game, eff["effects"])
-        if "message" not in eff and "set_flag" not in eff:
+        if "message" not in eff and "set_flag" not in eff and "scene" not in eff and "fx" not in eff:
             return
 
     p = game.state.player

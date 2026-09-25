@@ -275,7 +275,7 @@ def _author_action(game: "Game", enc: dict, choice: str, living: list, ability_c
     target = living[0] if living else None
     amount = picked.get("damage")
     if amount and target:
-        dmg = roll(str(amount), game.rng) if "d" in str(amount) else int(amount)
+        dmg = _amount(game, amount)
         target.hp -= max(0, dmg)
         game.say(t(game.lang, "you_hit", dmg=dmg, name=target.name))
         if target.hp <= 0:
@@ -295,15 +295,28 @@ def _author_action(game: "Game", enc: dict, choice: str, living: list, ability_c
     return True
 
 
+def _amount(game: "Game", amount) -> int:
+    try:
+        text = str(amount)
+        if "d" in text:
+            return roll(text, game.rng)
+        return int(amount)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _phases(game: "Game", enc: dict, living: list) -> None:
     seen = game._combat_phases
-    for row in enc.get("phases") or []:
+    for index, row in enumerate(enc.get("phases") or []):
         if not isinstance(row, dict) or row.get("at_hp") is None:
             continue
-        mark = str(row.get("id") or row.get("at_hp"))
+        mark = str(row.get("id") or f"{index}:{row.get('at_hp')}")
         if mark in seen:
             continue
-        limit = float(row.get("at_hp"))
+        try:
+            limit = float(row.get("at_hp"))
+        except (TypeError, ValueError):
+            continue
         if not any(e.hp > 0 and (100 * e.hp / max(1, e.max_hp)) <= limit for e in living):
             continue
         seen.add(mark)

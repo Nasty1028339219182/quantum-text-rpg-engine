@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.0.0-rc.1 — not a release
+
+Private release candidate. Bug pass only. No new systems. Public line is still 2.6.0.
+
+- A scene is spent only if it finishes. `quit`, a bad `goto`, or a real command no longer eats it
+- A bad `goto` no longer falls into the next branch
+- A direction or another command during a choice is obeyed, not swallowed
+- A scene that calls itself stops, instead of filling the stack
+- An effect can carry both `scene` or `fx` and a nested `effects` list. Both run
+- `repeat` on a chain repeats the chain. A word instead of a number does not crash
+- Two phases at the same health both speak. A bad `at_hp` or a bad `damage` does not crash the fight
+- A meter step written as a word does not crash the turn
+- `проверить` names a scene called from inside another scene
+- Greyford still says nothing is wrong. 106 tests
+
 ## 3.0.0-snapshot.10 — not a release
 
 Private snapshot. The last 3.0 snapshot. Public line is still 2.6.0. No pictures.

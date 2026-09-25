@@ -166,6 +166,7 @@ def problems(world: World) -> list[str]:
                 check_effects,
                 check_fx,
                 check_when,
+                check_scene,
             )
 
     for eid, enc in encounters.items():
@@ -188,7 +189,7 @@ def problems(world: World) -> list[str]:
     return out
 
 
-def _scene_beats(beats, where, add, check_effects, check_fx, check_when) -> None:
+def _scene_beats(beats, where, add, check_effects, check_fx, check_when, check_scene) -> None:
     if not isinstance(beats, list):
         return
     marks = set()
@@ -201,6 +202,8 @@ def _scene_beats(beats, where, add, check_effects, check_fx, check_when) -> None
         check_effects(beat.get("effects"), where)
         check_fx(beat.get("fx"), where)
         check_when(beat.get("when"), where)
+        if beat.get("scene"):
+            check_scene(beat.get("scene"), where)
         goto = beat.get("goto")
         if goto and str(goto) not in marks:
             add(f"[{where}] goto '{goto}' has no mark")
@@ -214,7 +217,15 @@ def _scene_beats(beats, where, add, check_effects, check_fx, check_when) -> None
                     add(f"[{where}] choice goes to missing '{dest}'")
                 check_effects(option.get("effects"), where)
                 check_when(option.get("when"), where)
-                _scene_beats(option.get("beats") or [], where, add, check_effects, check_fx, check_when)
+                _scene_beats(
+                    option.get("beats") or [],
+                    where,
+                    add,
+                    check_effects,
+                    check_fx,
+                    check_when,
+                    check_scene,
+                )
 
 
 def _map_rooms(raw) -> list[str]:

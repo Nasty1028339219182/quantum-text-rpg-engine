@@ -27,14 +27,22 @@ def play(game: "Game", spec) -> None:
     key = f"scene:{sid}"
     if once and not again and key in game.state.once:
         return
-    if once:
-        game.state.once.add(key)
+    playing = game.__dict__.setdefault("_scenes", set())
+    if sid in playing:
+        return
+    playing.add(sid)
     beats = scene.get("beats") or scene.get("steps") or []
-    if isinstance(beats, list):
-        _run(game, beats)
+    finished = False
+    try:
+        if isinstance(beats, list):
+            finished = _run(game, beats)
+    finally:
+        playing.discard(sid)
+    if once and finished:
+        game.state.once.add(key)
 
 
-def _run(game: "Game", beats: list) -> None:
+def _run(game: "Game", beats: list) -> bool:
     marks = {}
     for index, beat in enumerate(beats):
         if isinstance(beat, dict) and beat.get("mark"):
@@ -45,11 +53,14 @@ def _run(game: "Game", beats: list) -> None:
         jump = _beat(game, beats[index])
         guard += 1
         if jump == "stop":
-            return
+            return False
         if jump:
-            index = marks.get(jump, index + 1)
+            if jump not in marks:
+                return False
+            index = marks[jump]
         else:
             index += 1
+    return True
 
 
 def _beat(game: "Game", beat) -> Optional[str]:
@@ -159,6 +170,13 @@ def _choose(game: "Game", spec) -> Optional[str]:
                 break
         if picked:
             break
+        from .parser import parse
+
+        cmd = parse(raw)
+        if cmd and cmd.verb not in ("", "unknown"):
+            game.set_choices([])
+            game.handle(raw)
+            return "stop"
         if prompt:
             game.say(prompt)
     game.set_choices([])

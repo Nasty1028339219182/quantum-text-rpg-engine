@@ -44,9 +44,9 @@ def change(game: "Game", mid: str, delta: int, silent: bool = False) -> None:
     spec = specs(game).get(mid) or {}
     if not isinstance(spec, dict):
         return
-    mx = int(spec.get("max") or 10)
-    old = int(game.state.meters.get(mid, spec.get("start") or 0))
-    cur = max(0, min(mx, old + int(delta)))
+    mx = _int(spec.get("max"), 10) or 10
+    old = _int(game.state.meters.get(mid, spec.get("start") or 0))
+    cur = max(0, min(mx, old + _int(delta)))
     game.state.meters[mid] = cur
     if not silent:
         game.say(f"{name(game, mid)} {bar(cur, mx)} {cur}/{mx}")
@@ -117,19 +117,26 @@ def rows(game: "Game") -> list[dict]:
 
 def _delta(spec: dict, reason: str) -> int:
     if reason in spec and spec.get(reason) is not None:
-        return int(spec.get(reason) or 0)
+        return _int(spec.get(reason))
     if reason == "fight":
         return 0
-    return int(spec.get("step") or 0)
+    return _int(spec.get("step"))
+
+
+def _int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _hurt(game: "Game", mid: str, spec: dict) -> None:
     if game.state.ended:
         return
-    cur = int(game.state.meters.get(mid, 0))
-    mx = int(spec.get("max") or 10)
-    hurt = str(spec.get("hurt") or ("full" if int(spec.get("step") or spec.get("move") or 0) >= 0 else "empty"))
-    dmg = int(spec.get("damage") or 0)
+    cur = _int(game.state.meters.get(mid, 0))
+    mx = _int(spec.get("max"), 10) or 10
+    hurt = str(spec.get("hurt") or ("full" if _int(spec.get("step") or spec.get("move")) >= 0 else "empty"))
+    dmg = _int(spec.get("damage"))
     if not dmg or hurt not in ("full", "empty"):
         return
     if hurt == "full" and cur < mx:
@@ -150,7 +157,7 @@ def _bands(game: "Game", mid: str, spec: dict, old: int, new: int) -> None:
     for band in spec.get("bands") or []:
         if not isinstance(band, dict):
             continue
-        at = int(band.get("at") or 0)
+        at = _int(band.get("at"))
         crossed = (old < at <= new) if hurt != "empty" else (old > at >= new)
         if not crossed:
             continue
@@ -172,6 +179,6 @@ def _release(game: "Game", mid: str, spec: dict, cur: int) -> None:
     for band in spec.get("bands") or []:
         if not isinstance(band, dict):
             continue
-        at = int(band.get("at") or 0)
+        at = _int(band.get("at"))
         if (hurt != "empty" and cur < at) or (hurt == "empty" and cur > at):
             game.state.meter_marks.discard(f"{mid}:{at}")
