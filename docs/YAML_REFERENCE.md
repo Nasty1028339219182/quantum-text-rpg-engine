@@ -259,4 +259,17 @@ shop_discount: 25
 
 Each reputation point changes the price by that many percent. Buying gets cheaper, selling pays more. The price stays between 25% and 300% of the list, and never below 1. No `shop_faction` means the list price.
 
+## Party orders
+
+Still at most four. Default is follow, and they fight.
+
+```yaml
+- order: {npc: mira, do: wait}    # stays in this room
+- order: {npc: mira, do: follow}
+- order: {npc: mira, do: hold}    # follows, stays out of the fight
+```
+
+In play: `приказ мира жди`, `приказ мира за мной`, `приказ мира не дерись`. `отряд` shows the order and offers the same three buttons.
+
+
 

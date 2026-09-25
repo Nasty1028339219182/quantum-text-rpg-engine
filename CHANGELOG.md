@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.0 — 2026-09-25
+
+- `приказ` tells a follower to wait, follow, or stay out of the fight
+- The same three orders are buttons on `отряд` and effects: `order`
+- The party is still at most four
+
 ## 2.4.0 — 2026-09-25
 
 - An NPC `schedule` sends them to another room by time of day, or `away`

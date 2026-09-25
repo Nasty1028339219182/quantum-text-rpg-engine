@@ -174,6 +174,8 @@ def _apply_one(game: "Game", eff: dict) -> None:
         game.add_follower(eff["follow"])
     if "unfollow" in eff:
         game.remove_follower(str(eff["unfollow"]))
+    if "order" in eff:
+        game.order_follower(eff["order"])
     if "rep" in eff:
         game.change_rep(eff["rep"])
     if "set_rep" in eff:

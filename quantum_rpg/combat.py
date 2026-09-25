@@ -155,7 +155,7 @@ def run(game: "Game", encounter_id: str) -> str:
         cmd = parse(choice)
         if cmd and cmd.verb in (
             "save", "load", "language", "help", "stats", "inventory",
-            "quests", "journal", "map", "party", "reputation", "sound", "volume", "quit",
+            "quests", "journal", "map", "party", "order", "reputation", "sound", "volume", "quit",
         ):
             if cmd.verb == "quit":
                 game.in_combat = False
@@ -266,9 +266,21 @@ def _parse_choice(choice: str) -> tuple[str, str]:
     return aliases.get(head, "attack"), rest or head if head not in aliases else rest
 
 
+def _ally_fights(game: "Game", fid: str, data: dict) -> bool:
+    if data.get("order") == "hold":
+        return False
+    if int(data.get("hp") or 0) <= 0:
+        return False
+    if data.get("order") == "wait":
+        return fid in (game.state.location_npcs.get(game.state.location) or [])
+    return True
+
+
 def _cover_allies(game: "Game") -> list:
     out = []
     for fid, data in (game.state.followers or {}).items():
+        if not _ally_fights(game, fid, data):
+            continue
         if data.get("cover") is False:
             continue
         if int(data.get("hp") or 0) <= 0:
@@ -298,7 +310,7 @@ def _enemy_hit_ally(game: "Game", enemy: Fighter, fid: str, data: dict) -> None:
 
 def _allies_act(game: "Game", living: list[Fighter]) -> None:
     for fid, data in list((game.state.followers or {}).items()):
-        if int(data.get("hp") or 0) <= 0:
+        if not _ally_fights(game, fid, data):
             continue
         living[:] = [e for e in living if e.hp > 0]
         if not living:
@@ -324,7 +336,13 @@ def _status(game: "Game", living: list[Fighter]) -> None:
         line += f"  {t(game.lang, 'mp')} {p.mp}/{p.max_mp}"
     lines = [line]
     for fid, data in (game.state.followers or {}).items():
+        here = fid in (game.state.location_npcs.get(game.state.location) or [])
+        if data.get("order") == "wait" and not here:
+            continue
         name = game.npc_name(fid)
+        if data.get("order") == "hold":
+            lines.append(f"{name}  {t(game.lang, 'order_hold_short')}")
+            continue
         if int(data.get("hp") or 0) <= 0:
             lines.append(f"{name}  {t(game.lang, 'ally_down_short')}")
         else:

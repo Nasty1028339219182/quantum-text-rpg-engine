@@ -37,6 +37,7 @@ VERBS: dict[str, list[str]] = {
     "journal": ["journal", "log", "журнал"],
     "map": ["map", "карта"],
     "party": ["party", "отряд", "спутники"],
+    "order": ["order", "приказ", "прикажи"],
     "reputation": ["reputation", "rep", "репутация", "фракции"],
     "sound": ["sound", "mute", "unmute", "звук", "музыка"],
     "volume": ["volume", "vol", "громкость"],

@@ -144,4 +144,14 @@ mira:
         en: Let's go. Before he changes his mind.
       choices:
         - text: {ru: На площадь., en: To the square.}
+          effects:
+            - order: {npc: mira, do: follow}
+          end: true
+        - text: {ru: Жди здесь., en: Wait here.}
+          effects:
+            - order: {npc: mira, do: wait}
+          end: true
+        - text: {ru: Иди за мной, но не дерись., en: Follow, but don't fight.}
+          effects:
+            - order: {npc: mira, do: hold}
           end: true

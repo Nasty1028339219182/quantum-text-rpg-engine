@@ -93,6 +93,12 @@ HELP = {
   shop_faction: village
   shop_discount: 25          # процент за пункт репутации
 
+ОТРЯД
+  order: {npc: mira, do: wait|follow|hold}
+  приказ мира жди | за мной | не дерись
+  отряд — кнопки тех же приказов
+
+
 
 
 

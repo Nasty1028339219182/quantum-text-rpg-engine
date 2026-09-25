@@ -112,7 +112,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "осмотреть <что>, инвентарь, надеть / снять <предмет>, использовать <предмет>,\n"
             "говорить <кто>, атаковать <кто>, искать, открыть <что>, читать <что>,\n"
             "купить / продать, создать <рецепт>, дать <предмет> <кому>,\n"
-            "характеристики, задания, журнал, карта, отдохнуть, ждать,\n"
+            "характеристики, задания, журнал, карта, отряд, приказ, отдохнуть, ждать,\n"
             "сохранить [слот], загрузить [слот], язык ru|en, звук, громкость, помощь, выход"
         ),
         "en": (
@@ -120,7 +120,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "inventory, equip / unequip <item>, use <item>, talk <who>,\n"
             "attack <who>, search, open <thing>, read <thing>,\n"
             "buy / sell, craft <recipe>, give <item> <who>,\n"
-            "stats, quests, journal, map, rest, wait,\n"
+            "stats, quests, journal, map, party, order, rest, wait,\n"
             "save [slot], load [slot], language ru|en, sound, volume, help, quit"
         ),
     },
@@ -235,6 +235,17 @@ STRINGS: dict[str, dict[str, str]] = {
     "npc_arrives": {"ru": "{name} приходит.", "en": "{name} arrives."},
     "follows_now": {"ru": "{name} идёт с тобой.", "en": "{name} walks with you."},
     "follows": {"ru": "С тобой: {names}.", "en": "With you: {names}."},
+    "order_who": {"ru": "Кому? приказ <имя> жди | за мной | не дерись", "en": "Who? order <name> wait | follow | hold"},
+    "order_wait": {"ru": "{name} ждёт: {place}.", "en": "{name} waits: {place}."},
+    "order_wait_short": {"ru": "ждёт: {place}", "en": "waits: {place}"},
+    "order_follow": {"ru": "{name} идёт за тобой.", "en": "{name} follows you."},
+    "order_follow_short": {"ru": "за тобой", "en": "follows"},
+    "order_hold": {"ru": "{name} идёт за тобой и не лезет в бой.", "en": "{name} follows and stays out of the fight."},
+    "order_hold_short": {"ru": "не лезет в бой", "en": "out of the fight"},
+    "order_catchup": {"ru": "{name} догоняет.", "en": "{name} catches up."},
+    "order_wait_btn": {"ru": "жди", "en": "wait"},
+    "order_follow_btn": {"ru": "за мной", "en": "follow"},
+    "order_hold_btn": {"ru": "не дерись", "en": "hold"},
     "with_you": {"ru": "с тобой", "en": "with you"},
     "with_you_down": {"ru": "с тобой, лежит", "en": "with you, down"},
     "ally_hit": {"ru": "{name} бьёт {target} (−{dmg}).", "en": "{name} hits {target} (−{dmg})."},

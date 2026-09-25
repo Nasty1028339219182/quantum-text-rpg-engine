@@ -389,6 +389,7 @@ class Game:
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
             "party": self._cmd_party,
+            "order": self._cmd_order,
             "reputation": self._cmd_reputation,
             "sound": self._cmd_sound,
             "volume": self._cmd_volume,
@@ -476,6 +477,7 @@ class Game:
             "attack": str(combat_spec.get("attack") or spec.get("attack") or "1d4"),
             "ac": int(combat_spec.get("ac") or spec.get("ac") or 0),
             "cover": (combat_spec.get("cover") if "cover" in combat_spec else spec.get("cover", True)) is not False,
+            "order": "follow",
         }
         self.place_npc(self.state.location, nid)
         self.say(t(self.lang, "follows_now", name=self.npc_name(nid)))
@@ -487,11 +489,61 @@ class Game:
         if not self.state.followers:
             return
         names = []
-        for fid in list(self.state.followers):
+        for fid, data in self.state.followers.items():
+            if data.get("order") == "wait":
+                continue
             self.remove_npc(fid)
             self.place_npc(loc_id, fid)
             names.append(self.npc_name(fid))
-        self.say(t(self.lang, "follows", names=", ".join(names)))
+        if names:
+            self.say(t(self.lang, "follows", names=", ".join(names)))
+
+    def order_follower(self, info) -> None:
+        if isinstance(info, str):
+            parsed = _parse_order(info)
+            if not parsed:
+                return
+            name, order = parsed
+            nid = self._match_follower(name) if name else ""
+            if not nid and len(self.state.followers) == 1:
+                nid = next(iter(self.state.followers))
+        elif isinstance(info, dict):
+            nid = str(info.get("npc") or info.get("id") or "")
+            order = str(info.get("do") or info.get("order") or "follow")
+        else:
+            return
+        order = {"wait": "wait", "stay": "wait", "follow": "follow", "hold": "hold", "aside": "hold"}.get(order, order)
+        data = self.state.followers.get(nid or "")
+        if not data or order not in ("wait", "follow", "hold"):
+            self.say(t(self.lang, "order_who"))
+            return
+        data["order"] = order
+        name = self.npc_name(nid)
+        here = self.state.location_npcs.get(self.state.location) or []
+        if order == "wait":
+            data["wait_at"] = self.state.location
+            if nid not in here:
+                self.remove_npc(nid)
+                self.place_npc(self.state.location, nid)
+            self.say(t(self.lang, "order_wait", name=name, place=self.loc_name(self.state.location)))
+            return
+        data.pop("wait_at", None)
+        if nid not in here:
+            self.remove_npc(nid)
+            self.place_npc(self.state.location, nid)
+            self.say(t(self.lang, "order_catchup", name=name))
+        if order == "hold":
+            self.say(t(self.lang, "order_hold", name=name))
+        elif nid in here:
+            self.say(t(self.lang, "order_follow", name=name))
+
+    def _match_follower(self, query: str) -> str:
+        entities = {}
+        for fid in self.state.followers:
+            src = dict(self.world.npcs.get(fid) or {})
+            src["id"] = fid
+            entities[fid] = src
+        return match_entity(query, entities, self.lang) or ""
 
     def party_max(self) -> int:
         settings = self.world.game.get("settings") or {}
@@ -1528,10 +1580,39 @@ class Game:
             return
         for fid, data in self.state.followers.items():
             name = self.npc_name(fid)
+            order = data.get("order") or "follow"
             if int(data.get("hp") or 0) <= 0:
-                self.say(f"  {name}  {t(self.lang, 'ally_down_short')}")
+                state = t(self.lang, "ally_down_short")
             else:
-                self.say(f"  {name}  {t(self.lang, 'hp')} {data.get('hp')}/{data.get('max_hp')}")
+                state = f"{t(self.lang, 'hp')} {data.get('hp')}/{data.get('max_hp')}"
+            if order == "wait":
+                where = self.loc_name(str(data.get("wait_at") or self.state.location))
+                how = t(self.lang, "order_wait_short", place=where)
+            elif order == "hold":
+                how = t(self.lang, "order_hold_short")
+            else:
+                how = t(self.lang, "order_follow_short")
+            self.say(f"  {name}  {state}  {how}")
+        choices = []
+        for fid in self.state.followers:
+            name = self.npc_name(fid)
+            choices.append({"label": f"{name}: {t(self.lang, 'order_wait_btn')}", "command": f"приказ {fid} жди"})
+            choices.append({"label": f"{name}: {t(self.lang, 'order_follow_btn')}", "command": f"приказ {fid} за мной"})
+            choices.append({"label": f"{name}: {t(self.lang, 'order_hold_btn')}", "command": f"приказ {fid} не дерись"})
+        self.set_choices(choices)
+
+    def _cmd_order(self, cmd) -> None:
+        parsed = _parse_order(cmd.argstr or "")
+        if not parsed:
+            self._cmd_party(cmd)
+            return
+        name, order = parsed
+        if not name and len(self.state.followers) == 1:
+            name = next(iter(self.state.followers))
+        nid = self._match_follower(name) if name else ""
+        if not nid and len(self.state.followers) == 1:
+            nid = next(iter(self.state.followers))
+        self.order_follower({"npc": nid, "do": order})
 
     def _cmd_reputation(self, cmd) -> None:
         self.say(t(self.lang, "reputation"))
@@ -1683,6 +1764,33 @@ class Game:
                 self._cmd_go(cmd)
                 return
         self.say(t(self.lang, "unknown"))
+
+
+def _parse_order(text: str):
+    tokens = (text or "").strip().lower().split()
+    if not tokens:
+        return None
+    tails = {
+        "не дерись": "hold",
+        "не лезь": "hold",
+        "в сторону": "hold",
+        "aside": "hold",
+        "hold": "hold",
+        "за мной": "follow",
+        "follow": "follow",
+        "иди": "follow",
+        "следуй": "follow",
+        "жди": "wait",
+        "ждать": "wait",
+        "wait": "wait",
+        "stay": "wait",
+    }
+    for size in (2, 1):
+        if len(tokens) >= size:
+            tail = " ".join(tokens[-size:])
+            if tail in tails:
+                return " ".join(tokens[:-size]).strip(), tails[tail]
+    return None
 
 
 def open_shop(game: Game, npc_id: str, preset: str = "") -> None:

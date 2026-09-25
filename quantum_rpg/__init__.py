@@ -1,3 +1,3 @@
 """Quantum Text RPG Engine — data-driven, fully textual, no graphics."""
 
-__version__ = "2.4.0"
+__version__ = "2.5.0"
