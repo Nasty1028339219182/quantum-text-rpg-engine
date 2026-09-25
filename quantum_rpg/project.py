@@ -33,6 +33,8 @@ class Project:
         self.quests: dict[str, dict] = {}
         self.encounters: dict[str, dict] = {}
         self.recipes: dict[str, dict] = {}
+        self.abilities: dict[str, dict] = {}
+        self.loot_tables: dict[str, dict] = {}
         self.events_text = ""
         self.hooks_text = ""
         self.dirty = False
@@ -52,6 +54,8 @@ class Project:
         p.quests = _load_entities(path / "quests.yaml")
         p.encounters = _load_entities(path / "encounters.yaml")
         p.recipes = _load_entities(path / "recipes.yaml")
+        p.abilities = _load_entities(path / "abilities.yaml")
+        p.loot_tables = _load_loot(path / "loot_tables.yaml")
         ev = path / "events.yaml"
         p.events_text = ev.read_text(encoding="utf-8") if ev.exists() else ""
         hk = path / "hooks.py"
@@ -73,6 +77,8 @@ class Project:
         _dump_doc(dest / "quests.yaml", _strip_table(self.quests))
         _dump_doc(dest / "encounters.yaml", _strip_table(self.encounters))
         _dump_doc(dest / "recipes.yaml", _strip_table(self.recipes))
+        _dump_optional(dest / "abilities.yaml", self.abilities)
+        _dump_optional(dest / "loot_tables.yaml", self.loot_tables)
         (dest / "events.yaml").write_text(self.events_text or "", encoding="utf-8")
         (dest / "hooks.py").write_text(self.hooks_text or "", encoding="utf-8")
         self.path = dest
@@ -255,6 +261,32 @@ def _load_map(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _load_loot(path: Path) -> dict[str, dict]:
+    raw = _load_map(path)
+    out: dict[str, dict] = {}
+    for k, v in raw.items():
+        if str(k).startswith("#") or v is None:
+            continue
+        if isinstance(v, list):
+            out[str(k)] = {"id": k, "drops": v}
+        elif isinstance(v, dict):
+            row = dict(v)
+            row.setdefault("id", k)
+            if "drops" not in row and any(isinstance(x, dict) and "item" in x for x in (row.get("loot") or [])):
+                row["drops"] = row.pop("loot")
+            row.setdefault("drops", row.get("drops") or [])
+            out[str(k)] = row
+    return out
+
+
+def _dump_optional(path: Path, table: dict[str, dict]) -> None:
+    if not table:
+        if path.exists():
+            path.unlink()
+        return
+    _dump_doc(path, _strip_table(table))
+
+
 def _load_entities(path: Path) -> dict[str, dict]:
     raw = _load_map(path)
     out: dict[str, dict] = {}
@@ -331,4 +363,8 @@ def _blank(kind: str, eid: str) -> dict:
         return {"name": name, "hp": 8, "attack": "1d4", "xp": 5}
     if kind == "recipes":
         return {"name": name, "ingredients": [], "result": eid}
+    if kind == "abilities":
+        return {"name": name, "class": "", "mp": 2, "damage": "1d6", "text": name}
+    if kind == "loot_tables":
+        return {"drops": [{"item": "", "chance": 100}]}
     return {"name": name}

@@ -204,6 +204,8 @@ STRINGS: dict[str, dict[str, str]] = {
     "ed_quests": {"ru": "Квесты", "en": "Quests"},
     "ed_fights": {"ru": "Бои", "en": "Encounters"},
     "ed_recipes": {"ru": "Рецепты", "en": "Recipes"},
+    "ed_abilities": {"ru": "Умения", "en": "Abilities"},
+    "ed_loot": {"ru": "Лут", "en": "Loot"},
     "ed_events": {"ru": "events.yaml", "en": "events.yaml"},
     "ed_hooks": {"ru": "hooks.py", "en": "hooks.py"},
     "ed_validate": {"ru": "Проверить", "en": "Validate"},

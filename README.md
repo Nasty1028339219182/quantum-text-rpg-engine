@@ -4,7 +4,7 @@
 
 A data-driven engine for **fully textual** RPGs. No graphics, no pictures, no browser. Games are YAML. Optional Python hooks exist for logic YAML cannot express.
 
-**1.5.0** — night shops and encounters, plus companions who walk with you. No graphics.
+**1.6.0** — the editor can author abilities, loot, time, encounters, and followers. No new graphics.
 
 ```text
 python -m quantum_rpg

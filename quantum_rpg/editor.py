@@ -30,6 +30,8 @@ KINDS = [
     ("quests", "ed_quests"),
     ("encounters", "ed_fights"),
     ("recipes", "ed_recipes"),
+    ("abilities", "ed_abilities"),
+    ("loot_tables", "ed_loot"),
 ]
 DIRS = ("north", "south", "east", "west", "up", "down")
 ITEM_TYPES = ("weapon", "armor", "shield", "accessory", "consumable", "key", "book", "quest", "misc")
@@ -217,6 +219,10 @@ class EditorWindow:
             EncounterForm(box, self, eid)
         elif kind == "recipes":
             RecipeForm(box, self, eid)
+        elif kind == "abilities":
+            AbilityForm(box, self, eid)
+        elif kind == "loot_tables":
+            LootForm(box, self, eid)
         self.status.configure(text=f"{kind} {eid}".strip(), fg=C["dim"])
 
     def _save(self) -> bool:
@@ -451,6 +457,15 @@ class GameForm(_Base):
         self.include = _labeled(parent, "include (library files)", csv_load(g.get("include") or g.get("includes")))
         self.class_prompt = _check(parent, "class_prompt", bool(g.get("classes")) if g.get("class_prompt") is None else bool(g.get("class_prompt")))
         self.classes = _yaml_field(parent, "classes (YAML)", yaml_dump_text(g.get("classes")))
+        clock = g.get("time") or {}
+        if not isinstance(clock, dict):
+            clock = {}
+        self.start_hour = _labeled(parent, "time.start_hour", str(clock.get("start_hour") or ""))
+        self.rest_hours = _labeled(parent, "time.rest_hours", str(clock.get("rest_hours") or ""))
+        self.shop_closed = _labeled(parent, "time.shop_closed  night,evening", csv_load(clock.get("shop_closed")))
+        self.night_bonus = _labeled(
+            parent, "time.night_encounter_bonus", str(clock.get("night_encounter_bonus") or "")
+        )
 
     def collect(self) -> None:
         g = self.ed.project.game
@@ -487,6 +502,31 @@ class GameForm(_Base):
             g["classes"] = classes
         else:
             g.pop("classes", None)
+        clock = dict(g.get("time") or {}) if isinstance(g.get("time"), dict) else {}
+        hour = _get(self.start_hour).strip()
+        rest = _get(self.rest_hours).strip()
+        closed = csv_dump(_get(self.shop_closed))
+        bonus = _get(self.night_bonus).strip()
+        if hour:
+            clock["start_hour"] = int(hour)
+        else:
+            clock.pop("start_hour", None)
+        if rest:
+            clock["rest_hours"] = int(rest)
+        else:
+            clock.pop("rest_hours", None)
+        if closed:
+            clock["shop_closed"] = closed
+        else:
+            clock.pop("shop_closed", None)
+        if bonus:
+            clock["night_encounter_bonus"] = int(bonus)
+        else:
+            clock.pop("night_encounter_bonus", None)
+        if clock:
+            g["time"] = clock
+        else:
+            g.pop("time", None)
 
 
 def _labeled(parent, label: str, value: str) -> Entry:
@@ -501,6 +541,7 @@ class LocationForm(_Base):
         loc = editor.project.locations[eid]
         self.name = _loc(parent, "name", loc.get("name"))
         self.desc = _loc(parent, "description", loc.get("description"), height=5)
+        self.note_night = _loc(parent, "note_night", loc.get("note_night"), height=2)
         self.dark = _check(parent, "dark", loc.get("dark"))
         self.rest = _check(parent, "rest", loc.get("rest") is not False)
         self.items = _labeled(parent, "items", csv_load(loc.get("items")))
@@ -532,6 +573,22 @@ class LocationForm(_Base):
         Btn(parent, text="+ exit", command=lambda: self._exit_row("north", "", False, ""), anchor="center").pack(
             pady=6, anchor="w"
         )
+        renc = loc.get("random_encounters") or {}
+        if not isinstance(renc, dict):
+            renc = {}
+        self.renc_chance = _labeled(parent, "random.chance", str(renc.get("chance") or ""))
+        self.renc_night = _labeled(parent, "random.chance_night", str(renc.get("chance_night") or ""))
+        self.renc_once = _check(parent, "random.once", renc.get("once"))
+        _label(parent, "random table  encounter, weight")
+        self.renc_box = tk.Frame(parent, bg=C["bg"])
+        self.renc_box.pack(fill="x")
+        self.renc_rows = []
+        for row in renc.get("table") or []:
+            if isinstance(row, str):
+                self._renc_row(row, "1")
+            elif isinstance(row, dict):
+                self._renc_row(str(row.get("encounter") or ""), str(row.get("weight") or "1"))
+        Btn(parent, text="+ encounter", command=lambda: self._renc_row("", "1"), anchor="center").pack(anchor="w", pady=4)
         self.extra = _yaml_field(parent, "extra YAML (on_enter, containers, trap…)", _extra_yaml(loc, KEEP_LOC))
 
     def _exit_row(self, d, to, locked, key, original=None):
@@ -553,6 +610,21 @@ class LocationForm(_Base):
         Btn(row, text="×", command=lambda r=row: self._drop_exit(r), width=2, anchor="center").pack(side="left")
         self.exit_rows.append((row, dv, to_e, lv, key_e, original))
 
+    def _renc_row(self, encounter: str, weight: str) -> None:
+        row = tk.Frame(self.renc_box, bg=C["bg"])
+        row.pack(fill="x", pady=1)
+        a, b = Entry(row, width=22), Entry(row, width=6)
+        a.insert(0, encounter)
+        b.insert(0, weight)
+        a.pack(side="left", padx=2)
+        b.pack(side="left", padx=2)
+        Btn(row, text="×", width=2, anchor="center", command=lambda r=row: self._drop_renc(r)).pack(side="left")
+        self.renc_rows.append((row, a, b))
+
+    def _drop_renc(self, row) -> None:
+        self.renc_rows = [x for x in self.renc_rows if x[0] is not row]
+        row.destroy()
+
     def _drop_exit(self, row):
         self.exit_rows = [x for x in self.exit_rows if x[0] is not row]
         row.destroy()
@@ -561,6 +633,11 @@ class LocationForm(_Base):
         loc = self.ed.project.locations[self.eid]
         loc["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
         loc["description"] = loc_value(_get(self.desc[0]), _get(self.desc[1]))
+        note = loc_value(_get(self.note_night[0]), _get(self.note_night[1]))
+        if note:
+            loc["note_night"] = note
+        else:
+            loc.pop("note_night", None)
         loc["dark"] = bool(self.dark.get())
         loc["rest"] = bool(self.rest.get())
         loc["items"] = csv_dump(_get(self.items))
@@ -601,15 +678,50 @@ class LocationForm(_Base):
             else:
                 exits[d] = to
         loc["exits"] = exits
+        table = []
+        for _r, a, b in self.renc_rows:
+            enc = a.get().strip()
+            if not enc:
+                continue
+            weight = b.get().strip()
+            table.append({"encounter": enc, "weight": int(weight) if weight.isdigit() else 1})
+        chance = _get(self.renc_chance).strip()
+        night = _get(self.renc_night).strip()
+        if chance or night or table or self.renc_once.get():
+            renc = dict(loc.get("random_encounters") or {}) if isinstance(loc.get("random_encounters"), dict) else {}
+            if chance:
+                renc["chance"] = int(chance)
+            else:
+                renc.pop("chance", None)
+            if night:
+                renc["chance_night"] = int(night)
+            else:
+                renc.pop("chance_night", None)
+            renc["once"] = bool(self.renc_once.get())
+            if not renc["once"]:
+                renc.pop("once", None)
+            if table:
+                renc["table"] = table
+            else:
+                renc.pop("table", None)
+            loc["random_encounters"] = renc
+        else:
+            loc.pop("random_encounters", None)
         _merge_extra(loc, _get(self.extra), KEEP_LOC)
 
 
-KEEP_LOC = {"name", "description", "dark", "rest", "items", "hidden_items", "npcs", "exits", "search", "id"}
+KEEP_LOC = {
+    "name", "description", "note_night", "dark", "rest", "items", "hidden_items",
+    "npcs", "exits", "search", "random_encounters", "id",
+}
 KEEP_ITEM = {
     "name", "aliases", "description", "type", "slot", "damage", "hit", "ac", "light",
     "heal", "weight", "value", "takeable", "text", "use", "id",
 }
-KEEP_NPC = {"name", "aliases", "description", "location", "dialogue", "hostile", "encounter", "shop", "wants", "id"}
+KEEP_NPC = {
+    "name", "aliases", "description", "location", "dialogue", "hostile", "encounter",
+    "shop", "shop_always", "wants", "combat", "id",
+}
 
 
 class ItemForm(_Base):
@@ -693,6 +805,12 @@ class NpcForm(_Base):
         enc = str(n.get("encounter") or "")
         self.encounter = _option(parent, "encounter", enc if enc in encs else "", encs)
         self.hostile = _check(parent, "hostile", n.get("hostile"))
+        self.shop_always = _check(parent, "shop_always", n.get("shop_always"))
+        combat = n.get("combat") or {}
+        if not isinstance(combat, dict):
+            combat = {}
+        self.combat_hp = _labeled(parent, "combat.hp", str(combat.get("hp") or ""))
+        self.combat_attack = _labeled(parent, "combat.attack", str(combat.get("attack") or ""))
         self.wants = _labeled(parent, "wants", csv_load(n.get("wants")))
         _label(parent, "shop  item, price, stock")
         self.shop_box = tk.Frame(parent, bg=C["bg"])
@@ -736,6 +854,25 @@ class NpcForm(_Base):
         else:
             n.pop("encounter", None)
         n["hostile"] = bool(self.hostile.get())
+        if self.shop_always.get():
+            n["shop_always"] = True
+        else:
+            n.pop("shop_always", None)
+        hp = _get(self.combat_hp).strip()
+        attack = _get(self.combat_attack).strip()
+        if hp or attack:
+            combat = dict(n.get("combat") or {}) if isinstance(n.get("combat"), dict) else {}
+            if hp:
+                combat["hp"] = int(hp)
+            else:
+                combat.pop("hp", None)
+            if attack:
+                combat["attack"] = attack
+            else:
+                combat.pop("attack", None)
+            n["combat"] = combat
+        else:
+            n.pop("combat", None)
         n["wants"] = csv_dump(_get(self.wants))
         shop = []
         for _r, a, b, c in self.shop_rows:
@@ -837,13 +974,17 @@ class DialogueForm(_Base):
             meta.pack(fill="x")
             tk.Label(meta, text="goto", bg=C["bg"], fg=C["dim"], font=font_ui(8)).pack(side="left")
             g.pack(side="left", padx=4)
+            tk.Label(meta, text="follow", bg=C["bg"], fg=C["dim"], font=font_ui(8)).pack(side="left")
+            fol = Entry(meta, width=12)
+            fol.insert(0, _choice_follow(ch))
+            fol.pack(side="left", padx=4)
             ev = tk.BooleanVar(value=bool(ch.get("end")))
             tk.Checkbutton(
                 meta, text="end", variable=ev, bg=C["bg"], fg=C["fg"], selectcolor=C["btn"],
                 activebackground=C["bg"], highlightthickness=0,
             ).pack(side="left")
             Btn(meta, text="×", width=2, anchor="center", command=lambda rr=r: drop(rr)).pack(side="left")
-            rows.append((r, a, b, g, ev, ch))
+            rows.append((r, a, b, g, ev, fol, ch))
 
         def drop(r):
             nonlocal rows
@@ -869,7 +1010,7 @@ class DialogueForm(_Base):
         else:
             node.pop("shop", None)
         choices = []
-        for _r, a, b, g, ev, original in self._widgets["rows"]:
+        for _r, a, b, g, ev, fol, original in self._widgets["rows"]:
             text = loc_value(a.get(), b.get())
             if not text:
                 continue
@@ -883,6 +1024,17 @@ class DialogueForm(_Base):
             ch["end"] = bool(ev.get())
             if not ch["end"]:
                 ch.pop("end", None)
+            effects = [
+                e for e in (ch.get("effects") or [])
+                if not (isinstance(e, dict) and "follow" in e)
+            ]
+            fid = fol.get().strip()
+            if fid:
+                effects.append({"follow": fid})
+            if effects:
+                ch["effects"] = effects
+            else:
+                ch.pop("effects", None)
             choices.append(ch)
         node["choices"] = choices
         fx = yaml_load_text(_get(self._widgets["fx"]))
@@ -991,6 +1143,89 @@ class RecipeForm(_Base):
         r["text"] = loc_value(_get(self.text[0]), _get(self.text[1]))
 
 
+class AbilityForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        a = editor.project.abilities[eid]
+        classes = tuple((editor.project.game.get("classes") or {})) or ("",)
+        current = str(a.get("class") or "")
+        if current and current not in classes:
+            classes = classes + (current,)
+        self.name = _loc(parent, "name", a.get("name"))
+        self.klass = _option(parent, "class", current if current in classes else (classes[0] if classes else ""), classes)
+        self.mp = _labeled(parent, "mp", str(a.get("mp") or 0))
+        self.damage = _labeled(parent, "damage", str(a.get("damage") or "1d6"))
+        self.hit = _labeled(parent, "hit", str(a.get("hit") or ""))
+        self.text = _loc(parent, "text", a.get("text"), height=2)
+
+    def collect(self) -> None:
+        a = self.ed.project.abilities[self.eid]
+        a["name"] = loc_value(_get(self.name[0]), _get(self.name[1]))
+        klass = self.klass.get().strip()
+        if klass:
+            a["class"] = klass
+        else:
+            a.pop("class", None)
+        a["mp"] = int(_get(self.mp) or 0)
+        a["damage"] = _get(self.damage).strip() or "1d6"
+        hit = _get(self.hit).strip()
+        if hit:
+            a["hit"] = int(hit) if hit.lstrip("-").isdigit() else hit
+        else:
+            a.pop("hit", None)
+        text = loc_value(_get(self.text[0]), _get(self.text[1]))
+        if text:
+            a["text"] = text
+        else:
+            a.pop("text", None)
+
+
+class LootForm(_Base):
+    def __init__(self, parent, editor, eid: str):
+        super().__init__(parent, editor)
+        self.eid = eid
+        table = editor.project.loot_tables[eid]
+        drops = table.get("drops") if isinstance(table, dict) else table
+        _label(parent, "drops  item, chance")
+        self.box = tk.Frame(parent, bg=C["bg"])
+        self.box.pack(fill="x")
+        self.rows = []
+        for row in drops or []:
+            if isinstance(row, str):
+                self._row(row, "100")
+            elif isinstance(row, dict):
+                self._row(str(row.get("item") or ""), str(row.get("chance") if row.get("chance") is not None else 100))
+        if not self.rows:
+            self._row("", "100")
+        Btn(parent, text="+ drop", command=lambda: self._row("", "100"), anchor="center").pack(anchor="w", pady=4)
+
+    def _row(self, item: str, chance: str) -> None:
+        row = tk.Frame(self.box, bg=C["bg"])
+        row.pack(fill="x", pady=1)
+        a, b = Entry(row, width=22), Entry(row, width=6)
+        a.insert(0, item)
+        b.insert(0, chance)
+        a.pack(side="left", padx=2)
+        b.pack(side="left", padx=2)
+        Btn(row, text="×", width=2, anchor="center", command=lambda r=row: self._drop(r)).pack(side="left")
+        self.rows.append((row, a, b))
+
+    def _drop(self, row) -> None:
+        self.rows = [x for x in self.rows if x[0] is not row]
+        row.destroy()
+
+    def collect(self) -> None:
+        drops = []
+        for _r, a, b in self.rows:
+            item = a.get().strip()
+            if not item:
+                continue
+            chance = b.get().strip()
+            drops.append({"item": item, "chance": int(chance) if chance.isdigit() else 100})
+        self.ed.project.loot_tables[self.eid]["drops"] = drops
+
+
 class RawForm(_Base):
     def __init__(self, parent, editor, attr: str, filename: str):
         super().__init__(parent, editor)
@@ -1022,6 +1257,17 @@ def _merge_extra(obj: dict, text: str, keep: set[str]) -> None:
         for k, v in extra.items():
             if k not in keep:
                 obj[k] = v
+
+
+def _choice_follow(ch: dict) -> str:
+    for eff in ch.get("effects") or []:
+        if isinstance(eff, dict) and "follow" in eff:
+            val = eff["follow"]
+            if isinstance(val, str):
+                return val
+            if isinstance(val, dict):
+                return str(val.get("npc") or val.get("id") or "")
+    return ""
 
 
 def _loot_ids(loot) -> list:

@@ -73,6 +73,11 @@ HELP = {
   npc.combat: {hp: 8, attack: 1d4}
   идёт в ту же комнату, в бою бьёт один раз за ход
 
+РЕДАКТОР
+  умения, таблицы лута, time.*, note_night, random.chance
+  npc.combat, shop_always, в реплике поле follow
+
+
 
 
 INCLUDE

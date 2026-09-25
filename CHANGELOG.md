@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0 — 2026-09-25
+
+- Editor lists abilities and loot tables
+- Game form: start hour, rest, closed shop phases, night encounter bonus
+- Room form: `note_night`, random encounter chance and table
+- NPC form: combat hp/attack, shop stays open
+- Dialogue choice: `follow` field
+- No new play rules. 1.7 and after are in ROADMAP.md
+
 ## 1.5.0 — 2026-09-24
 
 - Shops close at night when the game has a `time:` block (`shop_closed`)

@@ -47,3 +47,33 @@ def test_shadow_keep_save_validates(tmp_path):
     # trap / extra keys survive a load-save without form collect
     crypt = next(iter(w.locations.values()))
     assert crypt.get("name")
+
+
+def test_editor_files_roundtrip(tmp_path):
+    p = Project.load(DEMO)
+    assert p.abilities["smash"]["class"] == "warrior"
+    assert p.abilities["smash"]["mp"] == 2
+    assert p.game["time"]["start_hour"] == 22
+    assert p.locations["stables"].get("note_night")
+    p.add("abilities", "shout", {"name": {"ru": "Крик", "en": "Shout"}, "class": "speaker", "mp": 1, "damage": "1d4"})
+    p.add("loot_tables", "pouch", {"drops": [{"item": "torch", "chance": 50}]})
+    dest = tmp_path / "sk"
+    p.save(dest)
+    w = load_world(dest)
+    assert "smash" in w.abilities and "shout" in w.abilities
+    assert w.loot_tables["pouch"][0]["item"] == "torch"
+    again = Project.load(dest)
+    assert again.loot_tables["pouch"]["drops"][0]["chance"] == 50
+    assert again.locations["stables"].get("note_night")
+    assert again.locations["courtyard"].get("note_morning")
+
+
+def test_greyford_follow_fields():
+    p = Project.load(ROOT / "games" / "greyford")
+    assert p.npcs["mira"]["combat"]["attack"] == "1d4"
+    assert p.npcs["hilda"].get("shop_always") is True
+    road = p.locations["road"]["random_encounters"]
+    assert road["chance"] == 35
+    assert road["table"][0]["encounter"] == "wolf"
+    start = p.dialogues["kain"]["nodes"]["start"]["choices"][0]
+    assert any(isinstance(e, dict) and e.get("follow") == "mira" for e in start["effects"])
