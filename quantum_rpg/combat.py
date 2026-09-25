@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
+from .conditions import check
 from .effects import apply as apply_effects
 from .abilities import available as available_abilities
 from .abilities import resolve_choice as resolve_ability
@@ -105,6 +106,7 @@ def run(game: "Game", encounter_id: str) -> str:
         return "none"
     game.in_combat = True
     game.combat_id = encounter_id
+    game._combat_phases = set()
     enemies = _build_enemies(game, enc)
     appear = loc((enc.get("phrases") or {}).get("appear") or enc.get("appear"), game.lang)
     if appear:
@@ -136,7 +138,9 @@ def run(game: "Game", encounter_id: str) -> str:
             return "win"
 
         _status(game, living)
+        _phases(game, enc, living)
         rows = available_abilities(game)
+        actions = _author_actions(game, enc)
         game.say(t(game.lang, "combat_menu"))
         choices = [
             {"label": t(game.lang, "attack"), "command": "1"},
@@ -148,6 +152,11 @@ def run(game: "Game", encounter_id: str) -> str:
             name = loc(spec.get("name") or aid, game.lang)
             cost = int(spec.get("mp") or 0)
             label = f"{i}. {name}" + (f" ({cost} MP)" if cost else "")
+            game.say(f"  {label}")
+            choices.append({"label": label, "command": str(i)})
+        start = 5 + len(rows)
+        for i, row in enumerate(actions, start):
+            label = f"{i}. {loc(row.get('name') or row.get('id'), game.lang)}"
             game.say(f"  {label}")
             choices.append({"label": label, "command": str(i)})
         game.set_choices(choices)
@@ -165,7 +174,9 @@ def run(game: "Game", encounter_id: str) -> str:
             game.handle(choice)
             continue
         ability_id = resolve_ability(game, choice)
-        if ability_id:
+        if _author_action(game, enc, choice, living, len(rows)):
+            defending = False
+        elif ability_id:
             if not _cast(game, ability_id, living):
                 continue
             defending = False
@@ -206,6 +217,7 @@ def run(game: "Game", encounter_id: str) -> str:
         living = [e for e in enemies if e.hp > 0]
         if not living or game.state.ended or not game.running:
             continue
+        _phases(game, enc, living)
 
         _allies_act(game, living)
         living = [e for e in enemies if e.hp > 0]
@@ -231,6 +243,79 @@ def run(game: "Game", encounter_id: str) -> str:
         defending = False
         game.tick_status(in_combat=True)
         game._hunger_tick()
+
+
+def _author_actions(game: "Game", enc: dict) -> list:
+    out = []
+    for row in enc.get("actions") or []:
+        if isinstance(row, dict) and (not row.get("when") or check(game, row.get("when"))):
+            out.append(row)
+    return out
+
+
+def _author_action(game: "Game", enc: dict, choice: str, living: list, ability_count: int) -> bool:
+    actions = _author_actions(game, enc)
+    if not actions:
+        return False
+    start = 5 + ability_count
+    picked = None
+    if choice.isdigit():
+        number = int(choice)
+        if start <= number < start + len(actions):
+            picked = actions[number - start]
+    else:
+        for row in actions:
+            ident = str(row.get("id") or "").lower()
+            name = loc(row.get("name") or "", game.lang).lower()
+            if choice == ident or (name and choice == name):
+                picked = row
+                break
+    if not picked:
+        return False
+    target = living[0] if living else None
+    amount = picked.get("damage")
+    if amount and target:
+        dmg = roll(str(amount), game.rng) if "d" in str(amount) else int(amount)
+        target.hp -= max(0, dmg)
+        game.say(t(game.lang, "you_hit", dmg=dmg, name=target.name))
+        if target.hp <= 0:
+            game.say(t(game.lang, "enemy_down", name=target.name))
+            from . import fx
+
+            fx.run_on(game, "kill", game.combat_id or "")
+    text = loc(picked.get("say") or picked.get("text"), game.lang)
+    if text:
+        game.say(text)
+    if picked.get("fx"):
+        from . import fx
+
+        fx.play(game, picked.get("fx"))
+    if picked.get("effects"):
+        apply_effects(game, picked.get("effects"))
+    return True
+
+
+def _phases(game: "Game", enc: dict, living: list) -> None:
+    seen = game._combat_phases
+    for row in enc.get("phases") or []:
+        if not isinstance(row, dict) or row.get("at_hp") is None:
+            continue
+        mark = str(row.get("id") or row.get("at_hp"))
+        if mark in seen:
+            continue
+        limit = float(row.get("at_hp"))
+        if not any(e.hp > 0 and (100 * e.hp / max(1, e.max_hp)) <= limit for e in living):
+            continue
+        seen.add(mark)
+        text = loc(row.get("say") or row.get("text"), game.lang)
+        if text:
+            game.say(text)
+        if row.get("fx"):
+            from . import fx
+
+            fx.play(game, row.get("fx"))
+        if row.get("effects"):
+            apply_effects(game, row.get("effects"))
 
 
 def _parse_choice(choice: str) -> tuple[str, str]:

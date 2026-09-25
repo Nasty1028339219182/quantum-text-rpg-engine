@@ -12,7 +12,7 @@ Not a public release. 2.6.0 stays the public line until 3.0.0 is finished. No pi
 | 3.0.0-snapshot.6 | Deeper schematic map. Done. |
 | 3.0.0-snapshot.7 | Deeper text effects. Done. |
 | 3.0.0-snapshot.8 | Scenes: a line, a branch, a question. Done. |
-| 3.0.0-snapshot.9 | Combat from YAML. Author actions and an enemy phase. |
+| 3.0.0-snapshot.9 | Combat from YAML. Author actions and an enemy phase. Done. |
 | 3.0.0-snapshot.10 | Check the game. Last 3.0 snapshot. |
 
 Approved through snapshot 10. That is the end of the 3.0 snapshots.

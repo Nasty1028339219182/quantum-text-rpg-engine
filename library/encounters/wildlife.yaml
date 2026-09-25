@@ -7,6 +7,15 @@ wolf:
   loot: beast_remains
   appear: {ru: Из кустов выходит волк. Рёбра видны., en: A wolf steps from the brush. You can see its ribs.}
   flee_dc: 12
+  actions:
+    - id: shout
+      name: {ru: Крикнуть, en: Shout}
+      damage: 2
+      say: {ru: "Волк жмурится.", en: "The wolf flinches."}
+  phases:
+    - id: low
+      at_hp: 50
+      say: {ru: "Волк жмётся к земле.", en: "The wolf hugs the ground."}
 
 wolves:
   name: {ru: Волки, en: Wolves}

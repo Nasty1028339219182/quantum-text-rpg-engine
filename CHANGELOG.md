@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-snapshot.9 — not a release
+
+Private snapshot. Combat from YAML. Public line is still 2.6.0. No pictures.
+
+- An encounter can add `actions`. The four old buttons stay. The new one is the next number, or its id, or its name
+- `damage` on an action hits the enemy. `effects` are the usual effects
+- `when` hides the button
+- `phases` with `at_hp: 50` speaks once per fight, when the enemy is at half or less
+- The wolf can be shouted at, and it hugs the ground when it is hurt
+
 ## 3.0.0-snapshot.8 — not a release
 
 Private snapshot. Scenes. Public line is still 2.6.0. No pictures.

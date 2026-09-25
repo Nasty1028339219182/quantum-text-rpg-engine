@@ -11,7 +11,10 @@ HELP = {
   teleport                   id комнаты
   start_quest / complete_quest / fail_quest
   advance_quest: id   или {quest: id, step: home}
-  start_combat               id боя
+  start_combat
+  encounter.actions: [{id, name, when, damage, say, fx, effects}]
+  encounter.phases: [{id, at_hp: 50, say, effects}]   один раз за бой
+               id боя
   reveal_exit / unlock / lock
   spawn_item / spawn_npc / remove_npc
   rest / game_over: win|lose
@@ -198,6 +201,9 @@ INCLUDE
   teleport
   start_quest / advance_quest / complete_quest / fail_quest
   start_combat
+  encounter.actions: [{id, name, when, damage, say, fx, effects}]
+  encounter.phases: [{id, at_hp: 50, say, effects}]   один раз за бой
+
   reveal_exit / unlock / lock
   spawn_item / spawn_npc / remove_npc
   rest / game_over: win|lose

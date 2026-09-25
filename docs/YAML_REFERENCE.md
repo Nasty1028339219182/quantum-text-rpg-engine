@@ -189,7 +189,25 @@ name, hp, attack, defense, ac, xp, loot, phrases, appear, flee_dc
 enemies: [encounter_id]          # group fight
 on_win, on_lose: effects
 loot: [{item, chance}]
+actions:
+  - id: shout
+    name: {ru: Крикнуть, en: Shout}
+    when: {meter: {thirst: {lte: 40}}}
+    damage: 2
+    say: {ru: "Волк жмурится.", en: "The wolf flinches."}
+    fx: blow
+    effects:
+      - set_flag: shouted
+phases:
+  - id: low
+    at_hp: 50
+    say: {ru: "Волк жмётся к земле.", en: "The wolf hugs the ground."}
+    effects:
+      - set_flag: wolf_low
 ```
+
+The four buttons stay: attack, item, defend, flee. An author action is the next number, or its id, or its name. `damage` hits the enemy. `effects` are the usual effects, so `damage` there still hurts the player. `at_hp: 50` means half health or less. The phase speaks once per fight. `when` hides a button.
+
 
 Attack/damage strings: `1d8+2`, `2d6`, `4`.
 
