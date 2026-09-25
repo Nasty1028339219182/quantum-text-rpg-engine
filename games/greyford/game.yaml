@@ -149,11 +149,28 @@ ui:
     party: {ru: Свои, en: Ours}
     meters: {ru: Состояние, en: Condition}
     map: {ru: Схема, en: Plan}
+  screens:
+    shop:
+      show: [gold, goods, sell]
+      hint: {ru: Назови, что берёшь., en: Name what you take.}
+    party:
+      show: [hp, orders]
+  actions:
+    - label: {ru: Поклониться, en: Bow}
+      command: look shrine
 fx:
   hill:
     style: banner
     color: accent
+    anim: type
+    delay: 16
+    sound: hit
     text: {ru: Ветер на холме, en: Wind on the hill}
+  sparks:
+    style: particles
+    particles: spark
+    color: accent
+    text: {ru: Искры., en: Sparks.}
 map:
   ford:
     - ["", shrine, ""]

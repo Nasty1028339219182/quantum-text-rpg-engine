@@ -127,7 +127,12 @@ HELP = {
   клетка соседа — ход
   fx.blow: {style: shake, color: danger, text: {ru: Удар.}}
   - fx: blow
-  стили: plain, banner, whisper, shout, shake, glitch, rule
+  стили: plain, banner, whisper, shout, shake, glitch, rule, particles
+  anim: type | slow    delay: 16    sound: hit
+  particles: spark | rain | dust | pulse | ash
+  ui.screens.shop.show: [gold, goods, sell]
+  ui.actions: [{label: {ru: Поклониться}, command: look shrine}]
+
 
 
 

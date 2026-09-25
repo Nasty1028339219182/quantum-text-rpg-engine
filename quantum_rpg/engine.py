@@ -200,6 +200,8 @@ class Game:
             "grid": gridmap.view(self),
             "panels": self.ui_panels(),
             "ui_titles": self.ui_titles(),
+            "ui_screens": self.ui_screens(),
+            "ui_actions": self.ui_actions(),
             "followers": [
                 {
                     "id": fid,
@@ -1480,6 +1482,41 @@ class Game:
 
     def ui_title(self, key: str, fallback: str) -> str:
         return self.ui_titles().get(key) or fallback
+
+    def ui_screens(self) -> dict:
+        ui = self.world.game.get("ui") if isinstance(self.world.game.get("ui"), dict) else {}
+        screens = ui.get("screens") if isinstance(ui.get("screens"), dict) else {}
+        out = {}
+        for key, spec in screens.items():
+            if not isinstance(spec, dict):
+                continue
+            show = spec.get("show")
+            out[str(key)] = {
+                "show": [str(x) for x in show] if isinstance(show, list) else [],
+                "hint": loc(spec.get("hint"), self.lang) if spec.get("hint") else "",
+            }
+        return out
+
+    def screen_show(self, key: str, default: list[str]) -> list[str]:
+        spec = self.ui_screens().get(key)
+        if not spec or not spec.get("show"):
+            return list(default)
+        return list(spec["show"])
+
+    def ui_actions(self) -> list[dict]:
+        ui = self.world.game.get("ui") if isinstance(self.world.game.get("ui"), dict) else {}
+        raw = ui.get("actions") or []
+        out = []
+        if not isinstance(raw, list):
+            return out
+        for row in raw:
+            if not isinstance(row, dict) or not row.get("command"):
+                continue
+            out.append({
+                "label": loc(row.get("label") or row.get("command"), self.lang),
+                "command": str(row["command"]),
+            })
+        return out
 
     def _cmd_quests(self, cmd) -> None:
         self.say(t(self.lang, "quests"))

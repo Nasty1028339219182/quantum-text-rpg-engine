@@ -19,7 +19,7 @@ class TerminalIO:
     def set_choices(self, choices: list) -> None:
         return None
 
-    def fx(self, text: str, color: str = "") -> None:
+    def fx(self, text: str, color: str = "", anim: str = "", delay: int = 0) -> None:
         self.write(text)
 
 
@@ -50,7 +50,7 @@ class ScriptedIO:
     def set_choices(self, choices: list) -> None:
         self.choices = list(choices or [])
 
-    def fx(self, text: str, color: str = "") -> None:
+    def fx(self, text: str, color: str = "", anim: str = "", delay: int = 0) -> None:
         self.write(text)
 
     @property
@@ -88,8 +88,15 @@ class QueueIO:
         self.choices = list(choices or [])
         self.out.put({"op": "choices", "choices": self.choices, "snap": self._snap()})
 
-    def fx(self, text: str, color: str = "") -> None:
-        self.out.put({"op": "fx", "text": text, "color": color or "fg", "snap": self._snap()})
+    def fx(self, text: str, color: str = "", anim: str = "", delay: int = 0) -> None:
+        self.out.put({
+            "op": "fx",
+            "text": text,
+            "color": color or "fg",
+            "anim": anim or "",
+            "delay": int(delay or 0),
+            "snap": self._snap(),
+        })
 
     def submit(self, line: str) -> None:
         self.inp.put(line)

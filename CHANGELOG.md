@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-snapshot.4 — not a release
+
+Private snapshot. Deeper panels, plus three effect kinds. Public line is still 2.6.0. No pictures.
+
+- `ui.screens` can hide gold, goods, or sell, and party HP or orders. A hint line is optional
+- `ui.actions` adds the author's own buttons
+- `anim: type` or `slow` reveals a line in the window. `delay` is the pause
+- `style: particles` draws sparks, rain, dust, pulse, or ash from symbols
+- `sound` on an effect plays a cue
+
 ## 3.0.0-snapshot.3 — not a release
 
 Private snapshot. Panels, meters, a room grid, text effects. Public line is still 2.6.0. No pictures.

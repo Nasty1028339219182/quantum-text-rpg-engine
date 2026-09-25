@@ -295,6 +295,41 @@ class PlayWindow:
         self.log.see("end")
         self.log.configure(state="disabled")
 
+    def _reveal(self, text: str, color: str, anim: str, delay: int) -> None:
+        if not text:
+            return
+        if anim not in ("type", "slow") or delay <= 0:
+            self._append(text, color)
+            return
+        tag = color if color in ("fg", "dim", "accent", "danger", "ok") else "fg"
+        step = max(12, min(int(delay), 70))
+        parts = text.split(" ") if anim == "slow" else list(text)
+        self.log.configure(state="normal")
+        self.log.insert("end", "\n", tag)
+        mark = f"anim{self.log.index('end').replace('.', '_')}"
+        self.log.mark_set(mark, "end-1c")
+        self.log.mark_gravity(mark, "right")
+        self.log.configure(state="disabled")
+
+        def tick(i: int = 0) -> None:
+            if not self.frame.winfo_exists() or i >= len(parts):
+                return
+            piece = parts[i] if anim == "type" else ((" " if i else "") + parts[i])
+            self.log.configure(state="normal")
+            self.log.insert(mark, piece, tag)
+            self.log.see("end")
+            self.log.configure(state="disabled")
+            self.root.after(step, lambda n=i + 1: tick(n))
+
+        tick()
+
+    def _screen(self, key: str) -> dict:
+        return ((self.snap or {}).get("ui_screens") or {}).get(key) or {}
+
+    def _shown(self, key: str, default: list[str]) -> list[str]:
+        show = self._screen(key).get("show") or []
+        return show or list(default)
+
     def _pump(self) -> None:
         if not self.frame.winfo_exists():
             return
@@ -305,7 +340,12 @@ class PlayWindow:
                 if op == "write":
                     self._append(msg.get("text") or "")
                 elif op == "fx":
-                    self._append(msg.get("text") or "", msg.get("color") or "fg")
+                    self._reveal(
+                        msg.get("text") or "",
+                        msg.get("color") or "fg",
+                        msg.get("anim") or "",
+                        int(msg.get("delay") or 0),
+                    )
                 elif op == "read":
                     self.waiting = True
                     prompt = (msg.get("prompt") or "> ").strip()
@@ -369,15 +409,20 @@ class PlayWindow:
                 "prompt": self._ui_title("prompt", t(self.lang, "pick_class")),
             }.get(mode, "")
             self._head(title)
-            if mode == "shop":
+            hint = self._screen(mode).get("hint") or ""
+            if hint:
+                tk.Label(self.side, text=hint, bg=C["bg"], fg=C["dim"], font=font_ui(8), anchor="w", wraplength=250).pack(fill="x")
+            shown = self._shown(mode, ["gold", "goods", "sell"] if mode == "shop" else ["choices"])
+            if mode == "shop" and "gold" in shown:
                 tk.Label(
                     self.side,
                     text=f"{t(self.lang, 'gold')} {s.get('gold', 0)}",
                     bg=C["bg"], fg=C["accent"], font=font_ui(9), anchor="w",
                 ).pack(fill="x")
-            for ch in choices:
-                self._btn(ch.get("label") or ch.get("command"), ch.get("command") or "")
-            if mode == "shop":
+            if "goods" in shown or mode != "shop":
+                for ch in choices:
+                    self._btn(ch.get("label") or ch.get("command"), ch.get("command") or "")
+            if mode == "shop" and "sell" in shown:
                 self._head(self._ui_title("inventory", t(self.lang, "inventory")))
                 for it in s.get("inventory") or []:
                     self._btn(f"{self._tr('gui_sell')}: {it['label']}", f"sell {it['id']}")
@@ -481,6 +526,8 @@ class PlayWindow:
 
     def _panel_actions(self, s: dict) -> None:
         self._head(self._ui_title("actions", self._tr("gui_actions")))
+        for act in s.get("ui_actions") or []:
+            self._btn(act.get("label") or act.get("command"), act.get("command") or "")
         self._btn(self._tr("gui_look"), "look")
         self._btn(self._tr("gui_search"), "search")
         self._btn(t(self.lang, "stats"), "stats")
@@ -499,16 +546,20 @@ class PlayWindow:
         people = s.get("followers") or []
         if not people:
             return
+        shown = self._shown("party", ["hp", "orders"])
         self._head(self._ui_title("party", t(self.lang, "party")))
+        hint = self._screen("party").get("hint") or ""
+        if hint:
+            tk.Label(self.side, text=hint, bg=C["bg"], fg=C["dim"], font=font_ui(8), anchor="w", wraplength=250).pack(fill="x")
         for person in people:
-            tk.Label(
-                self.side,
-                text=f"{person['label']}  {person.get('hp')}/{person.get('max_hp')}  {person.get('order')}",
-                bg=C["bg"], fg=C["fg"], font=font_ui(9), anchor="w",
-            ).pack(fill="x")
-            self._btn(t(self.lang, "order_wait_btn"), f"приказ {person['id']} жди")
-            self._btn(t(self.lang, "order_follow_btn"), f"приказ {person['id']} за мной")
-            self._btn(t(self.lang, "order_hold_btn"), f"приказ {person['id']} не дерись")
+            line = person["label"]
+            if "hp" in shown:
+                line += f"  {person.get('hp')}/{person.get('max_hp')}  {person.get('order')}"
+            tk.Label(self.side, text=line, bg=C["bg"], fg=C["fg"], font=font_ui(9), anchor="w").pack(fill="x")
+            if "orders" in shown:
+                self._btn(t(self.lang, "order_wait_btn"), f"приказ {person['id']} жди")
+                self._btn(t(self.lang, "order_follow_btn"), f"приказ {person['id']} за мной")
+                self._btn(t(self.lang, "order_hold_btn"), f"приказ {person['id']} не дерись")
 
     def _panel_inventory(self, s: dict) -> None:
         self._head(self._ui_title("inventory", t(self.lang, "inventory")))

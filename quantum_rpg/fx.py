@@ -9,6 +9,14 @@ from .util import loc
 if TYPE_CHECKING:
     from .engine import Game
 
+PARTICLES = {
+    "spark": ("  *   *  *   *", " *  *    * *  *"),
+    "rain": (" | |  | | | | |", "  | | |  | | | "),
+    "dust": (" .  . .   .  .", "  .   . .  . . "),
+    "pulse": (" ·   ·   ·   ·", "   ·   ·   ·  "),
+    "ash": (" +  + +   +  +", "  +   + +  + + "),
+}
+
 
 def resolve(game: "Game", spec) -> dict:
     table = game.world.game.get("fx") or {}
@@ -26,6 +34,14 @@ def render(spec: dict, lang: str) -> list[tuple[str, str]]:
     style = str(spec.get("style") or "plain")
     text = loc(spec.get("text") or spec.get("line"), lang)
     color = str(spec.get("color") or _color(style))
+    if style == "particles":
+        kind = str(spec.get("particles") or spec.get("particle") or "spark")
+        rows = PARTICLES.get(kind, PARTICLES["spark"])
+        count = max(1, min(int(spec.get("rows") or len(rows)), len(rows)))
+        out = [(row, color or "accent") for row in rows[:count]]
+        if text:
+            out.append((str(text), color or "accent"))
+        return out
     if style == "rule" or not text and style == "rule":
         return [("────────", color or "dim")]
     if not text:
@@ -46,10 +62,15 @@ def render(spec: dict, lang: str) -> list[tuple[str, str]]:
 
 def play(game: "Game", spec) -> None:
     body = resolve(game, spec)
+    sound = body.get("sound") or body.get("sfx")
+    if sound and getattr(game, "audio", None) is not None:
+        game.audio.cue(sound)
+    anim = str(body.get("anim") or "")
+    delay = int(body.get("delay") or 0)
     for text, color in render(body, game.lang):
         fn = getattr(game.ui, "fx", None)
         if callable(fn):
-            fn(text, color)
+            fn(text, color, anim, delay)
         else:
             game.say(text)
 
@@ -62,4 +83,5 @@ def _color(style: str) -> str:
         "glitch": "danger",
         "banner": "accent",
         "rule": "dim",
+        "particles": "accent",
     }.get(style, "fg")

@@ -394,7 +394,31 @@ fx:
 - fx: blow
 ```
 
-Styles: `plain`, `banner`, `whisper`, `shout`, `shake`, `glitch`, `rule`. Colors: `fg`, `dim`, `accent`, `danger`, `ok`.
+Styles: `plain`, `banner`, `whisper`, `shout`, `shake`, `glitch`, `rule`, `particles`. Colors: `fg`, `dim`, `accent`, `danger`, `ok`.
+
+A screen can hide pieces. A custom action is just another button. `anim: type` prints the line letter by letter in the window (the text log still gets the whole line). `anim: slow` does it word by word. `delay` is milliseconds, kept between 12 and 70. `sound` plays a cue from `audio.sfx`. `particles` is a symbol burst: `spark`, `rain`, `dust`, `pulse`, `ash`.
+
+```yaml
+ui:
+  screens:
+    shop:
+      show: [gold, goods, sell]
+      hint: {ru: Назови, что берёшь., en: Name what you take.}
+    party:
+      show: [hp, orders]
+  actions:
+    - label: {ru: Поклониться, en: Bow}
+      command: look shrine
+fx:
+  sparks:
+    style: particles
+    particles: spark
+    sound: hit
+    anim: type
+    delay: 16
+    text: {ru: Искры., en: Sparks.}
+```
+
 
 
 
