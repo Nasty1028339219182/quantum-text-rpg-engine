@@ -453,6 +453,12 @@ class PlayWindow:
         if not grid:
             return
         self._head(self._ui_title("map", t(self.lang, "map")))
+        drawn = s.get("grid_text") or ""
+        if drawn:
+            tk.Label(
+                self.side, text=drawn, bg=C["bg"], fg=C["fg"], font=font_log(8),
+                justify="left", anchor="w",
+            ).pack(anchor="w", pady=(0, 4))
         for row in grid:
             line = tk.Frame(self.side, bg=C["line"])
             line.pack(fill="x", pady=1)
@@ -462,7 +468,7 @@ class PlayWindow:
                 if cmd:
                     Btn(
                         line, text=label, command=lambda c=cmd: self._send(c),
-                        font=font_log(9), anchor="center", width=4,
+                        font=font_log(9), anchor="center", width=max(4, len(label)),
                         fg=C["accent"] if cell.get("here") else C["fg"],
                     ).pack(side="left", padx=1, expand=True, fill="x")
                 else:
@@ -534,6 +540,7 @@ class PlayWindow:
         self._btn(t(self.lang, "quests"), "quests")
         self._btn(t(self.lang, "journal"), "journal")
         self._btn(t(self.lang, "map"), "map")
+        self._btn(t(self.lang, "notes"), "note")
         self._btn(t(self.lang, "meters"), "meters")
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")

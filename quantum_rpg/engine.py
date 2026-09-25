@@ -198,6 +198,7 @@ class Game:
             ],
             "meters": meters.rows(self),
             "grid": gridmap.view(self),
+            "grid_text": gridmap.render(gridmap.view(self)),
             "panels": self.ui_panels(),
             "ui_titles": self.ui_titles(),
             "ui_screens": self.ui_screens(),
@@ -412,6 +413,7 @@ class Game:
             "rumors": self._cmd_rumors,
             "map": self._cmd_map,
             "meters": self._cmd_meters,
+            "note": self._cmd_note,
             "travel": self._cmd_travel,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
@@ -1873,12 +1875,22 @@ class Game:
         self.travel_to(query)
 
     def _cmd_map(self, cmd) -> None:
-        grid = gridmap.view(self)
+        query = (cmd.argstr or "").strip()
+        floor = gridmap.floor_match(self, query) if query else ""
+        if query and not floor and self._map_step(query):
+            return
+        if query and not floor:
+            self.say(t(self.lang, "no_floor"))
+            return
+        if floor and not gridmap.floor_seen(self, floor):
+            self.say(t(self.lang, "map_hidden"))
+            return
+        grid = gridmap.view(self, floor)
         if grid:
             self.say(t(self.lang, "map"))
-            rid = self.region_of(self.state.location)
-            if rid:
-                self.say(self.region_name(rid))
+            shown = floor or gridmap.floor_of(self, self.state.location)
+            if shown:
+                self.say(gridmap.floor_name(self, shown))
             self.say(gridmap.render(grid))
             return
         self.say(t(self.lang, "map"))
@@ -1899,6 +1911,54 @@ class Game:
                 if locked:
                     dest += f" ({t(self.lang, 'locked')})"
                 self.say(f"    {dir_name(direction, self.lang)} — {dest}")
+
+    def _map_step(self, query: str) -> bool:
+        q = query.lower()
+        for row in gridmap.view(self):
+            for cell in row:
+                cmd = str(cell.get("command") or "")
+                if not cmd:
+                    continue
+                names = {
+                    cmd.lower(),
+                    dir_name(cmd, "ru").lower(),
+                    dir_name(cmd, "en").lower(),
+                    str(cell.get("id") or "").lower(),
+                    str(cell.get("label") or "").lower().strip("[]*"),
+                }
+                if q in names:
+                    self.handle(cmd)
+                    return True
+        return False
+
+    def _cmd_note(self, cmd) -> None:
+        text = (cmd.argstr or "").strip()
+        if not text:
+            self.say(t(self.lang, "notes"))
+            if not self.state.map_notes:
+                self.say(t(self.lang, "nothing"))
+                return
+            for loc_id, note in self.state.map_notes.items():
+                self.say(f"  {self.loc_name(loc_id)} — {note}")
+            return
+        parts = text.split(None, 1)
+        loc_id = self._match_place(parts[0]) if len(parts) == 2 else ""
+        body = parts[1] if loc_id else text
+        where = loc_id or self.state.location
+        if body in ("-", "clear", "стереть"):
+            self.state.map_notes.pop(where, None)
+            self.say(t(self.lang, "noted", text="-"))
+            return
+        self.state.map_notes[where] = body
+        self.say(t(self.lang, "noted", text=body))
+
+    def _match_place(self, query: str) -> str:
+        q = query.lower()
+        for loc_id in self.world.locations:
+            if loc_id == self.state.location or loc_id in self.state.visited:
+                if q == loc_id.lower() or q == self.loc_name(loc_id).lower():
+                    return loc_id
+        return ""
 
     def _cmd_party(self, cmd) -> None:
         self.say(t(self.lang, "party"))

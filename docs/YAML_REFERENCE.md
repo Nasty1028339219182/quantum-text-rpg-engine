@@ -397,15 +397,25 @@ when: {meter: {hunger: {lte: 2}}}
 - meter: {thirst: -4}
 ```
 
-The grid is rows of room ids. An empty cell is `""`. `карта` draws the boxes. A neighbor cell is a button: click it to walk that way. Unvisited rooms stay blank. `map_mark` is the two letters in the cell.
+The grid is rows of room ids. An empty cell is `""`. `карта` draws the boxes for the floor you are on. A neighbor cell is a button, and `карта запад` or `карта inn` walks there. Every room on the floor is a cell: a known one shows its letters, an unknown one shows `?`. `reveal: fog` hides rooms you are not next to. `reveal: all` prints every name.
+
+A border tells the truth. A gap is an open door, `>` is one way, `×` is locked, `═` or `║` means the rooms touch on paper and have no door.
+
+A visited room can grow a mark by itself: `$` shop, `+` rest, `^` stairs. `map_tag` forces one letter. `пометка колодец` writes a note on the current room, and the cell gains `*`. `пометки` lists them. `карта холм` shows another floor after you have been on it.
 
 ```yaml
 map:
-  ford:
-    - ["", shrine, ""]
-    - [inn, square, mill]
-    - ["", road, ""]
+  reveal: rooms
+  floors:
+    ford:
+      name: {ru: Брод, en: Ford}
+      grid:
+        - ["", shrine, ""]
+        - [inn, square, mill]
 ```
+
+`map_mark` is the two letters in the cell. The older `map.ford: [rows]` form still works.
+
 
 Text effects, also with no picture:
 

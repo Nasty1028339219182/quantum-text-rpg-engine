@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.0-snapshot.6 — not a release
+
+Private snapshot. Deeper schematic map. Public line is still 2.6.0. No pictures.
+
+- A floor is the grid you are on. `карта холм` shows another floor after you have been there
+- Unknown rooms stay boxes with `?`. `reveal: fog` hides them. `reveal: all` prints names
+- The border is the door: a gap is open, `>` is one way, `×` is locked, `║` means no door
+- `$` shop, `+` rest, `^` stairs, or one letter from `map_tag`. Only after you have been there
+- `пометка текст` marks the room. The cell gets `*`. `карта запад` walks that way
+
 ## 3.0.0-snapshot.5 — not a release
 
 Private snapshot. Deeper meters. Public line is still 2.6.0. No pictures.

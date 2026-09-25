@@ -129,7 +129,13 @@ HELP = {
 
   - meter: {thirst: -4}
   map.ford: [["", shrine, ""], [inn, square, mill]]
-  клетка соседа — ход
+  клетка соседа — ход; карта запад — тоже ход
+  ? нехоженое, + отдых, $ лавка, ^ лестница, * пометка
+  дверь: пробел открыта, > в одну сторону, × закрыта, ║ стены нет
+  карта холм — другой этаж, если ты там был
+  пометка текст
+  пометки
+
   fx.blow: {style: shake, color: danger, text: {ru: Удар.}}
   - fx: blow
   стили: plain, banner, whisper, shout, shake, glitch, rule, particles
