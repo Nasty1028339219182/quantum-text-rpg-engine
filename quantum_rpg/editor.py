@@ -499,6 +499,8 @@ class GameForm(_Base):
         self.night_bonus = _labeled(
             parent, "time.night_encounter_bonus", str(clock.get("night_encounter_bonus") or "")
         )
+        self.regions = _yaml_field(parent, "regions (YAML)", yaml_dump_text(g.get("regions")))
+        self.roads = _yaml_field(parent, "roads (YAML)", yaml_dump_text(g.get("roads")))
 
     def collect(self) -> None:
         g = self.ed.project.game
@@ -580,6 +582,16 @@ class GameForm(_Base):
             g["time"] = clock
         else:
             g.pop("time", None)
+        regions = yaml_load_text(_get(self.regions))
+        if regions:
+            g["regions"] = regions
+        else:
+            g.pop("regions", None)
+        roads = yaml_load_text(_get(self.roads))
+        if roads:
+            g["roads"] = roads
+        else:
+            g.pop("roads", None)
 
 
 def _labeled(parent, label: str, value: str) -> Entry:
@@ -598,6 +610,7 @@ class LocationForm(_Base):
         self.dark = _check(parent, "dark", loc.get("dark"))
         self.rest = _check(parent, "rest", loc.get("rest") is not False)
         self.music = _labeled(parent, "music", str(loc.get("music") or ""))
+        self.region = _labeled(parent, "region", str(loc.get("region") or ""))
         self.items = _labeled(parent, "items", csv_load(loc.get("items")))
         self.hidden = _labeled(parent, "hidden_items", csv_load(loc.get("hidden_items")))
         self.npcs = _labeled(parent, "npcs", csv_load(loc.get("npcs")))
@@ -718,6 +731,11 @@ class LocationForm(_Base):
             loc["music"] = music
         else:
             loc.pop("music", None)
+        region = _get(self.region).strip()
+        if region:
+            loc["region"] = region
+        else:
+            loc.pop("region", None)
         loc["items"] = csv_dump(_get(self.items))
         loc["hidden_items"] = csv_dump(_get(self.hidden))
         loc["npcs"] = csv_dump(_get(self.npcs))
@@ -782,7 +800,7 @@ class LocationForm(_Base):
 
 
 KEEP_LOC = {
-    "name", "description", "note_night", "dark", "rest", "music", "items", "hidden_items",
+    "name", "description", "note_night", "dark", "rest", "music", "region", "items", "hidden_items",
     "npcs", "exits", "search", "random_encounters", "id",
 }
 KEEP_ITEM = {

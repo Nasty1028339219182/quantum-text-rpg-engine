@@ -191,6 +191,10 @@ class Game:
                 or self.state.location in (self.room().get("tags") or [])
                 or r.get("station") in (self.room().get("tags") or [])
             ],
+            "roads": [
+                {"id": dest, "label": self.region_name(dest), "command": f"travel {dest}"}
+                for dest in self.road_destinations()
+            ],
         }
 
     # ------------------------------------------------------------------ setup
@@ -389,6 +393,7 @@ class Game:
             "quests": self._cmd_quests,
             "journal": self._cmd_journal,
             "map": self._cmd_map,
+            "travel": self._cmd_travel,
             "rest": self._cmd_rest,
             "wait": self._cmd_wait,
             "party": self._cmd_party,
@@ -1547,7 +1552,7 @@ class Game:
         queue = [start] if start else []
         while queue:
             loc_id = queue.pop(0)
-            if not loc_id or loc_id in seen or loc_id not in visited:
+            if not loc_id or loc_id in seen or loc_id not in visited or not self._on_map(loc_id):
                 continue
             seen.add(loc_id)
             order.append(loc_id)
@@ -1555,12 +1560,148 @@ class Game:
                 if target in visited and target not in seen:
                     queue.append(target)
         for loc_id in sorted(visited):
-            if loc_id not in seen:
+            if loc_id not in seen and self._on_map(loc_id):
                 order.append(loc_id)
         return order
 
+    def regions_spec(self) -> dict:
+        raw = self.world.game.get("regions") or {}
+        return raw if isinstance(raw, dict) else {}
+
+    def region_of(self, loc_id: str) -> str:
+        spec = self.regions_spec()
+        if not spec:
+            return ""
+        loc = self.world.locations.get(loc_id) or {}
+        if loc.get("region") and str(loc.get("region")) in spec:
+            return str(loc.get("region"))
+        for rid, body in spec.items():
+            if not isinstance(body, dict):
+                continue
+            rooms = [str(x) for x in (body.get("rooms") or [])]
+            if loc_id in rooms or str(body.get("start") or "") == loc_id:
+                return str(rid)
+        return ""
+
+    def region_name(self, rid: str) -> str:
+        body = self.regions_spec().get(rid) or {}
+        if not isinstance(body, dict):
+            return str(rid)
+        return loc(body.get("name") or rid, self.lang)
+
+    def _on_map(self, loc_id: str) -> bool:
+        spec = self.regions_spec()
+        if not spec:
+            return True
+        here = self.region_of(self.state.location)
+        there = self.region_of(loc_id)
+        if not here or not there:
+            return True
+        return here == there
+
+    def _iter_roads(self):
+        for road in self.world.game.get("roads") or []:
+            if not isinstance(road, dict) or not road.get("from") or not road.get("to"):
+                continue
+            yield road
+            if road.get("both", True) and str(road["from"]) != str(road["to"]):
+                back = dict(road)
+                back["from"], back["to"] = road["to"], road["from"]
+                yield back
+
+    def road_destinations(self) -> list[str]:
+        here = self.region_of(self.state.location)
+        if not here:
+            return []
+        out = []
+        for road in self._iter_roads():
+            if str(road["from"]) == here and str(road["to"]) not in out:
+                out.append(str(road["to"]))
+        return out
+
+    def _match_region(self, query: str) -> str:
+        spec = self.regions_spec()
+        q = (query or "").strip().lower()
+        if not q:
+            return ""
+        exact, starts, contains = [], [], []
+        for rid, body in spec.items():
+            if not isinstance(body, dict):
+                body = {}
+            labels = [str(rid).lower(), self.region_name(str(rid)).lower()]
+            labels += [str(a).lower() for a in (body.get("aliases") or [])]
+            if q in labels:
+                exact.append(str(rid))
+            elif any(label.startswith(q) for label in labels if label):
+                starts.append(str(rid))
+            elif any(q in label for label in labels if label):
+                contains.append(str(rid))
+        found = exact or starts or contains
+        if len(found) == 1:
+            return found[0]
+        return ""
+
+    def travel_to(self, query: str) -> None:
+        if not self.regions_spec():
+            self.say(t(self.lang, "no_regions"))
+            return
+        here = self.region_of(self.state.location)
+        dest = self._match_region(query)
+        road = None
+        if here and dest:
+            for item in self._iter_roads():
+                if str(item["from"]) == here and str(item["to"]) == dest:
+                    road = item
+                    break
+        if not road:
+            self.say(t(self.lang, "no_road"))
+            self._list_roads()
+            return
+        hours = max(1, int(road.get("hours") or 1))
+        text = loc(road.get("text"), self.lang)
+        self.say(text or t(self.lang, "travel", name=self.region_name(dest), hours=hours))
+        advance(self, hours)
+        for _ in range(hours):
+            self._hunger_tick()
+            if self.state.ended:
+                return
+        self.apply_schedules()
+        chance = int(road.get("chance") or 0)
+        enc = road.get("encounter")
+        if enc and chance and roll("1d100", self.rng) <= chance:
+            self.start_combat(str(enc))
+            if self.state.ended or not self.running:
+                return
+        start = (self.regions_spec().get(dest) or {}).get("start")
+        if start:
+            self.move_to(str(start))
+
+    def _list_roads(self) -> None:
+        dests = self.road_destinations()
+        if not dests:
+            self.say(t(self.lang, "no_regions"))
+            self.set_choices([])
+            return
+        self.say(t(self.lang, "roads"))
+        choices = []
+        for dest in dests:
+            name = self.region_name(dest)
+            self.say(f"  - {name}")
+            choices.append({"label": name, "command": f"travel {dest}"})
+        self.set_choices(choices)
+
+    def _cmd_travel(self, cmd) -> None:
+        query = (cmd.argstr or "").strip()
+        if not query:
+            self._list_roads()
+            return
+        self.travel_to(query)
+
     def _cmd_map(self, cmd) -> None:
         self.say(t(self.lang, "map"))
+        rid = self.region_of(self.state.location)
+        if rid:
+            self.say(self.region_name(rid))
         if not self.state.visited:
             self.say(t(self.lang, "nothing"))
             return

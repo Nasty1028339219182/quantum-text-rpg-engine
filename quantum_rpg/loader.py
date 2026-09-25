@@ -289,6 +289,7 @@ def _validate(world: World) -> None:
 
     _warn_dialogues(world)
     _warn_audio(world)
+    _warn_regions(world)
 
 
 def _warn_dialogues(world: World) -> None:
@@ -369,6 +370,31 @@ def _warn_audio(world: World) -> None:
                     clip = cue.get(key)
                     if clip and not known(table, str(clip)):
                         world.warnings.append(f"[audio.cues.{event}] {key} '{clip}' has no file")
+
+
+def _warn_regions(world: World) -> None:
+    regions = world.game.get("regions") or {}
+    if not isinstance(regions, dict) or not regions:
+        return
+    for rid, body in regions.items():
+        if not isinstance(body, dict):
+            world.warnings.append(f"[region {rid}] must be a mapping")
+            continue
+        start = body.get("start")
+        if start and start not in world.locations:
+            world.warnings.append(f"[region {rid}] start '{start}' is not a room")
+        for room in body.get("rooms") or []:
+            if str(room) not in world.locations:
+                world.warnings.append(f"[region {rid}] unknown room '{room}'")
+    for road in world.game.get("roads") or []:
+        if not isinstance(road, dict):
+            continue
+        for key in ("from", "to"):
+            if str(road.get(key) or "") not in regions:
+                world.warnings.append(f"[road] {key} '{road.get(key)}' is not a region")
+        enc = road.get("encounter")
+        if enc and enc not in world.encounters:
+            world.warnings.append(f"[road] unknown encounter '{enc}'")
 
 
 def initial_location_items(world: World) -> dict[str, list]:

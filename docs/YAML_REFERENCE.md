@@ -281,6 +281,33 @@ In play: `приказ мира жди`, `приказ мира за мной`, 
 
 An exit row has `hidden` and `trap dc / damage / skill`. Empty trap fields mean no trap. Text for the trap can stay in the exit dict.
 
+## Regions
+
+Optional. No `regions:` means the game is one map, as before.
+
+```yaml
+regions:
+  ford:
+    name: {ru: Седой Брод, en: Greyford}
+    start: square
+    rooms: [square, inn]
+  hill:
+    name: {ru: Холм дозорных, en: Watch hill}
+    aliases: [холм, hill]
+    start: hill
+    rooms: [hill]
+roads:
+  - from: ford
+    to: hill
+    hours: 2
+    chance: 40
+    encounter: wolf
+    both: true
+```
+
+`ехать холм` spends the hours, ticks hunger once an hour, may start the encounter, then puts you in that region's `start`. `both` defaults to true. The map shows only the current region. A room can also set `region: hill`.
+
+
 
 
 

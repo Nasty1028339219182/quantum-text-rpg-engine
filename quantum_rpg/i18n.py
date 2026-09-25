@@ -104,6 +104,10 @@ STRINGS: dict[str, dict[str, str]] = {
     "cant_rest": {"ru": "Здесь нельзя отдыхать.", "en": "You can't rest here."},
     "journal": {"ru": "Журнал", "en": "Journal"},
     "map": {"ru": "Известные места", "en": "Known places"},
+    "roads": {"ru": "Дороги", "en": "Roads"},
+    "no_regions": {"ru": "Отсюда нет дальней дороги.", "en": "No long road leaves here."},
+    "no_road": {"ru": "Такой дороги нет.", "en": "There is no such road."},
+    "travel": {"ru": "Дорога в {name}. Часов в пути: {hours}.", "en": "The road to {name}. Hours: {hours}."},
     "lang_set": {"ru": "Язык: русский.", "en": "Language: English."},
     "help_title": {"ru": "Команды", "en": "Commands"},
     "help_body": {
@@ -112,7 +116,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "осмотреть <что>, инвентарь, надеть / снять <предмет>, использовать <предмет>,\n"
             "говорить <кто>, атаковать <кто>, искать, открыть <что>, читать <что>,\n"
             "купить / продать, создать <рецепт>, дать <предмет> <кому>,\n"
-            "характеристики, задания, журнал, карта, отряд, приказ, отдохнуть, ждать,\n"
+            "характеристики, задания, журнал, карта, ехать, отряд, приказ, отдохнуть, ждать,\n"
             "сохранить [слот], загрузить [слот], язык ru|en, звук, громкость, помощь, выход"
         ),
         "en": (
@@ -120,7 +124,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "inventory, equip / unequip <item>, use <item>, talk <who>,\n"
             "attack <who>, search, open <thing>, read <thing>,\n"
             "buy / sell, craft <recipe>, give <item> <who>,\n"
-            "stats, quests, journal, map, party, order, rest, wait,\n"
+            "stats, quests, journal, map, travel, party, order, rest, wait,\n"
             "save [slot], load [slot], language ru|en, sound, volume, help, quit"
         ),
     },

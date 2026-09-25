@@ -103,6 +103,14 @@ HELP = {
   Проверить — нет WAV, диалог ссылается в пустоту
   выход: hidden, trap dc / damage / skill
 
+РЕГИОНЫ
+  regions.ford.start: square
+  regions.ford.rooms: [square, inn]
+  roads: [{from: ford, to: hill, hours: 2, chance: 40, encounter: wolf}]
+  ехать холм
+  карта показывает только этот регион
+
+
 
 
 

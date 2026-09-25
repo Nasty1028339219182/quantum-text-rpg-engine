@@ -109,6 +109,25 @@ time:
   rest_hours: 8
   shop_closed: [night]
   night_encounter_bonus: 25
+regions:
+  ford:
+    name: {ru: Седой Брод, en: Greyford}
+    start: square
+    rooms: [square, inn, mill, road, forest, den, camp, shrine]
+  hill:
+    name: {ru: Холм дозорных, en: Watch hill}
+    aliases: [холм, hill, холм дозорных]
+    start: hill
+    rooms: [hill]
+roads:
+  - from: ford
+    to: hill
+    hours: 2
+    chance: 40
+    encounter: wolf
+    text:
+      ru: Колея уходит от брода на восток, к голому холму.
+      en: A track leaves the ford toward a bare hill.
 audio:
   music_volume: 80
   sfx_volume: 100

@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.0.0-snapshot.1 — not a release
+
+Private snapshot. Regions and roads. The public line is still 2.6.0.
+
+- A game may list `regions` and `roads`
+- `ехать холм` spends hours, ticks hunger, may start a fight, then enters that region
+- The map shows only the current region
+- No `regions:` means one map, as in 2.6.0
+
+Still to come on this line: quest deadlines, level-up choice, rumors, packaging.
+
 ## 2.6.0 — 2026-09-25
 
 - Editor **From here** plays the open room and skips the name

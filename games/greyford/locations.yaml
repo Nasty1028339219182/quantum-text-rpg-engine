@@ -145,3 +145,13 @@ shrine:
     - message:
         ru: Камень отдаёт тепло. Руки перестают дрожать.
         en: The stone gives heat. The hands stop shaking.
+
+hill:
+  region: hill
+  name: {ru: Холм дозорных, en: Watch hill}
+  description:
+    ru: Голый холм над бродом. Ветер, старый столб и ничего, что стоило бы красть.
+    en: A bare hill above the ford. Wind, an old post, and nothing worth stealing.
+  rest: true
+  exits: {}
+

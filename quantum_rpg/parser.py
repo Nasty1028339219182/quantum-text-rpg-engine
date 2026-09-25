@@ -36,6 +36,7 @@ VERBS: dict[str, list[str]] = {
     "quests": ["quests", "quest", "задания", "квесты", "задание"],
     "journal": ["journal", "log", "журнал"],
     "map": ["map", "карта"],
+    "travel": ["travel", "ride", "ехать", "дорога", "путь"],
     "party": ["party", "отряд", "спутники"],
     "order": ["order", "приказ", "прикажи"],
     "reputation": ["reputation", "rep", "репутация", "фракции"],

@@ -94,6 +94,8 @@ def _apply_one(game: "Game", eff: dict) -> None:
             p.stats[k] = int(p.stats.get(k, 10)) + int(v)
     if "teleport" in eff:
         game.move_to(str(eff["teleport"]), silent=False)
+    if "travel" in eff:
+        game.travel_to(str(eff["travel"]))
     if "start_quest" in eff:
         qid = str(eff["start_quest"])
         if st.quests.get(qid) not in ("done", "failed"):

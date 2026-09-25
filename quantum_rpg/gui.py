@@ -395,6 +395,10 @@ class PlayWindow:
         self._btn(t(self.lang, "quests"), "quests")
         self._btn(t(self.lang, "journal"), "journal")
         self._btn(t(self.lang, "map"), "map")
+        if s.get("roads"):
+            self._head(t(self.lang, "roads"))
+            for road in s["roads"]:
+                self._btn(road["label"], road["command"])
         self._btn(t(self.lang, "party"), "party")
         self._btn(t(self.lang, "reputation"), "reputation")
         self._btn(t(self.lang, "sound_btn"), "sound")
