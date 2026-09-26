@@ -122,7 +122,13 @@ def test_tcl_fix_does_nothing_off_windows():
     prepare()
 
 
-def test_windows_entry_does_not_use_a_relative_import():
+def test_editor_sections_are_plain_language():
+    from quantum_rpg.i18n import t
+
+    assert t("ru", "ed_nav_start") == "С чего начать"
+    assert "NPC" not in t("ru", "ed_npcs")
+    assert "yaml" not in t("ru", "ed_events").lower()
+    assert "комнат" in t("ru", "ed_hint_rooms")
     text = (Path(__file__).resolve().parents[1] / "launch.py").read_text(encoding="utf-8")
     assert "from quantum_rpg.cli import main" in text
     assert "from ." not in text

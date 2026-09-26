@@ -27,16 +27,22 @@ from .project import (
 from .theme import C, Btn, Entry, Text, font_ui, font_log
 
 KINDS = [
-    ("locations", "ed_rooms"),
-    ("items", "ed_items"),
-    ("npcs", "ed_npcs"),
-    ("dialogues", "ed_dialogues"),
-    ("quests", "ed_quests"),
-    ("encounters", "ed_fights"),
-    ("recipes", "ed_recipes"),
-    ("abilities", "ed_abilities"),
-    ("loot_tables", "ed_loot"),
+    ("locations", "ed_rooms", "ed_hint_rooms", "ed_new_room", "world"),
+    ("items", "ed_items", "ed_hint_items", "ed_new_item", "world"),
+    ("npcs", "ed_npcs", "ed_hint_npcs", "ed_new_npc", "world"),
+    ("dialogues", "ed_dialogues", "ed_hint_dialogues", "ed_new_talk", "story"),
+    ("quests", "ed_quests", "ed_hint_quests", "ed_new_quest", "story"),
+    ("encounters", "ed_fights", "ed_hint_fights", "ed_new_fight", "fight"),
+    ("abilities", "ed_abilities", "ed_hint_abilities", "ed_new_ability", "fight"),
+    ("loot_tables", "ed_loot", "ed_hint_loot", "ed_new_loot", "fight"),
+    ("recipes", "ed_recipes", "ed_hint_recipes", "ed_new_recipe", "fight"),
 ]
+KIND_IDS = {row[0] for row in KINDS}
+GROUPS = (
+    ("world", "ed_nav_world"),
+    ("story", "ed_nav_story"),
+    ("fight", "ed_nav_fight"),
+)
 DIRS = ("north", "south", "east", "west", "up", "down")
 ITEM_TYPES = ("weapon", "armor", "shield", "accessory", "consumable", "key", "book", "quest", "misc")
 
@@ -54,16 +60,16 @@ class EditorWindow:
                 t(lang, "ed_copied", path=str(writable)),
             )
         self.project = Project.load(writable)
-        self.sel = ("game", "")
+        self.sel = ("guide", "")
         self.form: Optional[tk.Frame] = None
         self.vars: dict[str, Any] = {}
-        root.geometry("1100x720")
-        root.minsize(900, 580)
+        root.geometry("1180x760")
+        root.minsize(980, 620)
         self.frame = tk.Frame(root, bg=C["bg"])
         self.frame.pack(fill="both", expand=True)
         self._build()
         self._fill_tree()
-        self._show("game", "")
+        self._show("guide", "")
 
     def tr(self, key: str, **kw) -> str:
         return t(self.lang, key, **kw)
@@ -71,36 +77,46 @@ class EditorWindow:
     def _build(self) -> None:
         top = tk.Frame(self.frame, bg=C["panel"])
         top.pack(fill="x")
-        self.title_lbl = tk.Label(top, text="", bg=C["panel"], fg=C["accent"], font=font_ui(11, True))
-        self.title_lbl.pack(side="left", padx=12, pady=8)
-        Btn(top, text=self.tr("ed_help"), command=self._help, anchor="center").pack(side="right", padx=4, pady=6)
-        Btn(top, text=self.tr("ed_library"), command=self._library, anchor="center").pack(side="right", pady=6)
-        Btn(top, text=self.tr("gui_menu"), command=self._leave, anchor="center").pack(side="right", padx=8, pady=6)
-        Btn(top, text=self.tr("gui_play"), command=self._play, anchor="center").pack(side="right", pady=6)
-        Btn(top, text=self.tr("ed_play_here"), command=self._play_here, anchor="center").pack(side="right", padx=4, pady=6)
-        Btn(top, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="right", padx=4, pady=6)
-        Btn(top, text=self.tr("ed_package"), command=self._package, anchor="center").pack(side="right", padx=4, pady=6)
-        Btn(top, text=self.tr("gui_save"), command=self._save, anchor="center", font=font_ui(9, True)).pack(
-            side="right", pady=6
+        titles = tk.Frame(top, bg=C["panel"])
+        titles.pack(side="left", padx=16, pady=10)
+        self.title_lbl = tk.Label(titles, text="", bg=C["panel"], fg=C["fg"], font=font_ui(13, True))
+        self.title_lbl.pack(anchor="w")
+        self.path_lbl = tk.Label(titles, text="", bg=C["panel"], fg=C["dim"], font=font_ui(8))
+        self.path_lbl.pack(anchor="w")
+
+        actions = tk.Frame(top, bg=C["panel"])
+        actions.pack(side="right", padx=12, pady=8)
+        Btn(actions, text=self.tr("gui_save"), command=self._save, anchor="center", font=font_ui(9, True)).pack(side="left", padx=3)
+        Btn(actions, text=self.tr("gui_play"), command=self._play, anchor="center", font=font_ui(9, True)).pack(side="left", padx=3)
+        Btn(actions, text=self.tr("ed_validate"), command=self._validate, anchor="center").pack(side="left", padx=3)
+        more = tk.Menubutton(
+            actions, text=self.tr("ed_more"), bg=C["btn"], fg=C["fg"],
+            activebackground=C["btn_hi"], activeforeground=C["fg"],
+            relief="flat", bd=0, padx=10, pady=4, font=font_ui(9),
         )
+        menu = tk.Menu(more, tearoff=0, bg=C["panel"], fg=C["fg"], activebackground=C["accent"], activeforeground=C["bg"])
+        menu.add_command(label=self.tr("ed_play_here"), command=self._play_here)
+        menu.add_command(label=self.tr("ed_library"), command=self._library)
+        menu.add_command(label=self.tr("ed_package"), command=self._package)
+        menu.add_command(label=self.tr("ed_help"), command=self._help)
+        more.configure(menu=menu)
+        more.pack(side="left", padx=3)
+        Btn(actions, text=self.tr("gui_menu"), command=self._leave, anchor="center").pack(side="left", padx=(8, 0))
 
         body = tk.Frame(self.frame, bg=C["bg"])
-        body.pack(fill="both", expand=True, padx=10, pady=8)
+        body.pack(fill="both", expand=True)
 
-        left = tk.Frame(body, bg=C["line"], width=240)
+        left = tk.Frame(body, bg=C["panel"], width=248)
         left.pack(side="left", fill="y")
         left.pack_propagate(False)
-        self.tree = tk.Listbox(
-            left, bg=C["panel"], fg=C["fg"], selectbackground=C["accent"],
-            selectforeground=C["bg"], relief="flat", bd=0, font=font_ui(10),
-            highlightthickness=0, activestyle="none",
-        )
-        self.tree.pack(fill="both", expand=True, padx=1, pady=1)
-        self.tree.bind("<<ListboxSelect>>", lambda e: self._on_tree())
-        self.tree.bind("<Delete>", lambda e: self._delete_sel())
+        self.side = tk.Frame(left, bg=C["panel"])
+        self.side.pack(fill="both", expand=True, padx=10, pady=12)
+
+        rule = tk.Frame(body, bg=C["line"], width=1)
+        rule.pack(side="left", fill="y")
 
         right_wrap = tk.Frame(body, bg=C["bg"])
-        right_wrap.pack(side="right", fill="both", expand=True, padx=(10, 0))
+        right_wrap.pack(side="left", fill="both", expand=True)
         self.canvas = tk.Canvas(right_wrap, bg=C["bg"], highlightthickness=0, bd=0)
         scroll = tk.Scrollbar(right_wrap, command=self.canvas.yview, width=10)
         self.inner = tk.Frame(self.canvas, bg=C["bg"])
@@ -111,52 +127,77 @@ class EditorWindow:
         scroll.pack(side="right", fill="y")
         self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(1, width=e.width))
 
-        self.status = tk.Label(self.frame, text="", bg=C["bg"], fg=C["dim"], font=font_ui(9), anchor="w")
-        self.status.pack(fill="x", padx=12, pady=(0, 8))
+        self.status = tk.Label(self.frame, text="", bg=C["panel"], fg=C["dim"], font=font_ui(9), anchor="w")
+        self.status.pack(fill="x", ipady=6, padx=16)
         self._set_title()
 
     def _set_title(self) -> None:
         from .util import loc
 
         name = loc(self.project.game.get("title") or self.project.path.name, self.lang)
-        mark = " *" if self.project.dirty else ""
-        self.title_lbl.configure(text=f"{self.tr('ed_title')}: {name}{mark}")
+        mark = "  ·  " + self.tr("ed_unsaved_mark") if self.project.dirty else ""
+        self.title_lbl.configure(text=f"{name}{mark}")
+        self.path_lbl.configure(text=str(self.project.path))
+
+    def _section(self, sel: Optional[tuple] = None) -> str:
+        kind, eid = sel or self.sel
+        if kind == "index":
+            return str(eid)
+        return kind
 
     def _fill_tree(self, keep: Optional[tuple] = None) -> None:
-        self.tree.delete(0, "end")
-        self.rows: list[tuple[str, str]] = []
+        for child in self.side.winfo_children():
+            child.destroy()
+        current = self._section(keep)
+        self._nav_item("guide", self.tr("ed_nav_start"), current == "guide")
+        self._nav_item("game", self.tr("ed_game"), current == "game")
+        for group, title_key in GROUPS:
+            self._nav_label(self.tr(title_key))
+            for kind, label_key, _hint, _new, grp in KINDS:
+                if grp != group:
+                    continue
+                count = len(self.project.table(kind))
+                self._nav_item(kind, self.tr(label_key), current == kind, str(count))
+        self._nav_label(self.tr("ed_nav_extra"))
+        self._nav_item("events", self.tr("ed_events"), current == "events")
+        self._nav_item("hooks", self.tr("ed_hooks"), current == "hooks")
 
-        def add(label: str, kind: str, eid: str, dim: bool = False):
-            self.tree.insert("end", label)
-            self.rows.append((kind, eid))
+    def _nav_label(self, text: str) -> None:
+        tk.Label(
+            self.side, text=text.upper(), bg=C["panel"], fg=C["dim"],
+            font=font_ui(8), anchor="w",
+        ).pack(fill="x", pady=(14, 4))
 
-        add("  " + self.tr("ed_game"), "game", "")
-        for kind, key in KINDS:
-            add(self.tr(key).upper(), "head", kind)
-            for eid in self.project.table(kind):
-                add(f"    {eid}", kind, eid)
-            add("    + " + self.tr("ed_add"), "add", kind)
-        add(self.tr("ed_events"), "events", "")
-        add(self.tr("ed_hooks"), "hooks", "")
-        if keep:
-            for i, row in enumerate(self.rows):
-                if row == keep:
-                    self.tree.selection_set(i)
-                    self.tree.see(i)
-                    break
+    def _nav_item(self, kind: str, text: str, on: bool, count: str = "") -> None:
+        row = tk.Frame(self.side, bg=C["accent"] if on else C["panel"])
+        row.pack(fill="x", pady=1)
+        inner = tk.Frame(row, bg=C["line"] if on else C["panel"])
+        inner.pack(fill="x", padx=(2, 0))
+        label = f"{text}    {count}" if count else text
+        btn = tk.Button(
+            inner, text=label, command=lambda k=kind: self._nav(k),
+            bg=C["line"] if on else C["panel"], fg=C["fg"] if on else C["dim"],
+            activebackground=C["line"], activeforeground=C["fg"],
+            relief="flat", bd=0, anchor="w", padx=10, pady=6,
+            font=font_ui(10, on), highlightthickness=0, cursor="hand2",
+        )
+        btn.pack(fill="x")
 
-    def _on_tree(self) -> None:
-        sel = self.tree.curselection()
-        if not sel:
-            return
-        kind, eid = self.rows[sel[0]]
-        if kind == "head":
-            return
-        if kind == "add":
-            self._add(eid)
-            return
+    def _nav(self, kind: str) -> None:
         self._flush()
-        self._show(kind, eid)
+        if kind == "guide":
+            self._show("guide", "")
+        elif kind in ("game", "events", "hooks"):
+            self._show(kind, "")
+        else:
+            self._show("index", kind)
+        self._fill_tree()
+
+    def _kind_row(self, kind: str):
+        for row in KINDS:
+            if row[0] == kind:
+                return row
+        return None
 
     def _add(self, kind: str) -> None:
         eid = simpledialog.askstring("Quantum RPG", self.tr("ed_new_id"), parent=self.root)
@@ -167,19 +208,20 @@ class EditorWindow:
         except ValueError:
             messagebox.showerror("Quantum RPG", self.tr("ed_bad_id"))
             return
-        self._fill_tree((kind, eid.strip().replace(" ", "_")))
-        self._show(kind, eid.strip().replace(" ", "_"))
+        eid = eid.strip().replace(" ", "_")
+        self._show(kind, eid)
+        self._fill_tree()
         self._set_title()
 
     def _delete_sel(self) -> None:
         kind, eid = self.sel
-        if kind not in dict(KINDS) or not eid:
+        if kind not in KIND_IDS or not eid:
             return
         if not messagebox.askyesno("Quantum RPG", self.tr("ed_delete", id=eid)):
             return
         self.project.delete(kind, eid)
+        self._show("index", kind)
         self._fill_tree()
-        self._show("game", "")
         self._set_title()
 
     def _flush(self) -> None:
@@ -201,20 +243,60 @@ class EditorWindow:
         for w in self.inner.winfo_children():
             w.destroy()
         self.form = None
+        self.canvas.yview_moveto(0)
+
+    def _page(self, parent, title: str, hint: str) -> None:
+        tk.Label(parent, text=title, bg=C["bg"], fg=C["fg"], font=font_ui(18, True), anchor="w").pack(anchor="w")
+        if hint:
+            tk.Label(
+                parent, text=hint, bg=C["bg"], fg=C["dim"], font=font_ui(10),
+                wraplength=680, justify="left", anchor="w",
+            ).pack(anchor="w", pady=(6, 16))
+
+    def _entity_label(self, kind: str, eid: str) -> str:
+        from .util import loc
+
+        row = self.project.table(kind).get(eid) or {}
+        if not isinstance(row, dict):
+            return eid
+        name = loc(row.get("name") or "", self.lang)
+        if name and name != eid:
+            return f"{name}    {eid}"
+        return eid
 
     def _show(self, kind: str, eid: str) -> None:
         self.sel = (kind, eid)
         self._clear_form()
         box = tk.Frame(self.inner, bg=C["bg"])
-        box.pack(fill="both", expand=True, padx=8, pady=4)
+        box.pack(fill="both", expand=True, padx=28, pady=22)
         self.form = box
-        if kind == "game":
+        if kind == "guide":
+            self._show_guide(box)
+        elif kind == "index":
+            self._show_index(box, eid)
+        elif kind == "game":
+            self._page(box, self.tr("ed_game"), self.tr("ed_hint_game"))
             GameForm(box, self)
         elif kind == "events":
+            self._page(box, self.tr("ed_events"), self.tr("ed_hint_events"))
             RawForm(box, self, "events_text", "events.yaml")
         elif kind == "hooks":
+            self._page(box, self.tr("ed_hooks"), self.tr("ed_hint_hooks"))
             RawForm(box, self, "hooks_text", "hooks.py")
-        elif kind == "locations":
+        else:
+            row = self._kind_row(kind)
+            title = self._entity_label(kind, eid)
+            hint = self.tr(row[2]) if row else ""
+            bar = tk.Frame(box, bg=C["bg"])
+            bar.pack(fill="x", pady=(0, 8))
+            Btn(bar, text="←  " + self.tr("ed_back"), command=lambda k=kind: self._nav(k), anchor="w").pack(side="left")
+            Btn(bar, text=self.tr("ed_delete_btn"), command=self._delete_sel, anchor="center").pack(side="right")
+            self._page(box, title, hint)
+            self._mount(box, kind, eid)
+        self.status.configure(text=self.tr("ed_status_ok"), fg=C["dim"])
+
+    def _mount(self, box, kind: str, eid: str) -> None:
+        if kind == "locations":
             LocationForm(box, self, eid)
         elif kind == "items":
             ItemForm(box, self, eid)
@@ -232,7 +314,42 @@ class EditorWindow:
             AbilityForm(box, self, eid)
         elif kind == "loot_tables":
             LootForm(box, self, eid)
-        self.status.configure(text=f"{kind} {eid}".strip(), fg=C["dim"])
+
+    def _show_guide(self, box) -> None:
+        self._page(box, self.tr("ed_guide_title"), self.tr("ed_guide_body"))
+        for key in ("ed_guide_1", "ed_guide_2", "ed_guide_3", "ed_guide_4"):
+            tk.Label(
+                box, text=self.tr(key), bg=C["bg"], fg=C["fg"], font=font_ui(11),
+                wraplength=680, justify="left", anchor="w",
+            ).pack(anchor="w", pady=3)
+        row = tk.Frame(box, bg=C["bg"])
+        row.pack(anchor="w", pady=(18, 0))
+        Btn(row, text=self.tr("ed_game"), command=lambda: self._nav("game"), anchor="center").pack(side="left")
+        Btn(row, text=self.tr("ed_rooms"), command=lambda: self._nav("locations"), anchor="center").pack(side="left", padx=8)
+        Btn(row, text=self.tr("gui_play"), command=self._play, anchor="center", font=font_ui(9, True)).pack(side="left")
+
+    def _show_index(self, box, kind: str) -> None:
+        row = self._kind_row(kind)
+        if not row:
+            return
+        _kind, label_key, hint_key, new_key, _group = row
+        self._page(box, self.tr(label_key), self.tr(hint_key))
+        Btn(box, text="+  " + self.tr(new_key), command=lambda k=kind: self._add(k), anchor="w", font=font_ui(10, True)).pack(anchor="w", pady=(0, 12))
+        table = self.project.table(kind)
+        if not table:
+            tk.Label(box, text=self.tr("ed_empty"), bg=C["bg"], fg=C["dim"], font=font_ui(10)).pack(anchor="w")
+            return
+        for eid in table:
+            Btn(
+                box, text=self._entity_label(kind, eid),
+                command=lambda k=kind, i=eid: self._open_entity(k, i),
+                anchor="w",
+            ).pack(fill="x", pady=2)
+
+    def _open_entity(self, kind: str, eid: str) -> None:
+        self._flush()
+        self._show(kind, eid)
+        self._fill_tree()
 
     def _save(self) -> bool:
         self._flush()
@@ -357,7 +474,7 @@ class EditorWindow:
             if not sel:
                 return
             brick = bricks[sel[0]]
-            table = self.project.table(brick.kind) if brick.kind in dict(KINDS) or hasattr(self.project, brick.kind) else None
+            table = self.project.table(brick.kind) if brick.kind in KIND_IDS or hasattr(self.project, brick.kind) else None
             if table is None:
                 if brick.kind == "loot_tables":
                     game = self.project.game
@@ -485,8 +602,6 @@ class GameForm(_Base):
         rooms = tuple(editor.project.locations) or ("start_room",)
         self.start = _option(parent, "start.location", start_id if start_id in rooms else (rooms[0] if rooms else ""), rooms)
         self.intro = _loc(parent, "intro", g.get("intro"), height=4)
-        self.win_flags = _labeled(parent, "win.flags", csv_load(win.get("flags") or win.get("flag")))
-        self.win_text = _loc(parent, "win.text", win.get("text"), height=3)
         self.pname = _labeled(parent, "player.name", player.get("name") or "")
         self.prompt = _check(parent, "player.name_prompt", player.get("name_prompt"))
         self.hp = _labeled(parent, "player.hp", str(player.get("hp") or 20))
@@ -498,34 +613,45 @@ class GameForm(_Base):
             ",".join(str(stats.get(k, 10)) for k in ("str", "dex", "int", "con", "cha", "per")),
         )
         self.inv = _labeled(parent, "player.inventory", csv_load(player.get("inventory")))
-        self.include = _labeled(parent, "include (library files)", csv_load(g.get("include") or g.get("includes")))
-        self.class_prompt = _check(parent, "class_prompt", bool(g.get("classes")) if g.get("class_prompt") is None else bool(g.get("class_prompt")))
-        self.classes = _yaml_field(parent, "classes (YAML)", yaml_dump_text(g.get("classes")))
-        self.factions = _yaml_field(parent, "factions (YAML)", yaml_dump_text(g.get("factions")))
+        rest = tk.Frame(parent, bg=C["bg"])
+
+        def _toggle(box=rest):
+            if box.winfo_ismapped():
+                box.pack_forget()
+            else:
+                box.pack(fill="x", pady=(8, 0))
+
+        Btn(parent, text=editor.tr("ed_more_fields"), command=_toggle, anchor="w").pack(anchor="w", pady=(18, 4))
+        self.win_flags = _labeled(rest, "win.flags", csv_load(win.get("flags") or win.get("flag")))
+        self.win_text = _loc(rest, "win.text", win.get("text"), height=3)
+        self.include = _labeled(rest, "include (library files)", csv_load(g.get("include") or g.get("includes")))
+        self.class_prompt = _check(rest, "class_prompt", bool(g.get("classes")) if g.get("class_prompt") is None else bool(g.get("class_prompt")))
+        self.classes = _yaml_field(rest, "classes (YAML)", yaml_dump_text(g.get("classes")))
+        self.factions = _yaml_field(rest, "factions (YAML)", yaml_dump_text(g.get("factions")))
         hunger = g.get("hunger") or {}
         if not isinstance(hunger, dict):
             hunger = {}
-        self.hunger_max = _labeled(parent, "hunger.max (empty = off)", str(hunger.get("max") or ""))
-        self.hunger_step = _labeled(parent, "hunger.step", str(hunger.get("step") or ""))
-        self.audio = _yaml_field(parent, "audio (YAML)", yaml_dump_text(g.get("audio")))
+        self.hunger_max = _labeled(rest, "hunger.max (empty = off)", str(hunger.get("max") or ""))
+        self.hunger_step = _labeled(rest, "hunger.step", str(hunger.get("step") or ""))
+        self.audio = _yaml_field(rest, "audio (YAML)", yaml_dump_text(g.get("audio")))
         clock = g.get("time") or {}
         if not isinstance(clock, dict):
             clock = {}
-        self.start_hour = _labeled(parent, "time.start_hour", str(clock.get("start_hour") or ""))
-        self.rest_hours = _labeled(parent, "time.rest_hours", str(clock.get("rest_hours") or ""))
-        self.shop_closed = _labeled(parent, "time.shop_closed  night,evening", csv_load(clock.get("shop_closed")))
+        self.start_hour = _labeled(rest, "time.start_hour", str(clock.get("start_hour") or ""))
+        self.rest_hours = _labeled(rest, "time.rest_hours", str(clock.get("rest_hours") or ""))
+        self.shop_closed = _labeled(rest, "time.shop_closed  night,evening", csv_load(clock.get("shop_closed")))
         self.night_bonus = _labeled(
-            parent, "time.night_encounter_bonus", str(clock.get("night_encounter_bonus") or "")
+            rest, "time.night_encounter_bonus", str(clock.get("night_encounter_bonus") or "")
         )
-        self.regions = _yaml_field(parent, "regions (YAML)", yaml_dump_text(g.get("regions")))
-        self.roads = _yaml_field(parent, "roads (YAML)", yaml_dump_text(g.get("roads")))
-        self.levels = _yaml_field(parent, "levels (YAML)", yaml_dump_text(g.get("levels")))
-        self.rumors = _yaml_field(parent, "rumors (YAML)", yaml_dump_text(g.get("rumors")))
-        self.scenes = _yaml_field(parent, "scenes (YAML)", yaml_dump_text(g.get("scenes")))
-        self.meters = _yaml_field(parent, "meters (YAML)", yaml_dump_text(g.get("meters")))
-        self.map = _yaml_field(parent, "map (YAML)", yaml_dump_text(g.get("map")))
-        self.ui = _yaml_field(parent, "ui (YAML)", yaml_dump_text(g.get("ui")))
-        self.fx = _yaml_field(parent, "fx (YAML)", yaml_dump_text(g.get("fx")))
+        self.regions = _yaml_field(rest, "regions (YAML)", yaml_dump_text(g.get("regions")))
+        self.roads = _yaml_field(rest, "roads (YAML)", yaml_dump_text(g.get("roads")))
+        self.levels = _yaml_field(rest, "levels (YAML)", yaml_dump_text(g.get("levels")))
+        self.rumors = _yaml_field(rest, "rumors (YAML)", yaml_dump_text(g.get("rumors")))
+        self.scenes = _yaml_field(rest, "scenes (YAML)", yaml_dump_text(g.get("scenes")))
+        self.meters = _yaml_field(rest, "meters (YAML)", yaml_dump_text(g.get("meters")))
+        self.map = _yaml_field(rest, "map (YAML)", yaml_dump_text(g.get("map")))
+        self.ui = _yaml_field(rest, "ui (YAML)", yaml_dump_text(g.get("ui")))
+        self.fx = _yaml_field(rest, "fx (YAML)", yaml_dump_text(g.get("fx")))
 
     def collect(self) -> None:
         g = self.ed.project.game

@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.1.0 — 2026-09-26
+
+The editor opens on a page that says what to do. Sections are rooms, things, and people, not a list of ids. Save, Play, and Check stay on top. The rest is under More. About the game shows the first fields only.
+
 ## 3.0.2 — 2026-09-25
 
 - The exe died on start: `ImportError: attempted relative import with no known parent package`. The Windows entry is now `launch.py`, which imports the package by name
