@@ -16,6 +16,7 @@ from .state import GameState, Player, StatusEffect, STAT_KEYS
 from .ui import ScriptedIO, TerminalIO
 from .clock import advance, clock, encounter_chance, phase_name, shop_is_open
 from .audio import Audio
+from .items import CATEGORIES, equip_slot, item_kind, match_kind
 from .util import as_list, loc, match_entity, modifier, roll, wrap
 
 
@@ -906,7 +907,7 @@ class Game:
             else:
                 self.audio.event("use")
             return
-        if item.get("type") in ("weapon", "armor", "shield", "accessory"):
+        if equip_slot(item):
             self._equip_id(iid)
             return
         self.say(t(self.lang, "cant_use"))
@@ -1165,7 +1166,7 @@ class Game:
 
     def _equip_id(self, iid: str) -> None:
         item = self.world.items.get(iid) or {}
-        slot = item.get("slot") or {"weapon": "weapon", "armor": "armor", "shield": "shield"}.get(item.get("type"))
+        slot = equip_slot(item)
         if not slot:
             self.say(t(self.lang, "cant_equip"))
             return
@@ -1195,10 +1196,27 @@ class Game:
         if not inv:
             self.say(t(self.lang, "empty_inv"))
             return
+        want = match_kind(cmd.argstr) if cmd.argstr else None
+        if cmd.argstr and want is None:
+            self.say(t(self.lang, "cat_unknown"))
+            return
+        if want == "":
+            want = None
         eq_ids = set(self.state.player.equipment.values())
-        for iid in inv:
-            mark = f" ({t(self.lang, 'equipped')})" if iid in eq_ids else ""
-            self.say(f"  - {self.item_name(iid)}{mark}")
+        shown = False
+        for cat in CATEGORIES:
+            if want is not None and cat["id"] != want:
+                continue
+            rows = [iid for iid in inv if item_kind(self.world.items.get(iid) or {}) == cat["id"]]
+            if not rows:
+                continue
+            shown = True
+            self.say(t(self.lang, cat["label"]))
+            for iid in rows:
+                mark = f" ({t(self.lang, 'equipped')})" if iid in eq_ids else ""
+                self.say(f"  - {self.item_name(iid)}{mark}")
+        if not shown:
+            self.say(t(self.lang, "empty_inv"))
 
     def _cmd_talk(self, cmd) -> None:
         npcs = self._here_npcs()

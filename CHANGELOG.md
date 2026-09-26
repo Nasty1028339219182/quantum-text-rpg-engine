@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.0 — 2026-09-26
+
+Things are filed by kind. The editor and the play window use the same nine tabs: weapon, armor, shield, trinket, supply, key, book, quest item, other. A new thing takes the open tab, and that kind is what equip and `инвентарь оружие` read. An accessory without its own slot uses `accessory`.
+
 ## 3.1.0 — 2026-09-26
 
 The editor opens on a page that says what to do. Sections are rooms, things, and people, not a list of ids. Save, Play, and Check stay on top. The rest is under More. About the game shows the first fields only.

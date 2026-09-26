@@ -35,6 +35,7 @@ a = Analysis(
         "quantum_rpg.gridmap",
         "quantum_rpg.conditions",
         "quantum_rpg.tclfix",
+        "quantum_rpg.items",
     ],
     hookspath=[],
     hooksconfig={},

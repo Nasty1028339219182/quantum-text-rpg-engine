@@ -185,6 +185,7 @@ class PlayWindow:
         self.waiting = False
         self.snap: dict = {}
         self.selected_item: Optional[str] = None
+        self.inv_tab = "all"
         world = load_world(self.game_path)
         if world.errors:
             messagebox.showerror("Quantum RPG", "\n".join(world.errors))
@@ -579,7 +580,21 @@ class PlayWindow:
         if not inv:
             tk.Label(self.side, text=t(self.lang, "empty_inv"), bg=C["bg"], fg=C["dim"],
                      font=font_ui(9), anchor="w").pack(fill="x")
+            return
+        kinds = []
         for it in inv:
+            kind = it.get("type") or "misc"
+            if kind not in kinds:
+                kinds.append(kind)
+        if self.inv_tab not in kinds and self.inv_tab != "all":
+            self.inv_tab = "all"
+        tabs = tk.Frame(self.side, bg=C["bg"])
+        tabs.pack(fill="x", pady=(0, 4))
+        self._inv_tab(tabs, "all", t(self.lang, "cat_all"))
+        for kind in kinds:
+            self._inv_tab(tabs, kind, t(self.lang, f"cat_{kind}"))
+        shown = [it for it in inv if self.inv_tab == "all" or (it.get("type") or "misc") == self.inv_tab]
+        for it in shown:
             mark = " *" if it.get("equipped") else ""
             self._btn(it["label"] + mark, f"__inv:{it['id']}")
         if self.selected_item:
@@ -593,6 +608,20 @@ class PlayWindow:
             ):
                 Btn(row, text=self._tr(key), command=lambda c=cmd: self._send(c),
                      font=font_ui(8), padx=4).pack(side="left", padx=1)
+
+    def _inv_tab(self, parent, kind: str, label: str) -> None:
+        on = self.inv_tab == kind
+        tk.Button(
+            parent, text=label, command=lambda k=kind: self._set_inv_tab(k),
+            bg=C["line"] if on else C["btn"], fg=C["fg"],
+            activebackground=C["line"], activeforeground=C["fg"],
+            relief="flat", bd=0, padx=6, pady=2, font=font_ui(8, on),
+            highlightthickness=0, cursor="hand2",
+        ).pack(side="left", padx=(0, 3), pady=1)
+
+    def _set_inv_tab(self, kind: str) -> None:
+        self.inv_tab = kind
+        self._render_side()
 
     def _send(self, command: str) -> None:
         if command.startswith("__inv:"):

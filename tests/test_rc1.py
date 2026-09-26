@@ -132,3 +132,23 @@ def test_editor_sections_are_plain_language():
     text = (Path(__file__).resolve().parents[1] / "launch.py").read_text(encoding="utf-8")
     assert "from quantum_rpg.cli import main" in text
     assert "from ." not in text
+
+
+def test_item_kinds_are_tabs():
+    from quantum_rpg.items import equip_slot
+
+    g = _ford()
+    g.world.items["ring"] = {
+        "name": {"ru": "Кольцо", "en": "Ring"},
+        "type": "accessory",
+        "aliases": ["кольцо"],
+    }
+    g.state.player.inventory.append("ring")
+    g.handle("инвентарь оружие")
+    assert "Оружие" in g.ui.text
+    assert "Кольцо" not in g.ui.text
+    g.handle("надеть кольцо")
+    assert g.state.player.equipment.get("accessory") == "ring"
+    assert equip_slot({"type": "book"}) is None
+    g.handle("инвентарь шляпа")
+    assert "вкладки нет" in g.ui.text

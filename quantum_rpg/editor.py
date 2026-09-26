@@ -24,6 +24,7 @@ from .project import (
     yaml_dump_text,
     yaml_load_text,
 )
+from .items import CATEGORIES, default_slot, item_kind
 from .theme import C, Btn, Entry, Text, font_ui, font_log
 
 KINDS = [
@@ -44,7 +45,7 @@ GROUPS = (
     ("fight", "ed_nav_fight"),
 )
 DIRS = ("north", "south", "east", "west", "up", "down")
-ITEM_TYPES = ("weapon", "armor", "shield", "accessory", "consumable", "key", "book", "quest", "misc")
+ITEM_TYPES = tuple(row["id"] for row in CATEGORIES)
 
 
 class EditorWindow:
@@ -61,6 +62,7 @@ class EditorWindow:
             )
         self.project = Project.load(writable)
         self.sel = ("guide", "")
+        self.item_tab = "weapon"
         self.form: Optional[tk.Frame] = None
         self.vars: dict[str, Any] = {}
         root.geometry("1180x760")
@@ -199,7 +201,7 @@ class EditorWindow:
                 return row
         return None
 
-    def _add(self, kind: str) -> None:
+    def _add(self, kind: str, item_type: str = "") -> None:
         eid = simpledialog.askstring("Quantum RPG", self.tr("ed_new_id"), parent=self.root)
         if not eid:
             return
@@ -209,6 +211,13 @@ class EditorWindow:
             messagebox.showerror("Quantum RPG", self.tr("ed_bad_id"))
             return
         eid = eid.strip().replace(" ", "_")
+        if kind == "items" and item_type:
+            row = self.project.items[eid]
+            row["type"] = item_type
+            slot = default_slot(item_type)
+            if slot:
+                row["slot"] = slot
+            self.item_tab = item_type
         self._show(kind, eid)
         self._fill_tree()
         self._set_title()
@@ -332,6 +341,9 @@ class EditorWindow:
         row = self._kind_row(kind)
         if not row:
             return
+        if kind == "items":
+            self._show_items(box, row)
+            return
         _kind, label_key, hint_key, new_key, _group = row
         self._page(box, self.tr(label_key), self.tr(hint_key))
         Btn(box, text="+  " + self.tr(new_key), command=lambda k=kind: self._add(k), anchor="w", font=font_ui(10, True)).pack(anchor="w", pady=(0, 12))
@@ -345,6 +357,46 @@ class EditorWindow:
                 command=lambda k=kind, i=eid: self._open_entity(k, i),
                 anchor="w",
             ).pack(fill="x", pady=2)
+
+    def _show_items(self, box, row) -> None:
+        _kind, label_key, hint_key, new_key, _group = row
+        self._page(box, self.tr(label_key), self.tr(hint_key))
+        tabs = tk.Frame(box, bg=C["bg"])
+        tabs.pack(fill="x", pady=(0, 12))
+        current = self.item_tab if self.item_tab in ITEM_TYPES else "weapon"
+        self.item_tab = current
+        for cat in CATEGORIES:
+            on = cat["id"] == current
+            tk.Button(
+                tabs, text=self.tr(cat["label"]),
+                command=lambda k=cat["id"]: self._pick_item_tab(k),
+                bg=C["line"] if on else C["btn"], fg=C["fg"],
+                activebackground=C["line"], activeforeground=C["fg"],
+                relief="flat", bd=0, padx=10, pady=5, font=font_ui(9, on),
+                highlightthickness=0, cursor="hand2",
+            ).pack(side="left", padx=(0, 4), pady=2)
+        Btn(
+            box, text="+  " + self.tr(new_key),
+            command=lambda: self._add("items", self.item_tab),
+            anchor="w", font=font_ui(10, True),
+        ).pack(anchor="w", pady=(0, 12))
+        found = [
+            eid for eid, it in self.project.items.items()
+            if item_kind(it if isinstance(it, dict) else {}) == current
+        ]
+        if not found:
+            tk.Label(box, text=self.tr("ed_empty"), bg=C["bg"], fg=C["dim"], font=font_ui(10)).pack(anchor="w")
+            return
+        for eid in found:
+            Btn(
+                box, text=self._entity_label("items", eid),
+                command=lambda i=eid: self._open_entity("items", i),
+                anchor="w",
+            ).pack(fill="x", pady=2)
+
+    def _pick_item_tab(self, kind: str) -> None:
+        self.item_tab = kind
+        self._show("index", "items")
 
     def _open_entity(self, kind: str, eid: str) -> None:
         self._flush()
